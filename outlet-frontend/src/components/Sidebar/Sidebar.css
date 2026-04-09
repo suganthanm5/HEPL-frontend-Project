@@ -1,0 +1,287 @@
+/* ══════════════════════════════════════════
+   Sidebar Shell
+══════════════════════════════════════════ */
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0f172a 0%, #1a1f3c 60%, #0f172a 100%);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 10;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Subtle glow strip on the right edge */
+.sidebar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, rgba(99,102,241,0.5), transparent);
+  pointer-events: none;
+}
+
+.sidebar--collapsed { width: 80px; }
+
+/* ══════════════════════════════════════════
+   Brand
+══════════════════════════════════════════ */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 18px 22px 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 76px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+  transition: box-shadow 0.3s;
+}
+
+.brand-logo:hover {
+  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.75);
+}
+
+.brand-logo svg {
+  width: 20px;
+  height: 20px;
+  color: #fff;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #f1f5f9;
+  white-space: nowrap;
+  flex: 1;
+  background: linear-gradient(90deg, #f1f5f9, #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ══════════════════════════════════════════
+   Hamburger Toggle
+══════════════════════════════════════════ */
+.sidebar-toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  margin-left: auto;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.hb-line {
+  display: block;
+  width: 15px;
+  height: 2px;
+  border-radius: 2px;
+  background: #94a3b8;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity   0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              width     0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.sidebar-toggle:hover .hb-line { background: #a5b4fc; }
+
+.sidebar-toggle.is-open .hb-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.sidebar-toggle.is-open .hb-line:nth-child(2) { opacity: 0; width: 0; }
+.sidebar-toggle.is-open .hb-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ══════════════════════════════════════════
+   Nav
+══════════════════════════════════════════ */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: rgba(148, 163, 184, 0.5);
+  padding: 18px 10px 8px;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.22s ease;
+  position: relative;
+}
+
+/* Hover state */
+.sidebar-link:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Active state — glowing pill */
+.sidebar-link.active {
+  background: linear-gradient(90deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15));
+  color: #a5b4fc;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(99,102,241,0.3),
+              0 4px 16px rgba(99,102,241,0.15);
+}
+
+/* Left accent bar on active */
+.sidebar-link.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  box-shadow: 0 0 8px rgba(99,102,241,0.7);
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.sidebar-link:hover .nav-icon { transform: scale(1.15); }
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2px;
+}
+
+.nav-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.nav-badge {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: auto;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+}
+
+/* ══════════════════════════════════════════
+   Footer / Logout
+══════════════════════════════════════════ */
+.sidebar-footer {
+  padding: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sidebar-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.22s ease;
+}
+
+.sidebar-logout:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(239,68,68,0.2);
+}
+
+.sidebar-logout:hover .nav-icon { transform: scale(1.15); }
+
+/* ══════════════════════════════════════════
+   Collapsed state
+══════════════════════════════════════════ */
+.sidebar--collapsed .sidebar-brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar--collapsed .sidebar-link,
+.sidebar--collapsed .sidebar-logout {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar--collapsed .sidebar-link.active::before { display: none; }
+.sidebar--collapsed .nav-badge  { display: none; }
+.sidebar--collapsed .sidebar-toggle { margin-left: 0; }
+
+/* ══════════════════════════════════════════
+   Dark theme overrides (already dark by default,
+   these keep it consistent when data-theme switches)
+══════════════════════════════════════════ */
+[data-theme="light"] .sidebar {
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+}
