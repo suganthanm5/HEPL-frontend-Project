@@ -9,7 +9,9 @@ import {
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import "./Dashboard.css";
-
+import { useSelector, useDispatch } from "react-redux";
+import { setDashboardData, setLoading } from "../../redux/dashboardSlice";
+import { Card, CardContent, Typography } from "@mui/material";
 /* ── Icons ── */
 const IcOutlet = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -63,21 +65,36 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 /* ── Stat Card ── */
 const StatCard = ({ label, value, icon, color, sub, loading, trend }) => (
-  <div className="stat-card" style={{ "--c": color.main, "--cl": color.light }}>
-    <div className="sc-top">
-      <div className="sc-icon">{icon}</div>
-      {trend !== undefined && (
-        <span className={`sc-trend ${trend >= 0 ? "up" : "down"}`}>
-          <IcTrend /> {Math.abs(trend)}%
-        </span>
-      )}
-    </div>
-    <div className="sc-value">{loading ? <span className="skel-val" /> : value}</div>
-    <div className="sc-label">{label}</div>
-    {sub && <div className="sc-sub">{sub}</div>}
-  </div>
-);
+  <Card 
+    className="stat-card mui-stat-card"
+    sx={{
+      "--c": color.main,
+      "--cl": color.light
+    }}
+  >
+    <CardContent>
+      
+      <div className="sc-top">
+        <div className="sc-icon">{icon}</div>
 
+        {trend !== undefined && (
+          <span className={`sc-trend ${trend >= 0 ? "up" : "down"}`}>
+            <IcTrend /> {Math.abs(trend)}%
+          </span>
+        )}
+      </div>
+
+      <div className="sc-value">
+        {loading ? <span className="skel-val" /> : value}
+      </div>
+
+      <div className="sc-label">{label}</div>
+
+      {sub && <div className="sc-sub">{sub}</div>}
+
+    </CardContent>
+  </Card>
+);
 /* ── Progress Row ── */
 const ProgressRow = ({ label, value, max, color }) => {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -96,27 +113,36 @@ const ProgressRow = ({ label, value, max, color }) => {
 };
 
 export default function Dashboard() {
-  const [data, setData]     = useState({ outlets: [], locations: [], divisions: [] });
-  const [loading, setLoading] = useState(true);
+  // const [data, setData]     = useState({ outlets: [], locations: [], divisions: [] });
+  // const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+
+const outlets = useSelector(state => state.dashboard.outlets);
+const locations = useSelector(state => state.dashboard.locations);
+const divisions = useSelector(state => state.dashboard.divisions);
+const loading = useSelector(state => state.dashboard.loading);
 const extractList = (res) => {
   return res?.value?.data?.data?.content || [];
 };
 
-  const load = async () => {
-    setLoading(true);
-    const [o, l, d] = await Promise.allSettled([
-      getOutlets(), getLocations(), getDivisions(),
-    ]);
-    setData({
-      outlets:   extractList(o),
-      locations: extractList(l),
-      divisions: extractList(d),
-    });
-    setLoading(false);
-  };
+ const load = async () => {
+  dispatch(setLoading(true));
 
-  useEffect(() => { load(); }, []);
+  const [o, l, d] = await Promise.allSettled([
+    getOutlets(),
+    getLocations(),
+    getDivisions(),
+  ]);
 
+  dispatch(setDashboardData({
+    outlets: extractList(o),
+    locations: extractList(l),
+    divisions: extractList(d),
+  }));
+};
+ useEffect(() => {
+  load();
+}, [dispatch]);
   const user = localStorage.getItem("username") || "Admin";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -134,13 +160,13 @@ const extractList = (res) => {
     return () => clearInterval(interval);
   }, [fullGreeting]);
 
-  const total = data.outlets.length + data.locations.length + data.divisions.length;
+  const total = outlets.length + locations.length + divisions.length;
 
   /* Bar chart — category comparison */
   const barData = [
-    { name: "Outlets",   value: data.outlets.length,   fill: COLORS.outlet.main },
-    { name: "Locations", value: data.locations.length, fill: COLORS.location.main },
-    { name: "Divisions", value: data.divisions.length, fill: COLORS.division.main },
+    { name: "Outlets",   value: outlets.length,   fill: COLORS.outlet.main },
+    { name: "Locations", value: locations.length, fill: COLORS.location.main },
+    { name: "Divisions", value: divisions.length, fill: COLORS.division.main },
   ];
 
   /* Area chart — simulated growth (last 6 months) */
@@ -148,21 +174,21 @@ const extractList = (res) => {
     const months = ["Jan","Feb","Mar","Apr","May","Jun"];
     return months.map((m, i) => ({
       month: m,
-      Outlets:   Math.max(0, data.outlets.length   - (5 - i) * Math.ceil(data.outlets.length   / 6)),
-      Locations: Math.max(0, data.locations.length - (5 - i) * Math.ceil(data.locations.length / 6)),
-      Divisions: Math.max(0, data.divisions.length - (5 - i) * Math.ceil(data.divisions.length / 6)),
+      Outlets:   Math.max(0, outlets.length   - (5 - i) * Math.ceil(outlets.length   / 6)),
+      Locations: Math.max(0, locations.length - (5 - i) * Math.ceil(locations.length / 6)),
+      Divisions: Math.max(0, divisions.length - (5 - i) * Math.ceil(divisions.length / 6)),
     }));
-  }, [data]);
+  }, [outlets, locations, divisions]);
 
   /* Pie */
   const pieData = barData.filter((d) => d.value > 0).map((d) => ({ name: d.name, value: d.value }));
 
   /* Recent items */
-  const recentOutlets   = [...data.outlets].slice(-5).reverse();
-  const recentLocations = [...data.locations].slice(-4).reverse();
-  const recentDivisions = [...data.divisions].slice(-4).reverse();
+  const recentOutlets   = [...outlets].slice(-5).reverse();
+  const recentLocations = [...locations].slice(-4).reverse();
+  const recentDivisions = [...divisions].slice(-4).reverse();
 
-  const max = Math.max(data.outlets.length, data.locations.length, data.divisions.length, 1);
+  const max = Math.max(outlets.length, locations.length, divisions.length, 1);
 
   return (
     <div className="layout">
@@ -182,9 +208,9 @@ const extractList = (res) => {
 
           {/* ── Stat Cards ── */}
           <div className="stats-grid">
-            <StatCard label="Total Outlets"   value={data.outlets.length}   icon={<IcOutlet />}   color={COLORS.outlet}   sub="Registered stores"   loading={loading} trend={12} />
-            <StatCard label="Total Locations" value={data.locations.length} icon={<IcLocation />} color={COLORS.location} sub="Active regions"       loading={loading} trend={8}  />
-            <StatCard label="Total Divisions" value={data.divisions.length} icon={<IcDivision />} color={COLORS.division} sub="Operational units"    loading={loading} trend={5}  />
+            <StatCard label="Total Outlets"   value={outlets.length}   icon={<IcOutlet />}   color={COLORS.outlet}   sub="Registered stores"   loading={loading} trend={12} />
+            <StatCard label="Total Locations" value={locations.length} icon={<IcLocation />} color={COLORS.location} sub="Active regions"       loading={loading} trend={8}  />
+            <StatCard label="Total Divisions" value={divisions.length} icon={<IcDivision />} color={COLORS.division} sub="Operational units"    loading={loading} trend={5}  />
             <StatCard label="Total Records"   value={total}                 icon={<IcTrend />}    color={COLORS.total}    sub="Across all modules"  loading={loading} />
           </div>
 
@@ -283,9 +309,9 @@ const extractList = (res) => {
                 </div>
               </div>
               <div className="prog-list">
-                <ProgressRow label="Outlets"   value={data.outlets.length}   max={max} color={COLORS.outlet.main}   />
-                <ProgressRow label="Locations" value={data.locations.length} max={max} color={COLORS.location.main} />
-                <ProgressRow label="Divisions" value={data.divisions.length} max={max} color={COLORS.division.main} />
+                <ProgressRow label="Outlets"   value={outlets.length}   max={max} color={COLORS.outlet.main}   />
+                <ProgressRow label="Locations" value={locations.length} max={max} color={COLORS.location.main} />
+                <ProgressRow label="Divisions" value={divisions.length} max={max} color={COLORS.division.main} />
               </div>
               <div className="prog-total-row">
                 <span>Total Records</span>
@@ -301,7 +327,7 @@ const extractList = (res) => {
                   <p className="card-sub">Latest {recentOutlets.length} added</p>
                 </div>
                 <span className="badge" style={{ "--bc": COLORS.outlet.main, "--bl": COLORS.outlet.light }}>
-                  {data.outlets.length} total
+                  {outlets.length} total
                 </span>
               </div>
               {loading ? <SkeletonList n={4} /> : recentOutlets.length === 0
@@ -318,7 +344,7 @@ const extractList = (res) => {
                   <p className="card-sub">Latest {recentLocations.length} added</p>
                 </div>
                 <span className="badge" style={{ "--bc": COLORS.location.main, "--bl": COLORS.location.light }}>
-                  {data.locations.length} total
+                  {locations.length} total
                 </span>
               </div>
               {loading ? <SkeletonList n={4} /> : recentLocations.length === 0
@@ -335,7 +361,7 @@ const extractList = (res) => {
                   <p className="card-sub">Latest {recentDivisions.length} added</p>
                 </div>
                 <span className="badge" style={{ "--bc": COLORS.division.main, "--bl": COLORS.division.light }}>
-                  {data.divisions.length} total
+                  {divisions.length} total
                 </span>
               </div>
               {loading ? <SkeletonList n={4} /> : recentDivisions.length === 0

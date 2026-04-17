@@ -121,7 +121,7 @@
 }
 
 .stat-card {
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 18px;
   padding: 22px;
   border: 1px solid var(--border);
@@ -551,4 +551,21 @@
 .db-greeting::selection {
   background: #c7d2fe;
   color: #000;
+}
+/* MUI enhancement */
+.mui-stat-card {
+  border-radius: 18px !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--border) !important;
+  transition: all 0.25s ease;
+}
+
+.mui-stat-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(99,102,241,0.15) !important;
+}
+
+/* Remove default MUI padding conflict */
+.mui-stat-card .MuiCardContent-root {
+  padding: 22px !important;
 }
