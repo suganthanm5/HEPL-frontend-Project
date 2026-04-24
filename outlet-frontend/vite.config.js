@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://70rgsz56-8080.inc1.devtunnels.ms',
+        target: 'https://70rgsz56-8080.inc1.devtunnels.ms/',
         changeOrigin: true,
         secure: false,
       }

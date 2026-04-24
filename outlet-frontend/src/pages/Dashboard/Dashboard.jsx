@@ -1,17 +1,15 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { Paper, Card, CardContent, Button, Typography, Box } from "@mui/material";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchDashboardData } from "../../redux/dashboardSlice";
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
-import { getOutlets }   from "../../services/outletService";
-import { getLocations } from "../../services/locationService";
-import { getDivisions } from "../../services/devisionService";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import "./Dashboard.css";
-import { useSelector, useDispatch } from "react-redux";
-import { setDashboardData, setLoading } from "../../redux/dashboardSlice";
-import { Card, CardContent, Typography } from "@mui/material";
+
 /* ── Icons ── */
 const IcOutlet = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -65,36 +63,42 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 /* ── Stat Card ── */
 const StatCard = ({ label, value, icon, color, sub, loading, trend }) => (
-  <Card 
-    className="stat-card mui-stat-card"
-    sx={{
-      "--c": color.main,
-      "--cl": color.light
-    }}
-  >
-    <CardContent>
-      
-      <div className="sc-top">
-        <div className="sc-icon">{icon}</div>
-
-        {trend !== undefined && (
-          <span className={`sc-trend ${trend >= 0 ? "up" : "down"}`}>
-            <IcTrend /> {Math.abs(trend)}%
-          </span>
-        )}
-      </div>
-
-      <div className="sc-value">
-        {loading ? <span className="skel-val" /> : value}
-      </div>
-
-      <div className="sc-label">{label}</div>
-
-      {sub && <div className="sc-sub">{sub}</div>}
-
-    </CardContent>
-  </Card>
+  <Paper elevation={4} sx={{
+    p: 2,
+    borderRadius: 3,
+    background: `linear-gradient(135deg, ${color.light} 0%, ${color.main}22 100%)`,
+    boxShadow: `0 2px 12px 0 ${color.main}22`,
+    minWidth: 180,
+    minHeight: 120,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    mb: 2,
+    transition: 'transform 0.18s, box-shadow 0.18s',
+    cursor: 'pointer',
+    '&:hover': {
+      boxShadow: `0 6px 24px 0 ${color.main}44`,
+      transform: 'translateY(-4px) scale(1.03)'
+    }
+  }}>
+    <Box className="sc-top" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box className="sc-icon" sx={{ fontSize: 32 }}>{icon}</Box>
+      {trend !== undefined && (
+        <span className={`sc-trend ${trend >= 0 ? "up" : "down"}`}>
+          <IcTrend /> {Math.abs(trend)}%
+        </span>
+      )}
+    </Box>
+    <Typography variant="h5" className="sc-value" sx={{ fontWeight: 700, mt: 1 }}>
+      {loading ? <span className="skel-val" /> : value}
+    </Typography>
+    <Typography variant="subtitle2" className="sc-label" sx={{ color: color.dark, fontWeight: 500 }}>
+      {label}
+    </Typography>
+    {sub && <Typography variant="caption" className="sc-sub" sx={{ color: 'text.secondary' }}>{sub}</Typography>}
+  </Paper>
 );
+
 /* ── Progress Row ── */
 const ProgressRow = ({ label, value, max, color }) => {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -113,36 +117,14 @@ const ProgressRow = ({ label, value, max, color }) => {
 };
 
 export default function Dashboard() {
-  // const [data, setData]     = useState({ outlets: [], locations: [], divisions: [] });
-  // const [loading, setLoading] = useState(true);
-  const dispatch = useDispatch();
+  const dispatch  = useDispatch();
+  const outlets   = useSelector(s => s.dashboard.outlets);
+  const locations = useSelector(s => s.dashboard.locations);
+  const divisions = useSelector(s => s.dashboard.divisions);
+  const loading   = useSelector(s => s.dashboard.loading);
 
-const outlets = useSelector(state => state.dashboard.outlets);
-const locations = useSelector(state => state.dashboard.locations);
-const divisions = useSelector(state => state.dashboard.divisions);
-const loading = useSelector(state => state.dashboard.loading);
-const extractList = (res) => {
-  return res?.value?.data?.data?.content || [];
-};
+  useEffect(() => { dispatch(fetchDashboardData()); }, [dispatch]);
 
- const load = async () => {
-  dispatch(setLoading(true));
-
-  const [o, l, d] = await Promise.allSettled([
-    getOutlets(),
-    getLocations(),
-    getDivisions(),
-  ]);
-
-  dispatch(setDashboardData({
-    outlets: extractList(o),
-    locations: extractList(l),
-    divisions: extractList(d),
-  }));
-};
- useEffect(() => {
-  load();
-}, [dispatch]);
   const user = localStorage.getItem("username") || "Admin";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -193,7 +175,10 @@ const extractList = (res) => {
   return (
     <div className="layout">
       <Sidebar />
-      <div className="layout-main">
+      <div className="layout-main" style={{
+        background: "linear-gradient(120deg, #e0e7ff 0%, #f0fdfa 100%)",
+        minHeight: "100vh"
+      }}>
         <Navbar title="Dashboard" />
         <div className="page-content">
 
@@ -207,12 +192,17 @@ const extractList = (res) => {
           </div>
 
           {/* ── Stat Cards ── */}
-          <div className="stats-grid">
+          <Box className="stats-grid" sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 3
+          }}>
             <StatCard label="Total Outlets"   value={outlets.length}   icon={<IcOutlet />}   color={COLORS.outlet}   sub="Registered stores"   loading={loading} trend={12} />
             <StatCard label="Total Locations" value={locations.length} icon={<IcLocation />} color={COLORS.location} sub="Active regions"       loading={loading} trend={8}  />
             <StatCard label="Total Divisions" value={divisions.length} icon={<IcDivision />} color={COLORS.division} sub="Operational units"    loading={loading} trend={5}  />
-            <StatCard label="Total Records"   value={total}                 icon={<IcTrend />}    color={COLORS.total}    sub="Across all modules"  loading={loading} />
-          </div>
+            <StatCard label="Total Records"   value={total}            icon={<IcTrend />}    color={COLORS.total}    sub="Across all modules"  loading={loading} />
+          </Box>
 
           {/* ── Main Grid ── */}
           <div className="main-grid">
