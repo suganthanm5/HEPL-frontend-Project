@@ -78,6 +78,7 @@ const PAGE_SIZES = [5, 10, 25, 50];
 
 const Location = () => {
   const [locations, setLocations] = useState([]);
+  const [allLocations, setAllLocations] = useState([]);
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState("");
   const [search,    setSearch]    = useState("");
@@ -86,6 +87,7 @@ const Location = () => {
   const [view,      setView]      = useState("table");
   const [totalPages,    setTotalPages]    = useState(1);
   const [totalElements, setTotalElements] = useState(0);
+  const [toast, setToast] = useState(null);
 
   /* modals */
   const [addModal,    setAddModal]    = useState(false);
@@ -97,17 +99,49 @@ const Location = () => {
   const [editName, setEditName] = useState("");
   const [saving,   setSaving]   = useState(false);
 
-  useEffect(() => { fetchLocations(); }, [page, pageSize, search]);
+  useEffect(() => { fetchLocations(); }, [page, pageSize]);
+  useEffect(() => { filterLocations(); }, [search, allLocations, pageSize, page]);
+
+  // Toast notification system
+  const showToast = (message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Input validation - only letters and spaces
+  const validateLocationName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/;
+    return regex.test(name);
+  };
+
+  const handleInputChange = (value, setter) => {
+    // Allow commas for multiple locations
+    const hasInvalidChars = /[^a-zA-Z\s,]/.test(value);
+    
+    if (hasInvalidChars) {
+      showToast('Please enter a valid format. Only letters, spaces, and commas are allowed.', 'warning');
+      return;
+    }
+    
+    // Check if input starts with a space or comma
+    if (value.startsWith(' ') || value.startsWith(',')) {
+      showToast('Location name cannot start with a space or comma.', 'warning');
+      return;
+    }
+    
+    // Allow the input
+    setter(value);
+  };
 
   const fetchLocations = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await getLocations(page - 1, pageSize, search);
+      // Try server-side search first
+      const res = await getLocations(0, 1000); // Get all locations
       const pageData = res?.data?.data;
-      setLocations(pageData?.content || []);
-      setTotalPages(pageData?.totalPages || 1);
-      setTotalElements(pageData?.totalElements || 0);
+      const allLocs = pageData?.content || [];
+      setAllLocations(allLocs);
     } catch (e) {
       setError("Failed to load locations. Check API connection.");
       console.error(e);
@@ -116,39 +150,166 @@ const Location = () => {
     }
   };
 
+  const filterLocations = () => {
+    let filtered = allLocations;
+    
+    // Client-side search filtering
+    if (search.trim()) {
+      const searchLower = search.toLowerCase().trim();
+      filtered = allLocations.filter(location => 
+        location.name?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Pagination
+    const totalFiltered = filtered.length;
+    const totalPgs = Math.ceil(totalFiltered / pageSize) || 1;
+    const safePg = Math.min(page, totalPgs);
+    const startIdx = (safePg - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+    const paginatedData = filtered.slice(startIdx, endIdx);
+    
+    setLocations(paginatedData);
+    setTotalPages(totalPgs);
+    setTotalElements(totalFiltered);
+  };
+
   const handleAdd = async () => {
     if (!addName.trim()) return;
+    
+    // Split by comma and clean up location names
+    const locationNames = addName.split(',').map(name => name.trim()).filter(name => name.length > 0);
+    
+    if (locationNames.length === 0) {
+      showToast('Please enter at least one valid location name.', 'warning');
+      return;
+    }
+    
+    // Check for duplicates in existing locations
+    const duplicates = [];
+    const validLocations = [];
+    
+    locationNames.forEach(name => {
+      const isDuplicate = allLocations.some(location => 
+        location.name?.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        duplicates.push(name);
+      } else {
+        validLocations.push(name);
+      }
+    });
+    
+    // Check for duplicates within the input itself
+    const uniqueValidLocations = [];
+    const inputDuplicates = [];
+    
+    validLocations.forEach(name => {
+      const nameExists = uniqueValidLocations.some(existing => 
+        existing.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (nameExists) {
+        inputDuplicates.push(name);
+      } else {
+        uniqueValidLocations.push(name);
+      }
+    });
+    
+    // Show duplicate warnings
+    if (duplicates.length > 0) {
+      showToast(`These locations already exist: ${duplicates.join(', ')}`, 'warning');
+    }
+    
+    if (inputDuplicates.length > 0) {
+      showToast(`Duplicate entries in input: ${inputDuplicates.join(', ')}`, 'warning');
+    }
+    
+    if (uniqueValidLocations.length === 0) {
+      return;
+    }
+    
     setSaving(true);
+    let successCount = 0;
+    let failedLocations = [];
+    
     try {
-      await createLocation({ name: addName.trim() });
+      // Add locations one by one
+      for (const locationName of uniqueValidLocations) {
+        try {
+          await createLocation({ name: locationName });
+          successCount++;
+        } catch (e) {
+          failedLocations.push(locationName);
+        }
+      }
+      
+      // Show results
+      if (successCount > 0) {
+        const message = successCount === 1 
+          ? `Location "${uniqueValidLocations[0]}" added successfully!`
+          : `${successCount} locations added successfully!`;
+        showToast(message, 'success');
+      }
+      
+      if (failedLocations.length > 0) {
+        showToast(`Failed to add: ${failedLocations.join(', ')}`, 'error');
+      }
+      
       setPage(1);
       fetchLocations();
-      setAddName(""); setAddModal(false);
+      setAddName(""); 
+      setAddModal(false);
+      
     } catch (e) {
-      alert("Failed to add: " + (e.response?.data?.message || e.message));
-    } finally { setSaving(false); }
+      showToast("Failed to add locations: " + (e.response?.data?.message || e.message), 'error');
+    } finally { 
+      setSaving(false); 
+    }
   };
 
   const handleUpdate = async () => {
     if (!editName.trim()) return;
+    
+    // Check for duplicate location name (excluding current location)
+    const trimmedName = editName.trim();
+    const isDuplicate = allLocations.some(location => 
+      location.id !== editModal.id && 
+      location.name?.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      showToast(`Location "${trimmedName}" already exists. Please choose a different name.`, 'error');
+      return;
+    }
+    
     setSaving(true);
     try {
-      await updateLocation(editModal.id, { name: editName.trim() });
+      await updateLocation(editModal.id, { name: trimmedName });
       fetchLocations();
       setEditModal(null);
+      showToast(`Location updated to "${trimmedName}" successfully!`, 'success');
     } catch (e) {
-      alert("Failed to update: " + (e.response?.data?.message || e.message));
+      const errorMsg = e.response?.data?.message || e.message;
+      if (errorMsg.toLowerCase().includes('already exists') || errorMsg.toLowerCase().includes('duplicate')) {
+        showToast(`Location "${trimmedName}" already exists. Please choose a different name.`, 'error');
+      } else {
+        showToast("Failed to update location: " + errorMsg, 'error');
+      }
     } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
+    const locationName = deleteModal.name;
     setSaving(true);
     try {
       await deleteLocation(deleteModal.id);
       fetchLocations();
       setDeleteModal(null);
+      showToast(`Location "${locationName}" deleted successfully!`, 'success');
     } catch (e) {
-      alert("Failed to delete: " + (e.response?.data?.message || e.message));
+      showToast("Failed to delete location: " + (e.response?.data?.message || e.message), 'error');
     } finally { setSaving(false); }
   };
 
@@ -168,8 +329,7 @@ const Location = () => {
           {/* Hero */}
           <div className="loc-hero">
             <div>
-              <h2 className="loc-hero-title">Location Management</h2>
-              
+              {/* Title removed as requested */}
             </div>
             <button className="loc-btn-primary" onClick={() => { setAddName(""); setAddModal(true); }}>
               <IcPlus /> Add Location
@@ -340,23 +500,26 @@ const Location = () => {
 
       {/* Add Modal */}
       {addModal && (
-        <Modal title="Add Location" subtitle="Create a new location node" icon={<IcPlus />} accent="#10b981"
+        <Modal title="Add Locations" subtitle="Create one or multiple location nodes" icon={<IcPlus />} accent="#10b981"
           onClose={() => { setAddModal(false); setAddName(""); }}>
           <div className="loc-modal-field">
-            <label>Location Name <span className="loc-req">*</span></label>
+            <label>Location Names <span className="loc-req">*</span></label>
             <input
               autoFocus
-              placeholder="e.g. Colombo"
+              placeholder="e.g. Chennai, Mumbai, Delhi (separate multiple locations with commas)"
               value={addName}
-              onChange={(e) => setAddName(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value, setAddName)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
+            <div className="loc-input-help">
+              💡 Tip: You can add multiple locations at once by separating them with commas
+            </div>
           </div>
           <div className="loc-modal-actions">
             <button className="loc-modal-btn cancel" onClick={() => { setAddModal(false); setAddName(""); }}>Cancel</button>
             <button className="loc-modal-btn confirm" onClick={handleAdd} disabled={saving || !addName.trim()}>
               {saving ? <span className="loc-spinner" /> : <IcPlus />}
-              {saving ? "Adding…" : "Add Location"}
+              {saving ? "Adding…" : "Add Locations"}
             </button>
           </div>
         </Modal>
@@ -372,7 +535,7 @@ const Location = () => {
               autoFocus
               placeholder="Location name"
               value={editName}
-              onChange={(e) => setEditName(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value, setEditName)}
               onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
             />
           </div>
@@ -396,12 +559,24 @@ const Location = () => {
           </div>
           <div className="loc-modal-actions">
             <button className="loc-modal-btn cancel" onClick={() => setDeleteModal(null)}>Cancel</button>
-            <button className="loc-modal-btn danger" onClick={handleDelete} disabled={saving}>
+            <button className="loc-modal-btn confirm" style={{ "--btn-color": "#6366f1" }} onClick={handleDelete} disabled={saving}>
               {saving ? <span className="loc-spinner" /> : <IcTrash />}
               {saving ? "Deleting…" : "Delete Location"}
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`loc-toast loc-toast-${toast.type}`}>
+          <div className="loc-toast-content">
+            <div className="loc-toast-icon">
+              {toast.type === 'success' ? '✓' : toast.type === 'warning' ? 'ⓘ' : '⚠'}
+            </div>
+            <span className="loc-toast-message">{toast.message}</span>
+          </div>
+        </div>
       )}
 
     </div>

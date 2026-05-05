@@ -3,21 +3,49 @@ import { getOutlets }   from "../services/outletService";
 import { getLocations } from "../services/locationService";
 import { getDivisions } from "../services/devisionService";
 
-const extractList = (res) => res?.value?.data?.data?.content || [];
+const extractList = (res) => {
+  // Handle Promise.allSettled structure
+  const data = res?.value?.data || res?.data;
+  if (!data) return [];
+  
+  // Handle different API response structures
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.data?.content)) return data.data.content;
+  if (Array.isArray(data.content)) return data.content;
+  
+  return [];
+};
 
 export const fetchDashboardData = createAsyncThunk(
   "dashboard/fetchAll",
-  async () => {
-    const [o, l, d] = await Promise.allSettled([
-      getOutlets(),
-      getLocations(),
-      getDivisions(),
-    ]);
-    return {
-      outlets:   extractList(o),
-      locations: extractList(l),
-      divisions: extractList(d),
-    };
+  async (_, { rejectWithValue }) => {
+    try {
+      const results = await Promise.allSettled([
+        getOutlets(0, 1000),
+        getLocations(0, 1000),
+        getDivisions(0, 1000),
+      ]);
+
+      const [o, l, d] = results;
+
+      // Log failures if any
+      results.forEach((res, idx) => {
+        if (res.status === "rejected") {
+          const names = ["Outlets", "Locations", "Divisions"];
+          console.error(`❌ ${names[idx]} fetch failed:`, res.reason);
+        }
+      });
+
+      return {
+        outlets:   extractList(o),
+        locations: extractList(l),
+        divisions: extractList(d),
+      };
+    } catch (error) {
+      console.error("❌ Dashboard fetch error:", error);
+      return rejectWithValue(error.message);
+    }
   }
 );
 
@@ -39,6 +67,15 @@ const dashboardSlice = createSlice({
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
+    addOutlet: (state, action) => {
+      state.outlets.unshift(action.payload);
+    },
+    addLocation: (state, action) => {
+      state.locations.unshift(action.payload);
+    },
+    addDivision: (state, action) => {
+      state.divisions.unshift(action.payload);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -54,5 +91,5 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { setDashboardData, setLoading } = dashboardSlice.actions;
+export const { setDashboardData, setLoading, addOutlet, addLocation, addDivision } = dashboardSlice.actions;
 export default dashboardSlice.reducer;

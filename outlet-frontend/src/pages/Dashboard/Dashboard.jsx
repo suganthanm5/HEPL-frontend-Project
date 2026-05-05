@@ -1,396 +1,581 @@
 import { useState, useMemo, useEffect } from "react";
-import { Paper, Card, CardContent, Button, Typography, Box } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchDashboardData } from "../../redux/dashboardSlice";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend,
+  AreaChart, Area, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from "recharts";
 import "./Dashboard.css";
 
 /* ── Icons ── */
-const IcOutlet = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+const IcStore = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/>
   </svg>
 );
 const IcLocation = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
   </svg>
 );
-const IcDivision = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
-    <line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/>
+const IcBox = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z"/>
   </svg>
 );
-const IcTrend = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+const IcDollar = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M7 15h2c0 1.08 1.37 2 3 2s3-.92 3-2c0-1.1-1.04-1.5-3.24-2.03C9.64 12.44 7 11.78 7 9c0-1.79 1.47-3.31 3.5-3.82V3h3v2.18C15.53 5.69 17 7.21 17 9h-2c0-1.08-1.37-2-3-2s-3 .92-3 2c0 1.1 1.04 1.5 3.24 2.03C14.36 11.56 17 12.22 17 15c0 1.79-1.47 3.31-3.5 3.82V21h-3v-2.18C8.47 18.31 7 16.79 7 15z"/>
   </svg>
 );
-const IcArrow = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+const IcMoreVert = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
   </svg>
 );
-
-/* ── Color palette ── */
-const COLORS = {
-  outlet:   { main: "#6366f1", light: "#eef2ff", dark: "#4f46e5" },
-  location: { main: "#10b981", light: "#ecfdf5", dark: "#059669" },
-  division: { main: "#f59e0b", light: "#fffbeb", dark: "#d97706" },
-  total:    { main: "#06b6d4", light: "#ecfeff", dark: "#0891b2" },
-};
-const PIE_COLORS = ["#6366f1", "#10b981", "#f59e0b"];
-
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="chart-tooltip">
-      <p className="ct-label">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} className="ct-val" style={{ color: p.color || p.fill }}>
-          {p.name}: <strong>{p.value}</strong>
-        </p>
-      ))}
-    </div>
-  );
-};
-
-/* ── Stat Card ── */
-const StatCard = ({ label, value, icon, color, sub, loading, trend }) => (
-  <Paper elevation={4} sx={{
-    p: 2,
-    borderRadius: 3,
-    background: `linear-gradient(135deg, ${color.light} 0%, ${color.main}22 100%)`,
-    boxShadow: `0 2px 12px 0 ${color.main}22`,
-    minWidth: 180,
-    minHeight: 120,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    mb: 2,
-    transition: 'transform 0.18s, box-shadow 0.18s',
-    cursor: 'pointer',
-    '&:hover': {
-      boxShadow: `0 6px 24px 0 ${color.main}44`,
-      transform: 'translateY(-4px) scale(1.03)'
-    }
-  }}>
-    <Box className="sc-top" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <Box className="sc-icon" sx={{ fontSize: 32 }}>{icon}</Box>
-      {trend !== undefined && (
-        <span className={`sc-trend ${trend >= 0 ? "up" : "down"}`}>
-          <IcTrend /> {Math.abs(trend)}%
-        </span>
-      )}
-    </Box>
-    <Typography variant="h5" className="sc-value" sx={{ fontWeight: 700, mt: 1 }}>
-      {loading ? <span className="skel-val" /> : value}
-    </Typography>
-    <Typography variant="subtitle2" className="sc-label" sx={{ color: color.dark, fontWeight: 500 }}>
-      {label}
-    </Typography>
-    {sub && <Typography variant="caption" className="sc-sub" sx={{ color: 'text.secondary' }}>{sub}</Typography>}
-  </Paper>
+const IcTrendUp = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+  </svg>
 );
-
-/* ── Progress Row ── */
-const ProgressRow = ({ label, value, max, color }) => {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <div className="prog-row">
-      <div className="prog-meta">
-        <span className="prog-label">{label}</span>
-        <span className="prog-val" style={{ color }}>{value}</span>
-      </div>
-      <div className="prog-track">
-        <div className="prog-fill" style={{ width: `${pct}%`, background: color }} />
-      </div>
-      <span className="prog-pct">{pct}%</span>
-    </div>
-  );
-};
+const IcBell = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+  </svg>
+);
+const IcCalendar = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+  </svg>
+);
+const IcArrowRight = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M10 17l5-5-5-5v10z"/>
+  </svg>
+);
 
 export default function Dashboard() {
-  const dispatch  = useDispatch();
-  const outlets   = useSelector(s => s.dashboard.outlets);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const outlets = useSelector(s => s.dashboard.outlets);
   const locations = useSelector(s => s.dashboard.locations);
   const divisions = useSelector(s => s.dashboard.divisions);
-  const loading   = useSelector(s => s.dashboard.loading);
+  const loading = useSelector(s => s.dashboard.loading);
 
   useEffect(() => { dispatch(fetchDashboardData()); }, [dispatch]);
 
   const user = localStorage.getItem("username") || "Admin";
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const fullGreeting = `${greeting}, ${user}`;
-
+  const welcomeMessage = `Welcome back, ${user}! Here's what's happening in your outlet system today.`;
+  
+  // Typing animation state
   const [typedText, setTypedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  // Typing animation effect
   useEffect(() => {
     setTypedText("");
+    setIsTyping(true);
     let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setTypedText(fullGreeting.slice(0, i));
-      if (i >= fullGreeting.length) clearInterval(interval);
-    }, 60);
-    return () => clearInterval(interval);
-  }, [fullGreeting]);
+    const typingInterval = setInterval(() => {
+      if (i < welcomeMessage.length) {
+        setTypedText(welcomeMessage.slice(0, i + 1));
+        i++;
+      } else {
+        setIsTyping(false);
+        clearInterval(typingInterval);
+      }
+    }, 50); // Typing speed: 50ms per character
 
-  const total = outlets.length + locations.length + divisions.length;
+    return () => clearInterval(typingInterval);
+  }, [welcomeMessage]);
+  
+  // Calculate totals
+  const totalOutlets = outlets.length;
+  const totalLocations = locations.length;
+  const totalProducts = divisions.reduce((sum, div) => sum + (div.products?.length || 0), 0);
+  const totalRevenue = totalProducts * 595; // Mock revenue calculation
 
-  /* Bar chart — category comparison */
-  const barData = [
-    { name: "Outlets",   value: outlets.length,   fill: COLORS.outlet.main },
-    { name: "Locations", value: locations.length, fill: COLORS.location.main },
-    { name: "Divisions", value: divisions.length, fill: COLORS.division.main },
+  // Filter state for both charts
+  const [performanceFilter, setPerformanceFilter] = useState("This Month");
+
+  // Generate different data sets based on filter for performance
+  const getPerformanceData = (filter) => {
+    switch (filter) {
+      case "This Month":
+        return [
+          { date: "01 May", value: 50, percentage: 50 },
+          { date: "07 May", value: 55, percentage: 55 },
+          { date: "14 May", value: 50, percentage: 50 },
+          { date: "21 May", value: 75, percentage: 75 },
+          { date: "28 May", value: 80, percentage: 80 },
+          { date: "31 May", value: 78, percentage: 78 },
+        ];
+      case "Last Month":
+        return [
+          { date: "01 Apr", value: 45, percentage: 45 },
+          { date: "07 Apr", value: 52, percentage: 52 },
+          { date: "14 Apr", value: 48, percentage: 48 },
+          { date: "21 Apr", value: 65, percentage: 65 },
+          { date: "28 Apr", value: 70, percentage: 70 },
+          { date: "30 Apr", value: 68, percentage: 68 },
+        ];
+      case "Last 3 Months":
+        return [
+          { date: "Mar", value: 42, percentage: 42 },
+          { date: "Mar", value: 48, percentage: 48 },
+          { date: "Apr", value: 55, percentage: 55 },
+          { date: "Apr", value: 62, percentage: 62 },
+          { date: "May", value: 70, percentage: 70 },
+          { date: "May", value: 78, percentage: 78 },
+        ];
+      default:
+        return [
+          { date: "01 May", value: 50, percentage: 50 },
+          { date: "07 May", value: 55, percentage: 55 },
+          { date: "14 May", value: 50, percentage: 50 },
+          { date: "21 May", value: 75, percentage: 75 },
+          { date: "28 May", value: 80, percentage: 80 },
+          { date: "31 May", value: 78, percentage: 78 },
+        ];
+    }
+  };
+
+  // Generate different data sets based on filter for division
+  const getDivisionData = (filter) => {
+    switch (filter) {
+      case "This Month":
+        return [
+          { name: "Retail", value: 35, color: "#3B82F6" },
+          { name: "Wholesale", value: 25, color: "#10B981" },
+          { name: "Franchise", value: 20, color: "#F59E0B" },
+          { name: "Online", value: 10, color: "#EF4444" },
+          { name: "Others", value: 10, color: "#8B5CF6" },
+        ];
+      case "Last Month":
+        return [
+          { name: "Retail", value: 40, color: "#3B82F6" },
+          { name: "Wholesale", value: 20, color: "#10B981" },
+          { name: "Franchise", value: 18, color: "#F59E0B" },
+          { name: "Online", value: 12, color: "#EF4444" },
+          { name: "Others", value: 10, color: "#8B5CF6" },
+        ];
+      case "Last 3 Months":
+        return [
+          { name: "Retail", value: 38, color: "#3B82F6" },
+          { name: "Wholesale", value: 22, color: "#10B981" },
+          { name: "Franchise", value: 19, color: "#F59E0B" },
+          { name: "Online", value: 11, color: "#EF4444" },
+          { name: "Others", value: 10, color: "#8B5CF6" },
+        ];
+      default:
+        return [
+          { name: "Retail", value: 35, color: "#3B82F6" },
+          { name: "Wholesale", value: 25, color: "#10B981" },
+          { name: "Franchise", value: 20, color: "#F59E0B" },
+          { name: "Online", value: 10, color: "#EF4444" },
+          { name: "Others", value: 10, color: "#8B5CF6" },
+        ];
+    }
+  };
+
+  // Get current data based on filter
+  const attendanceData = getPerformanceData(performanceFilter);
+  const outletsByDivision = getDivisionData(performanceFilter);
+  
+  // Get the latest performance percentage for display
+  const currentPerformance = attendanceData[attendanceData.length - 1];
+  const performanceDate = performanceFilter === "Last 3 Months" ? "May" : 
+                         performanceFilter === "Last Month" ? "30 Apr" : "31 May";
+
+  // Handle filter change
+  const handleFilterChange = (e) => {
+    setPerformanceFilter(e.target.value);
+  };
+
+  // Custom tooltip for the chart
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip">
+          <p className="tooltip-label">{label}</p>
+          <p className="tooltip-value">
+            Performance: <span className="tooltip-percentage">{payload[0].value}%</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Outlets by Division Data - now dynamic based on filter
+  // This is now handled by getDivisionData function above
+
+  // Recent Outlets
+  const recentOutlets = [...outlets].slice(-4).reverse();
+
+  // Announcements
+  const announcements = [
+    {
+      id: 1,
+      icon: <IcBell />,
+      title: "New Outlet Opening",
+      description: "New outlet will be opened on 25 May 2024.",
+      time: "2h ago",
+      color: "#3B82F6"
+    },
+    {
+      id: 2,
+      icon: <IcCalendar />,
+      title: "Monthly Review",
+      description: "Monthly performance review scheduled.",
+      time: "5h ago",
+      color: "#F59E0B"
+    },
+    {
+      id: 3,
+      icon: <IcBox />,
+      title: "New Products Added",
+      description: "New products are added this month.",
+      time: "1d ago",
+      color: "#10B981"
+    }
   ];
 
-  /* Area chart — simulated growth (last 6 months) */
-  const areaData = useMemo(() => {
-    const months = ["Jan","Feb","Mar","Apr","May","Jun"];
-    return months.map((m, i) => ({
-      month: m,
-      Outlets:   Math.max(0, outlets.length   - (5 - i) * Math.ceil(outlets.length   / 6)),
-      Locations: Math.max(0, locations.length - (5 - i) * Math.ceil(locations.length / 6)),
-      Divisions: Math.max(0, divisions.length - (5 - i) * Math.ceil(divisions.length / 6)),
-    }));
-  }, [outlets, locations, divisions]);
-
-  /* Pie */
-  const pieData = barData.filter((d) => d.value > 0).map((d) => ({ name: d.name, value: d.value }));
-
-  /* Recent items */
-  const recentOutlets   = [...outlets].slice(-5).reverse();
-  const recentLocations = [...locations].slice(-4).reverse();
-  const recentDivisions = [...divisions].slice(-4).reverse();
-
-  const max = Math.max(outlets.length, locations.length, divisions.length, 1);
+  // Upcoming Events
+  const upcomingEvents = [
+    { date: "25", month: "MAY", title: "Outlet Opening", time: "25 May 2024, 10:00 AM", color: "#3B82F6" },
+    { date: "01", month: "JUN", title: "Staff Training", time: "01 June 2024, 09:00 AM", color: "#10B981" },
+    { date: "15", month: "JUN", title: "Board Meeting", time: "15 June 2024, 11:00 AM", color: "#F59E0B" }
+  ];
 
   return (
-    <div className="layout">
+    <div className="edu-dashboard">
       <Sidebar />
-      <div className="layout-main" style={{
-        background: "linear-gradient(120deg, #e0e7ff 0%, #f0fdfa 100%)",
-        minHeight: "100vh"
-      }}>
+      <div className="edu-main">
         <Navbar title="Dashboard" />
-        <div className="page-content">
-
-          {/* ── Top Bar ── */}
-          <div className="db-topbar">
-            <div>
-              <h2 className="db-greeting">{typedText}<span className="db-cursor">|</span></h2>
-              <p className="db-sub"></p>
+        
+        <div className="edu-content">
+          {/* Header */}
+          <div className="edu-header">
+            <div className="edu-header-left">
+              <h1>Dashboard</h1>
+              <p className="typing-text">
+                {typedText}
+                {isTyping && <span className="typing-cursor">|</span>}
+              </p>
             </div>
 
           </div>
 
-          {/* ── Stat Cards ── */}
-          <Box className="stats-grid" sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
-            gap: 2,
-            mb: 3
-          }}>
-            <StatCard label="Total Outlets"   value={outlets.length}   icon={<IcOutlet />}   color={COLORS.outlet}   sub="Registered stores"   loading={loading} trend={12} />
-            <StatCard label="Total Locations" value={locations.length} icon={<IcLocation />} color={COLORS.location} sub="Active regions"       loading={loading} trend={8}  />
-            <StatCard label="Total Divisions" value={divisions.length} icon={<IcDivision />} color={COLORS.division} sub="Operational units"    loading={loading} trend={5}  />
-            <StatCard label="Total Records"   value={total}            icon={<IcTrend />}    color={COLORS.total}    sub="Across all modules"  loading={loading} />
-          </Box>
-
-          {/* ── Main Grid ── */}
-          <div className="main-grid">
-
-            {/* ── Area Chart ── */}
-            <div className="db-card span-2">
-              <div className="card-header">
-                <div>
-                  <h3 className="card-title">Growth Overview</h3>
-                  <p className="card-sub">Cumulative records across all modules</p>
-                </div>
-                <div className="legend-row">
-                  {["Outlets","Locations","Divisions"].map((k, i) => (
-                    <span key={k} className="legend-item">
-                      <span className="legend-dot" style={{ background: PIE_COLORS[i] }} />{k}
-                    </span>
-                  ))}
+          {/* Stats Cards */}
+          <div className="edu-stats">
+            <div className="stat-card blue">
+              <div className="stat-icon">
+                <IcStore />
+              </div>
+              <div className="stat-content">
+                <div className="stat-label">Total Outlets</div>
+                <div className="stat-number">{loading ? "..." : totalOutlets.toLocaleString()}</div>
+                <div className="stat-growth">
+                  <IcTrendUp /> 12% from last month
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={areaData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <defs>
-                    {["Outlets","Locations","Divisions"].map((k, i) => (
-                      <linearGradient key={k} id={`g${i}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={PIE_COLORS[i]} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={PIE_COLORS[i]} stopOpacity={0}   />
+              <div className="stat-menu">
+                <IcMoreVert />
+              </div>
+            </div>
+
+            <div className="stat-card green">
+              <div className="stat-icon">
+                <IcLocation />
+              </div>
+              <div className="stat-content">
+                <div className="stat-label">Total Locations</div>
+                <div className="stat-number">{loading ? "..." : totalLocations}</div>
+                <div className="stat-growth">
+                  <IcTrendUp /> 8% from last month
+                </div>
+              </div>
+              <div className="stat-menu">
+                <IcMoreVert />
+              </div>
+            </div>
+
+            <div className="stat-card orange">
+              <div className="stat-icon">
+                <IcBox />
+              </div>
+              <div className="stat-content">
+                <div className="stat-label">Total Products</div>
+                <div className="stat-number">{loading ? "..." : totalProducts}</div>
+                <div className="stat-growth">
+                  <IcTrendUp /> 5% from last month
+                </div>
+              </div>
+              <div className="stat-menu">
+                <IcMoreVert />
+              </div>
+            </div>
+
+            <div className="stat-card purple">
+              <div className="stat-icon">
+                <IcDollar />
+              </div>
+              <div className="stat-content">
+                <div className="stat-label">Total Revenue</div>
+                <div className="stat-number">${loading ? "..." : totalRevenue.toLocaleString()}</div>
+                <div className="stat-growth">
+                  <IcTrendUp /> 15% from last month
+                </div>
+              </div>
+              <div className="stat-menu">
+                <IcMoreVert />
+              </div>
+            </div>
+          </div>
+
+          {/* Main Grid */}
+          <div className="edu-grid">
+            {/* Attendance Overview */}
+            <div className="edu-card attendance-card">
+              <div className="card-header">
+                <div className="card-title">
+                  <h3>Outlet Performance</h3>
+                </div>
+                <div className="card-filter">
+                  <select value={performanceFilter} onChange={handleFilterChange}>
+                    <option value="This Month">This Month</option>
+                    <option value="Last Month">Last Month</option>
+                    <option value="Last 3 Months">Last 3 Months</option>
+                  </select>
+                </div>
+              </div>
+              <div className="chart-container">
+                <div className="chart-info">
+                  <div className="chart-percentage">
+                    <span className="percentage">{currentPerformance.value}%</span>
+                    <span className="date">{performanceDate}</span>
+                    <span className="label">Performance: {currentPerformance.value}%</span>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <AreaChart 
+                    data={attendanceData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
                       </linearGradient>
-                    ))}
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} />
-                  {["Outlets","Locations","Divisions"].map((k, i) => (
-                    <Area key={k} type="monotone" dataKey={k} stroke={PIE_COLORS[i]} strokeWidth={2.5}
-                      fill={`url(#g${i})`} dot={false} activeDot={{ r: 5, fill: PIE_COLORS[i] }} />
-                  ))}
-                </AreaChart>
-              </ResponsiveContainer>
+                    </defs>
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke="#E5E7EB" 
+                      horizontal={true}
+                      vertical={false}
+                    />
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 12, fill: '#64748B' }}
+                      dy={10}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 12, fill: '#64748B' }}
+                      domain={[0, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Tooltip 
+                      content={<CustomTooltip />}
+                      cursor={{ stroke: '#3B82F6', strokeWidth: 1, strokeDasharray: '5 5' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#3B82F6" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorAttendance)"
+                      dot={{ 
+                        fill: '#3B82F6', 
+                        strokeWidth: 2, 
+                        stroke: '#ffffff',
+                        r: 4 
+                      }}
+                      activeDot={{ 
+                        r: 6, 
+                        fill: '#3B82F6',
+                        stroke: '#ffffff',
+                        strokeWidth: 2,
+                        style: { cursor: 'pointer' }
+                      }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            {/* ── Bar Chart ── */}
-            <div className="db-card">
+            {/* Outlets by Division */}
+            <div className="edu-card pie-card">
               <div className="card-header">
-                <div>
-                  <h3 className="card-title">Category Breakdown</h3>
-                  <p className="card-sub">Current totals by type</p>
+                <div className="card-title">
+                  <h3>Outlets by Division</h3>
+                </div>
+                <div className="card-filter">
+                  <select value={performanceFilter} onChange={handleFilterChange}>
+                    <option value="This Month">This Month</option>
+                    <option value="Last Month">Last Month</option>
+                    <option value="Last 3 Months">Last 3 Months</option>
+                  </select>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={barData} barSize={40} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--hover-bg)" }} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                    {barData.map((d, i) => <Cell key={i} fill={d.fill} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* ── Pie Chart ── */}
-            <div className="db-card">
-              <div className="card-header">
-                <div>
-                  <h3 className="card-title">Distribution</h3>
-                  <p className="card-sub">Share by category</p>
-                </div>
-              </div>
-              {pieData.length === 0 ? (
-                <div className="empty-chart">No data yet</div>
-              ) : (
+              <div className="pie-container">
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%"
-                      innerRadius={52} outerRadius={80} paddingAngle={4}>
-                      {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                    <Pie
+                      data={outletsByDivision}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {outletsByDivision.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
                     </Pie>
-                    <Legend iconType="circle" iconSize={8}
-                      wrapperStyle={{ fontSize: 12, color: "var(--text-muted)" }} />
-                    <Tooltip content={<ChartTooltip />} />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              )}
-            </div>
-
-            {/* ── Progress Card ── */}
-            <div className="db-card">
-              <div className="card-header">
-                <div>
-                  <h3 className="card-title">Relative Scale</h3>
-                  <p className="card-sub">Each module vs highest count</p>
+                <div className="pie-center">
+                  <div className="pie-total">{divisions.length}</div>
+                  <div className="pie-label">Total</div>
+                </div>
+                <div className="pie-legend">
+                  {outletsByDivision.map((item, index) => (
+                    <div key={index} className="legend-item">
+                      <div className="legend-dot" style={{ backgroundColor: item.color }}></div>
+                      <span className="legend-name">{item.name}</span>
+                      <span className="legend-percent">{item.value}%</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="prog-list">
-                <ProgressRow label="Outlets"   value={outlets.length}   max={max} color={COLORS.outlet.main}   />
-                <ProgressRow label="Locations" value={locations.length} max={max} color={COLORS.location.main} />
-                <ProgressRow label="Divisions" value={divisions.length} max={max} color={COLORS.division.main} />
-              </div>
-              <div className="prog-total-row">
-                <span>Total Records</span>
-                <span className="prog-total-val">{loading ? "—" : total}</span>
-              </div>
             </div>
 
-            {/* ── Recent Outlets ── */}
-            <div className="db-card">
+            {/* Announcements */}
+            <div className="edu-card announcements-card">
               <div className="card-header">
-                <div>
-                  <h3 className="card-title">Recent Outlets</h3>
-                  <p className="card-sub">Latest {recentOutlets.length} added</p>
+                <div className="card-title">
+                  <h3><IcBell /> Announcements</h3>
                 </div>
-                <span className="badge" style={{ "--bc": COLORS.outlet.main, "--bl": COLORS.outlet.light }}>
-                  {outlets.length} total
-                </span>
+                <div className="card-menu">
+                  <IcMoreVert />
+                </div>
               </div>
-              {loading ? <SkeletonList n={4} /> : recentOutlets.length === 0
-                ? <EmptyMsg text="No outlets yet" />
-                : <ActivityList items={recentOutlets} nameKey="outletName" color={COLORS.outlet.main} />
-              }
+              <div className="announcements-list">
+                {announcements.map(announcement => (
+                  <div key={announcement.id} className="announcement-item">
+                    <div className="announcement-icon" style={{ color: announcement.color }}>
+                      {announcement.icon}
+                    </div>
+                    <div className="announcement-content">
+                      <h4>{announcement.title}</h4>
+                      <p>{announcement.description}</p>
+                      <span className="announcement-time">{announcement.time}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="view-all-announcements" onClick={() => navigate('/dashboard')}>
+                  <span>View All Announcements</span>
+                  <IcArrowRight />
+                </div>
+              </div>
             </div>
 
-            {/* ── Recent Locations ── */}
-            <div className="db-card">
+            {/* Recent Outlets */}
+            <div className="edu-card recent-card">
               <div className="card-header">
-                <div>
-                  <h3 className="card-title">Recent Locations</h3>
-                  <p className="card-sub">Latest {recentLocations.length} added</p>
+                <div className="card-title">
+                  <h3>Recent Outlets</h3>
                 </div>
-                <span className="badge" style={{ "--bc": COLORS.location.main, "--bl": COLORS.location.light }}>
-                  {locations.length} total
-                </span>
+                <div className="view-all-btn" onClick={() => navigate('/outlet')}>View All</div>
               </div>
-              {loading ? <SkeletonList n={4} /> : recentLocations.length === 0
-                ? <EmptyMsg text="No locations yet" />
-                : <ActivityList items={recentLocations} nameKey="name" color={COLORS.location.main} />
-              }
+              <div className="recent-table">
+                <div className="table-header">
+                  <div className="th">#</div>
+                  <div className="th">Name</div>
+                  <div className="th">Division</div>
+                  <div className="th">Location</div>
+                  <div className="th">Registration Date</div>
+                  <div className="th">Status</div>
+                  <div className="th"></div>
+                </div>
+                {recentOutlets.map((outlet, index) => (
+                  <div key={outlet.id || index} className="table-row">
+                    <div className="td">{index + 1}</div>
+                    <div className="td">
+                      <div className="user-info">
+                        <div className="user-avatar">
+                          {(outlet.outletName || "O").charAt(0).toUpperCase()}
+                        </div>
+                        <span>{outlet.outletName ? outlet.outletName.replace(/\b\w/g, l => l.toUpperCase()) : "Unknown Outlet"}</span>
+                      </div>
+                    </div>
+                    <div className="td">{outlet.division?.name ? outlet.division.name.replace(/\b\w/g, l => l.toUpperCase()) : "General"}</div>
+                    <div className="td">{outlet.location?.name ? outlet.location.name.replace(/\b\w/g, l => l.toUpperCase()) : "N/A"}</div>
+                    <div className="td">{new Date().toLocaleDateString()}</div>
+                    <div className="td">
+                      <span className="status-badge active">Active</span>
+                    </div>
+                    <div className="td">
+                      <IcMoreVert />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* ── Recent Divisions ── */}
-            <div className="db-card">
+            {/* Upcoming Events */}
+            <div className="edu-card events-card">
               <div className="card-header">
-                <div>
-                  <h3 className="card-title">Recent Divisions</h3>
-                  <p className="card-sub">Latest {recentDivisions.length} added</p>
+                <div className="card-title">
+                  <h3><IcCalendar /> Upcoming Events</h3>
                 </div>
-                <span className="badge" style={{ "--bc": COLORS.division.main, "--bl": COLORS.division.light }}>
-                  {divisions.length} total
-                </span>
+                <div className="card-menu">
+                  <IcMoreVert />
+                </div>
               </div>
-              {loading ? <SkeletonList n={4} /> : recentDivisions.length === 0
-                ? <EmptyMsg text="No divisions yet" />
-                : <ActivityList items={recentDivisions} nameKey="name" color={COLORS.division.main} />
-              }
+              <div className="events-list">
+                {upcomingEvents.map((event, index) => (
+                  <div key={index} className="event-item">
+                    <div className="event-date" style={{ backgroundColor: event.color }}>
+                      <div className="event-month">{event.month}</div>
+                      <div className="event-day">{event.date}</div>
+                    </div>
+                    <div className="event-info">
+                      <h4>{event.title}</h4>
+                      <p>{event.time}</p>
+                    </div>
+                  </div>
+                ))}
+                <div className="view-all-events" onClick={() => navigate('/dashboard')}>
+                  <span>View All Events</span>
+                  <IcArrowRight />
+                </div>
+              </div>
             </div>
-
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-/* ── Sub-components ── */
-const ActivityList = ({ items, nameKey, color }) => (
-  <ul className="act-list">
-    {items.map((item, i) => (
-      <li key={item.id ?? i} className="act-item">
-        <span className="act-avatar" style={{ background: `${color}20`, color }}>{(item[nameKey] ?? "?").charAt(0).toUpperCase()}</span>
-        <span className="act-name">{item[nameKey] ?? "—"}</span>
-        <span className="act-arrow"><IcArrow /></span>
-      </li>
-    ))}
-  </ul>
-);
-
-const SkeletonList = ({ n }) => (
-  <div className="skel-list">
-    {Array.from({ length: n }).map((_, i) => (
-      <div key={i} className="skel-row">
-        <span className="skel-circle" />
-        <span className="skel-line" style={{ width: `${55 + (i % 3) * 15}%` }} />
-      </div>
-    ))}
-  </div>
-);
-
-const EmptyMsg = ({ text }) => (
-  <div className="empty-msg">{text}</div>
-);

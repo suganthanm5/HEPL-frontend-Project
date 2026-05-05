@@ -10,11 +10,14 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+
+        if (isLoading) return; // Prevent multiple submissions
 
         if (!username || !password) {
             setError("Enter username and password");
@@ -24,38 +27,44 @@ const Login = () => {
             setError("Password must be at least 4 characters");
             return;
         }
+        
         setError("");
+        setIsLoading(true);
 
         try {
+            console.log('🔐 Login attempt to:', import.meta.env.VITE_API_BASE_URL);
+            
             const res = await loginUser({ username, password });
 
-            console.log("LOGIN RESPONSE:", JSON.stringify(res.data));
+            console.log("✅ Backend response:", res.data);
 
-            // handle all common response shapes
-            const token =
-                res.data?.token ||
-                res.data?.data?.token ||
-                res.data?.accessToken ||
-                res.data?.data?.accessToken ||
-                res.data?.data?.access_token ||
-                res.data?.access_token;
+            const token = res.data?.data?.token || res.data?.token || res.data?.accessToken || res.data?.access_token;
 
-            if (!token) {
-                alert("Login failed: token not found in response. Check console for response shape.");
-                return;
+            if (token) {
+                localStorage.setItem('token', token);
+                localStorage.setItem('username', res.data?.data?.username || res.data?.username || username);
+                localStorage.setItem('email', res.data?.data?.email || res.data?.email || `${username}@company.com`);
+                localStorage.setItem('role', res.data?.data?.role || res.data?.role || 'Administrator');
+                
+                document.cookie = `token=${token}; path=/; SameSite=Strict`;
+                document.cookie = `username=${username}; path=/; SameSite=Strict`;
+                
+                console.log('✅ Login successful, redirecting...');
+                navigate("/dashboard");
+            } else {
+                setError(res.data?.message || 'Login failed - no token received');
             }
 
-            document.cookie = `token=${token}; path=/; SameSite=Strict`;
-            document.cookie = `username=${username}; path=/; SameSite=Strict`;
-            navigate("/dashboard");
-
         } catch (error) {
-            console.error("LOGIN ERROR:", error.response || error);
-            const msg = error.response?.data?.message ||
-                error.response?.data?.error ||
-                error.message ||
-                "Login failed";
-            alert("Login failed: " + msg);
+            console.error("❌ Login error:", error.response?.data || error.message);
+            
+            if (error.response?.data) {
+                setError(error.response.data.message || 'Invalid username or password');
+            } else {
+                setError('Cannot connect to backend');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -104,7 +113,7 @@ const Login = () => {
                                 className="eye-icon"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
-                                {showPassword ? "" : ""}
+                                {showPassword ? "Hide" : "Show"}
                             </span>
                         </div>
 
@@ -112,8 +121,12 @@ const Login = () => {
                             <span className="forgot">Forgot Password?</span>
                         </div>
 
-                        <button type="submit" className="login-btn">
-                            Login
+                        <button 
+                            type="submit" 
+                            className="login-btn"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Logging in...' : 'Login'}
                         </button>
 
                     </form>

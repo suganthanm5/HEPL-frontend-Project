@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
+import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { getOutlets, createOutlet, updateOutlet, deleteOutlet } from "../../services/outletService";
 import { getLocations } from "../../services/locationService";
 import { getDivisions } from "../../services/devisionService";
@@ -137,27 +138,53 @@ export default function Outlet() {
 
   const [form,   setForm]   = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [selectedDivisions, setSelectedDivisions] = useState([]);
+  const [availableProducts, setAvailableProducts] = useState([]);
 
   useEffect(() => { fetchAll(); }, []);
 
   const extractList = (res) => {
-  return res?.data?.data?.content || [];
-};
+    // Handle different API response structures
+    const data = res?.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.content)) return data.data.content;
+    if (Array.isArray(data?.content)) return data.content;
+    return [];
+  };
 
   const fetchAll = async (silent = false) => {
     if (!silent) setLoading(true); 
     setError("");
     try {
       const [oRes, lRes, dRes] = await Promise.allSettled([
-        getOutlets(), getLocations(), getDivisions(),
+        getOutlets(), 
+        getLocations(0, 100), // Fetch more locations with explicit parameters
+        getDivisions(0, 100)  // Fetch more divisions with explicit parameters
       ]);
 
-      const locList = lRes.status === "fulfilled" ? extractList(lRes.value) : [];
-      const divList = dRes.status === "fulfilled" ? extractList(dRes.value) : [];
+      // Handle locations
+      if (lRes.status === "fulfilled") {
+        const locList = extractList(lRes.value);
+        console.log('Locations API response:', lRes.value); // Debug full response
+        console.log('Extracted locations:', locList); // Debug extracted list
+        setLocations(locList);
+      } else {
+        console.error("Locations fetch failed:", lRes.reason);
+        setLocations([]);
+      }
 
-      setLocations(locList);
-      setDivisions(divList);
+      // Handle divisions
+      if (dRes.status === "fulfilled") {
+        const divList = extractList(dRes.value);
+        console.log('Divisions loaded:', divList.length); // Debug log
+        setDivisions(divList);
+      } else {
+        console.error("Divisions fetch failed:", dRes.reason);
+        setDivisions([]);
+      }
 
+      // Handle outlets
       if (oRes.status === "fulfilled") {
         const raw = extractList(oRes.value);
 
@@ -192,23 +219,96 @@ export default function Outlet() {
  
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const toggleDivision = (divId) => {
-    setForm((f) => {
-      const exists = divId in f.mappings;
-      const mappings = { ...f.mappings };
-      if (exists) delete mappings[divId];
-      else mappings[divId] = [];
-      return { ...f, mappings };
+  // Handle division selection
+  const handleDivisionSelect = (divisionId, divisionName) => {
+    if (!divisionId) return;
+    
+    const division = divisions.find(d => d.id == divisionId);
+    if (!division) return;
+    
+    // Add to selected divisions if not already selected
+    if (!selectedDivisions.find(d => d.id == divisionId)) {
+      setSelectedDivisions(prev => [...prev, division]);
+      
+      // Initialize empty product selection for this division
+      setForm(f => ({
+        ...f,
+        mappings: {
+          ...f.mappings,
+          [divisionId]: []
+        }
+      }));
+      
+      // Update available products
+      updateAvailableProducts([...selectedDivisions, division]);
+    }
+  };
+  
+  // Remove division
+  const removeDivision = (divisionId) => {
+    setSelectedDivisions(prev => prev.filter(d => d.id != divisionId));
+    
+    // Remove from form mappings
+    setForm(f => {
+      const newMappings = { ...f.mappings };
+      delete newMappings[divisionId];
+      return { ...f, mappings: newMappings };
+    });
+    
+    // Update available products
+    const remainingDivisions = selectedDivisions.filter(d => d.id != divisionId);
+    updateAvailableProducts(remainingDivisions);
+  };
+  
+  // Update available products based on selected divisions
+  const updateAvailableProducts = (divisionList) => {
+    const products = divisionList.flatMap(d => 
+      (d.products || []).map(p => ({
+        ...p,
+        divisionId: d.id,
+        divisionName: d.name,
+        displayName: `${p.name} (${d.name})`
+      }))
+    );
+    setAvailableProducts(products);
+  };
+  
+  // Handle product selection
+  const handleProductSelect = (productId, productName) => {
+    if (!productId) return;
+    
+    const product = availableProducts.find(p => p.id == productId);
+    if (!product) return;
+    
+    const divisionId = product.divisionId;
+    
+    // Add product to division mapping
+    setForm(f => {
+      const currentProducts = f.mappings[divisionId] || [];
+      if (!currentProducts.includes(Number(productId))) {
+        return {
+          ...f,
+          mappings: {
+            ...f.mappings,
+            [divisionId]: [...currentProducts, Number(productId)]
+          }
+        };
+      }
+      return f;
     });
   };
-
-  const toggleProduct = (divId, pid) => {
-    setForm((f) => {
-      const current = f.mappings[divId] ?? [];
-      const updated = current.includes(pid)
-        ? current.filter((id) => id !== pid)
-        : [...current, pid];
-      return { ...f, mappings: { ...f.mappings, [divId]: updated } };
+  
+  // Remove product
+  const removeProduct = (divisionId, productId) => {
+    setForm(f => {
+      const currentProducts = f.mappings[divisionId] || [];
+      return {
+        ...f,
+        mappings: {
+          ...f.mappings,
+          [divisionId]: currentProducts.filter(pid => pid != productId)
+        }
+      };
     });
   };
 
@@ -251,16 +351,50 @@ export default function Outlet() {
     } finally { setSaving(false); }
   };
 
-  const openEdit = (o) => {
+  // Refresh locations when opening modals
+  const refreshLocations = async () => {
+    try {
+      console.log('Refreshing locations...'); // Debug log
+      const res = await getLocations(0, 100); // Fetch with explicit parameters
+      console.log('Location refresh response:', res); // Debug full response
+      const locList = extractList(res);
+      console.log('Refreshed locations count:', locList.length); // Debug count
+      console.log('Refreshed locations:', locList); // Debug list
+      setLocations(locList);
+      return locList;
+    } catch (e) {
+      console.error('Failed to refresh locations:', e);
+      return [];
+    }
+  };
+
+  const openAddModal = async () => {
+    setForm(EMPTY_FORM);
+    setSelectedDivisions([]);
+    setAvailableProducts([]);
+    setAddModal(true);
+    const locations = await refreshLocations();
+    console.log('Add modal opened with locations:', locations.length);
+  };
+
+  const openEditModal = async (o) => {
+    const locations = await refreshLocations();
+    
     const locName = o.locationName || "";
     const locId   = o.locationId
       ? String(o.locationId)
       : String(locations.find((l) => l.name === locName)?.id ?? "");
 
     const mappings = {};
+    const selectedDivs = [];
+    
     (o.divisions ?? []).forEach((d) => {
       mappings[d.id] = (d.products ?? []).map((p) => p.id);
+      selectedDivs.push(d);
     });
+    
+    setSelectedDivisions(selectedDivs);
+    updateAvailableProducts(selectedDivs);
 
     setForm({
       outletName:   o.outletName ?? "",
@@ -272,6 +406,7 @@ export default function Outlet() {
       ownerName:    o.ownerName  ?? "",
     });
     setEditModal(o);
+    console.log('Edit modal opened with locations:', locations.length);
   };
 
   const handleUpdate = async () => {
@@ -336,15 +471,22 @@ export default function Outlet() {
       <div className="form-row">
         <div className="modal-field">
           <label>Location <span className="req">*</span></label>
-          <select name="locationId" value={form.locationId} onChange={(e) => {
-              const opt = e.target.options[e.target.selectedIndex];
-              setForm((f) => ({ ...f, locationId: e.target.value, locationName: opt.text }));
-            }}>
-            <option value="">— Select location —</option>
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
-            ))}
-          </select>
+          <SearchableSelect
+            options={locations}
+            value={form.locationId}
+            onChange={(id, name) => {
+              console.log('Location selected:', { id, name }); // Debug log
+              setForm(f => ({ ...f, locationId: id, locationName: name }));
+            }}
+            placeholder="— Select location —"
+            searchPlaceholder="Search locations..."
+            required
+          />
+          {locations.length === 0 && (
+            <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+              ⚠️ No locations loaded. Please check the Location page.
+            </div>
+          )}
         </div>
         <div className="modal-field">
           <label>Outlet Type <span className="req">*</span></label>
@@ -368,52 +510,84 @@ export default function Outlet() {
 
       <div className="modal-field">
         <label>
-          Divisions &amp; Products <span className="req">*</span>
+          Divisions & Products <span className="req">*</span>
           <span className="field-hint">(select division then its products)</span>
         </label>
-        <div className="division-chips">
-          {divisions.length === 0
-            ? <span className="chips-empty">No divisions available</span>
-            : divisions.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  className={`chip ${d.id in form.mappings ? "chip-active" : ""}`}
-                  onClick={() => toggleDivision(d.id)}
-                >
-                  {d.name}
-                </button>
-              ))}
+        
+        {/* Division Selection */}
+        <div className="form-row">
+          <div className="modal-field">
+            <label>Select Division</label>
+            <SearchableSelect
+              options={divisions.filter(d => !selectedDivisions.find(sd => sd.id === d.id))}
+              value=""
+              onChange={handleDivisionSelect}
+              placeholder="— Add division —"
+              searchPlaceholder="Search divisions..."
+            />
+          </div>
+          <div className="modal-field">
+            <label>Select Product</label>
+            <SearchableSelect
+              options={availableProducts.filter(p => {
+                const currentProducts = form.mappings[p.divisionId] || [];
+                return !currentProducts.includes(p.id);
+              })}
+              value=""
+              onChange={handleProductSelect}
+              placeholder="— Add product —"
+              searchPlaceholder="Search products..."
+              disabled={selectedDivisions.length === 0}
+            />
+          </div>
         </div>
-      </div>
-
-      {Object.keys(form.mappings).length > 0 && (
-        <div className="modal-field">
-          {divisions
-            .filter((d) => d.id in form.mappings)
-            .map((d) => (
-              <div key={d.id} className="div-product-group">
-                <div className="div-product-group-label">{d.name}</div>
-                <div className="division-chips">
-                  {(d.products ?? []).length === 0
-                    ? <span className="chips-empty">No products — add them in Division page</span>
-                    : (d.products ?? []).map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className={`chip ${
-                            (form.mappings[d.id] ?? []).includes(p.id) ? "chip-active" : ""
-                          }`}
-                          onClick={() => toggleProduct(d.id, p.id)}
-                        >
-                          {p.name}
-                        </button>
-                      ))}
+        
+        {/* Selected Divisions and Products */}
+        {selectedDivisions.length > 0 && (
+          <div className="selected-mappings">
+            {selectedDivisions.map((division) => {
+              const selectedProducts = (form.mappings[division.id] || []).map(pid => 
+                availableProducts.find(p => p.id === pid)
+              ).filter(Boolean);
+              
+              return (
+                <div key={division.id} className="mapping-group">
+                  <div className="mapping-header">
+                    <span className="division-name">{division.name}</span>
+                    <button 
+                      type="button" 
+                      className="remove-division-btn"
+                      onClick={() => removeDivision(division.id)}
+                      title="Remove division"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="products-list">
+                    {selectedProducts.length === 0 ? (
+                      <span className="no-products">No products selected</span>
+                    ) : (
+                      selectedProducts.map((product) => (
+                        <div key={product.id} className="product-item">
+                          <span className="product-name">{product.name}</span>
+                          <button 
+                            type="button" 
+                            className="remove-product-btn"
+                            onClick={() => removeProduct(division.id, product.id)}
+                            title="Remove product"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </>
   );
 
@@ -430,7 +604,7 @@ export default function Outlet() {
               <h2 className="hero-title">Outlet Management</h2>
               
             </div>
-            <button className="btn-primary" onClick={() => { setForm(EMPTY_FORM); setAddModal(true); }}>
+            <button className="btn-primary" onClick={openAddModal}>
               <IcPlus /> Add Outlet
             </button>
           </div>
@@ -511,7 +685,7 @@ export default function Outlet() {
                         <div className="empty-icon"><IcOutlet /></div>
                         <p>{search ? "No outlets match your search" : "No outlets yet"}</p>
                         {!search && (
-                          <button className="btn-primary sm" onClick={() => { setForm(EMPTY_FORM); setAddModal(true); }}>
+                          <button className="btn-primary sm" onClick={openAddModal}>
                             <IcPlus /> Add First Outlet
                           </button>
                         )}
@@ -574,7 +748,7 @@ export default function Outlet() {
                           </td>
                           <td>
                             <div className="action-btns">
-                              <button className="act-btn edit" onClick={() => openEdit(o)} title="Edit"><IcEdit /></button>
+                              <button className="act-btn edit" onClick={() => openEditModal(o)} title="Edit"><IcEdit /></button>
                               <button className="act-btn del"  onClick={() => setDeleteModal(o)} title="Delete"><IcTrash /></button>
                             </div>
                           </td>
@@ -633,7 +807,7 @@ export default function Outlet() {
                         <div className="oc-address">{o.address}</div>
                       )}
                       <div className="oc-actions">
-                        <button className="act-btn edit" onClick={() => openEdit(o)}><IcEdit /> Edit</button>
+                        <button className="act-btn edit" onClick={() => openEditModal(o)}><IcEdit /> Edit</button>
                         <button className="act-btn del"  onClick={() => setDeleteModal(o)}><IcTrash /> Delete</button>
                       </div>
                     </div>

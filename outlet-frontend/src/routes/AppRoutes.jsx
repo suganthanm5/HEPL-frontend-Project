@@ -13,7 +13,7 @@ const getCookie = (name) => {
 };
 
 const PrivateRoute = ({ children }) => {
-  const token = getCookie("token");
+  const token = getCookie("token") || localStorage.getItem('token');
   return token ? children : <Navigate to="/" />;
 };
 

@@ -8,13 +8,22 @@ export const ENDPOINTS = {
   locations: '/api/locations',
   outlets:   '/api/outlets',
   products:  '/api/products',
+  profile:   '/api/user/profile',
+  changePassword: '/api/user/change-password',
+  uploadPicture: '/api/user/upload-picture'
 };
 
 const API = axios.create({
-  baseURL: '',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
+  timeout: 60000,
+  withCredentials: false,
+  validateStatus: function (status) {
+    return status < 500;
+  }
 });
 
 const getCookie = (name) => {
@@ -27,22 +36,26 @@ const deleteCookie = (name) => {
 };
 
 API.interceptors.request.use((config) => {
-  const token = getCookie('token');
-  if (token) {
+  const token = getCookie('token') || localStorage.getItem('token');
+  if (token && !config.url.includes('/login') && !config.url.includes('/register')) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-}, (error) => Promise.reject(error));
+}, (error) => {
+  return Promise.reject(error);
+});
 
 API.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && window.location.pathname !== '/') {
       deleteCookie('token');
       deleteCookie('username');
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
-      }
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }

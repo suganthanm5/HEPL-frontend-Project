@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import Sidebar from "../../components/Sidebar/Sidebar";
+import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { addProduct, updateProduct, deleteProduct } from "../../services/productService";
 import { getDivisions } from "../../services/devisionService";
 import "./Product.css";
@@ -58,6 +59,12 @@ const IcGrid = () => (
     <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
   </svg>
 );
+const IcEye = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
 
 /* ── Modal ── */
 const Modal = ({ title, subtitle, icon, accent = "#f59e0b", onClose, children }) => (
@@ -93,6 +100,33 @@ const Product = () => {
   const [form,        setForm]        = useState(EMPTY_FORM);
   const [saving,      setSaving]      = useState(false);
   const [divisions,   setDivisions]   = useState([]);
+  const [viewModal, setViewModal] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  // Toast notification system
+  const showToast = (message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Price validation
+  const validatePrices = () => {
+    const mrp = Number(form.mrp) || 0;
+    const sellingPrice = Number(form.sellingPrice) || 0;
+    const purchasePrice = Number(form.purchasePrice) || 0;
+    
+    if (sellingPrice > mrp) {
+      showToast('Selling price cannot be greater than MRP', 'error');
+      return false;
+    }
+    
+    if (purchasePrice > mrp) {
+      showToast('Purchase price cannot be greater than MRP', 'error');
+      return false;
+    }
+    
+    return true;
+  };
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -118,6 +152,20 @@ const Product = () => {
     } finally { setLoading(false); }
   };
 
+  // Generate unique product code starting with MKL
+  const generateProductCode = () => {
+    const existingCodes = products.map(p => p.productCode).filter(Boolean);
+    let counter = 1;
+    let newCode;
+    
+    do {
+      newCode = `MKL${counter.toString().padStart(3, '0')}`;
+      counter++;
+    } while (existingCodes.includes(newCode));
+    
+    return newCode;
+  };
+
   const divMap = useMemo(() => Object.fromEntries(divisions.map((d) => [d.id, d.name])), [divisions]);
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -134,13 +182,18 @@ const Product = () => {
 
   const handleAdd = async () => {
     if (!form.name.trim()) return;
+    if (!validatePrices()) return;
     setSaving(true);
     try {
-      await addProduct(buildPayload());
+      // Generate product code automatically
+      const autoCode = generateProductCode();
+      const payload = { ...buildPayload(), productCode: autoCode };
+      await addProduct(payload);
       await fetchProducts();
       setAddModal(false); setForm(EMPTY_FORM);
+      showToast('Product added successfully!', 'success');
     } catch (e) {
-      alert("Failed to add: " + (e.response?.data?.message || e.message));
+      showToast("Failed to add product: " + (e.response?.data?.message || e.message), 'error');
     } finally { setSaving(false); }
   };
 
@@ -161,13 +214,15 @@ const Product = () => {
 
   const handleUpdate = async () => {
     if (!form.name.trim()) return;
+    if (!validatePrices()) return;
     setSaving(true);
     try {
       await updateProduct(editModal.id, buildPayload());
       await fetchProducts();
       setEditModal(null); setForm(EMPTY_FORM);
+      showToast('Product updated successfully!', 'success');
     } catch (e) {
-      alert("Failed to update: " + (e.response?.data?.message || e.message));
+      showToast("Failed to update product: " + (e.response?.data?.message || e.message), 'error');
     } finally { setSaving(false); }
   };
 
@@ -177,8 +232,9 @@ const Product = () => {
       await deleteProduct(deleteModal.id);
       await fetchProducts();
       setDeleteModal(null);
+      showToast('Product deleted successfully!', 'success');
     } catch (e) {
-      alert("Failed to delete: " + (e.response?.data?.message || e.message));
+      showToast("Failed to delete product: " + (e.response?.data?.message || e.message), 'error');
     } finally { setSaving(false); }
   };
 
@@ -194,24 +250,31 @@ const Product = () => {
   const end        = Math.min(safePage * pageSize, filtered.length);
   const fmt        = (v) => (v == null || v === "" ? "—" : Number(v).toLocaleString());
 
-  const renderFormFields = () => (
+  const renderFormFields = (isEdit = false) => (
     <>
       <div className="prod-form-row">
         <div className="prod-modal-field">
           <label>Product Name <span className="prod-req">*</span></label>
           <input autoFocus name="name" value={form.name} onChange={handleChange} placeholder="e.g. Milk 1L" />
         </div>
-        <div className="prod-modal-field">
-          <label>Product Code</label>
-          <input name="productCode" value={form.productCode} onChange={handleChange} placeholder="e.g. MLK-001" />
-        </div>
+        {isEdit && (
+          <div className="prod-modal-field">
+            <label>Product Code</label>
+            <input name="productCode" value={form.productCode} readOnly 
+              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+              placeholder="Auto-generated" />
+          </div>
+        )}
       </div>
       <div className="prod-modal-field" style={{ marginBottom: 14 }}>
         <label>Division</label>
-        <select name="divisionId" value={form.divisionId} onChange={handleChange}>
-          <option value="">— Select division —</option>
-          {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
+        <SearchableSelect
+          options={divisions}
+          value={form.divisionId}
+          onChange={(id, name) => setForm(f => ({ ...f, divisionId: id }))}
+          placeholder="— Select division —"
+          searchPlaceholder="Search divisions..."
+        />
       </div>
       <div className="prod-form-row">
         <div className="prod-modal-field">
@@ -314,7 +377,7 @@ const Product = () => {
                     <th>MRP</th>
                     <th>Selling Price</th>
                     <th>Purchase Price</th>
-                    <th style={{ width: 130 }}>Actions</th>
+                    <th style={{ width: 150 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -356,6 +419,7 @@ const Product = () => {
                         <td className="prod-td-price">{fmt(p.purchasePrice)}</td>
                         <td>
                           <div className="prod-action-btns">
+                            <button className="prod-act-btn view" onClick={() => setViewModal(p)} title="View"><IcEye /></button>
                             <button className="prod-act-btn edit" onClick={() => openEdit(p)} title="Edit"><IcEdit /></button>
                             <button className="prod-act-btn del"  onClick={() => setDeleteModal(p)} title="Delete"><IcTrash /></button>
                           </div>
@@ -394,6 +458,7 @@ const Product = () => {
                       <div className="prod-card-price-row"><span>Purchase</span><strong>{fmt(p.purchasePrice)}</strong></div>
                     </div>
                     <div className="prod-card-actions">
+                      <button className="prod-act-btn view" onClick={() => setViewModal(p)}><IcEye /> View</button>
                       <button className="prod-act-btn edit" onClick={() => openEdit(p)}><IcEdit /> Edit</button>
                       <button className="prod-act-btn del"  onClick={() => setDeleteModal(p)}><IcTrash /> Delete</button>
                     </div>
@@ -435,7 +500,7 @@ const Product = () => {
       {addModal && (
         <Modal title="Add Product" subtitle="Create a new product" icon={<IcPlus />} accent="#f59e0b"
           onClose={() => { setAddModal(false); setForm(EMPTY_FORM); }}>
-          {renderFormFields()}
+          {renderFormFields(false)}
           <div className="prod-modal-actions">
             <button className="prod-modal-btn cancel" onClick={() => { setAddModal(false); setForm(EMPTY_FORM); }}>Cancel</button>
             <button className="prod-modal-btn confirm" onClick={handleAdd} disabled={saving || !form.name.trim()}>
@@ -450,7 +515,7 @@ const Product = () => {
       {editModal && (
         <Modal title="Edit Product" subtitle={`Editing: ${editModal.name}`} icon={<IcEdit />} accent="#6366f1"
           onClose={() => { setEditModal(null); setForm(EMPTY_FORM); }}>
-          {renderFormFields()}
+          {renderFormFields(true)}
           <div className="prod-modal-actions">
             <button className="prod-modal-btn cancel" onClick={() => { setEditModal(null); setForm(EMPTY_FORM); }}>Cancel</button>
             <button className="prod-modal-btn confirm" style={{ "--btn-color": "#6366f1" }} onClick={handleUpdate} disabled={saving || !form.name.trim()}>
@@ -477,6 +542,61 @@ const Product = () => {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* View Modal */}
+      {viewModal && (
+        <Modal title="Product Details" subtitle={`Viewing: ${viewModal.name}`} icon={<IcEye />} accent="#0ea5e9"
+          onClose={() => setViewModal(null)}>
+          <div className="prod-view-details">
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">Product Name:</div>
+              <div className="prod-detail-value">{viewModal.name}</div>
+            </div>
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">Product Code:</div>
+              <div className="prod-detail-value">{viewModal.productCode || '—'}</div>
+            </div>
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">Division:</div>
+              <div className="prod-detail-value">{divNameOf(viewModal)}</div>
+            </div>
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">UIM Price:</div>
+              <div className="prod-detail-value">₹{fmt(viewModal.uimPrice)}</div>
+            </div>
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">MRP:</div>
+              <div className="prod-detail-value">₹{fmt(viewModal.mrp)}</div>
+            </div>
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">Selling Price:</div>
+              <div className="prod-detail-value">₹{fmt(viewModal.sellingPrice)}</div>
+            </div>
+            <div className="prod-detail-row">
+              <div className="prod-detail-label">Purchase Price:</div>
+              <div className="prod-detail-value">₹{fmt(viewModal.purchasePrice)}</div>
+            </div>
+          </div>
+          <div className="prod-modal-actions">
+            <button className="prod-modal-btn cancel" onClick={() => setViewModal(null)}>Close</button>
+            <button className="prod-modal-btn confirm" style={{ "--btn-color": "#0ea5e9" }} onClick={() => { setViewModal(null); openEdit(viewModal); }}>
+              <IcEdit /> Edit Product
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`prod-toast prod-toast-${toast.type}`}>
+          <div className="prod-toast-content">
+            <div className="prod-toast-icon">
+              {toast.type === 'success' ? '✓' : toast.type === 'warning' ? 'ⓘ' : '⚠'}
+            </div>
+            <span className="prod-toast-message">{toast.message}</span>
+          </div>
+        </div>
       )}
 
     </div>

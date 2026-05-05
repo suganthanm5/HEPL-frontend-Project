@@ -251,6 +251,19 @@
 .loc-modal-field input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); background: #fff; }
 .loc-modal-field input::placeholder { color: #94a3b8; }
 
+.loc-input-help {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ── Delete body ── */
 .loc-delete-body { background: #fff5f5; border: 1px solid #fecaca; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
 .loc-delete-body p { margin: 0 0 6px; font-size: 14px; color: #1e293b; font-weight: 500; }
@@ -270,9 +283,6 @@
 .loc-modal-btn.confirm { background: linear-gradient(135deg, var(--btn-color, #10b981), #059669); color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
 .loc-modal-btn.confirm:hover:not(:disabled) { opacity: 0.9; }
 .loc-modal-btn.confirm:disabled { opacity: 0.55; cursor: not-allowed; }
-.loc-modal-btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,0.3); }
-.loc-modal-btn.danger:hover:not(:disabled) { opacity: 0.9; }
-.loc-modal-btn.danger:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .loc-spinner {
   width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.35);
@@ -292,4 +302,108 @@
 @media (max-width: 480px) {
   .loc-stats { grid-template-columns: 1fr; }
   .loc-card-grid { grid-template-columns: 1fr; }
+}
+/* OpenStreetMap Styles */
+.loc-map-section {
+  margin-bottom: 28px;
+}
+
+.loc-map-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.loc-map-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+  overflow: hidden;
+}
+.loc-map-section { margin: 24px 0 28px; }
+.loc-map-title { 
+  font-size: 18px; 
+  font-weight: 700; 
+  color: #0f172a; 
+  margin-bottom: 12px; 
+}
+.loc-map-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+  border: 1px solid #f1f5f9;
+}
+
+/* ── Toast Notifications ── */
+.loc-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  min-width: 320px;
+  max-width: 450px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  animation: loc-toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.loc-toast-success {
+  background: linear-gradient(135deg, rgba(16,185,129,0.95), rgba(5,150,105,0.95));
+  border: 1px solid rgba(167,243,208,0.3);
+}
+
+.loc-toast-error {
+  background: linear-gradient(135deg, rgba(99,102,241,0.95), rgba(79,70,229,0.95));
+  border: 1px solid rgba(196,181,253,0.3);
+}
+
+.loc-toast-warning {
+  background: linear-gradient(135deg, rgba(245,158,11,0.95), rgba(217,119,6,0.95));
+  border: 1px solid rgba(253,230,138,0.3);
+}
+
+.loc-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  color: #fff;
+}
+
+.loc-toast-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.loc-toast-message {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+}
+
+@keyframes loc-toastSlide {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
