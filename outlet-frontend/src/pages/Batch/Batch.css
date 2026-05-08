@@ -1,0 +1,67 @@
+/* ══════════════════════════════════════════
+   Batch Management Page CSS
+══════════════════════════════════════════ */
+.batch-page {
+  font-family: 'Poppins', sans-serif;
+  padding: 8px 0;
+}
+
+/* Expiry badge */
+.expiry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.expiry-badge.valid   { background: #dcfce7; color: #16a34a; }
+.expiry-badge.warning { background: #fef9c3; color: #ca8a04; }
+.expiry-badge.expired { background: #fee2e2; color: #ef4444; }
+
+/* Stock badge */
+.stock-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stock-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 99px;
+  background: #f0ebff;
+  overflow: hidden;
+}
+
+.stock-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #7d2ae8, #a855f7);
+  transition: width 0.4s ease;
+}
+
+.stock-qty {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Batch status chip */
+.batch-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.batch-status.active   { background: #dcfce7; color: #16a34a; }
+.batch-status.inactive { background: #fee2e2; color: #ef4444; }

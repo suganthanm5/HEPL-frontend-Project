@@ -49,6 +49,7 @@ import { addOutlet, addLocation, addDivision } from '../../redux/dashboardSlice'
 import { createOutlet } from '../../services/outletService';
 import { createLocation } from '../../services/locationService';
 import { createDivision } from '../../services/devisionService';
+import aiService from '../../services/aiService';
 import userService from '../../api/userService';
 
 const ProfileDrawer = ({ open, onClose }) => {
@@ -263,70 +264,13 @@ const ProfileDrawer = ({ open, onClose }) => {
 
     // Start generating response
     setTimeout(async () => {
-      let response = "";
-      
-      // 🚀 POWERFUL AI CAPABILITY: DATA CREATION
-      const lowerInput = input.toLowerCase();
-      
-      try {
-        // 1. Create Outlet Intent
-        if (lowerInput.includes('create outlet') || lowerInput.includes('add outlet')) {
-          const nameMatch = input.match(/(?:named|name is|outlet) ["']?([^"']+)["']?/i);
-          const addressMatch = input.match(/(?:at|address|in) ["']?([^"']+)["']?/i);
-          
-          if (nameMatch) {
-            const name = nameMatch[1];
-            const address = addressMatch ? addressMatch[1] : "Default Address";
-            
-            response = `🏗️ **System Action: Creating Outlet...**\n\nAttempting to create outlet **"${name}"** at **"${address}"**. Please wait...`;
-            
-            const newOutlet = { name, address, ownerName: user.name, status: 'Active' };
-            const apiRes = await createOutlet(newOutlet);
-            dispatch(addOutlet(apiRes.data));
-            
-            response = `✅ **Success!**\n\nI have successfully created the outlet **"${name}"**. You can now see it in your dashboard!\n\n📍 Address: ${address}\n👤 Owner: ${user.name}`;
-          } else {
-            response = `🤔 **I need more details!**\n\nTo create an outlet, please specify a name. For example:\n*"Create outlet named 'Green Valley' in 'New York'"*`;
-          }
-        } 
-        // 2. Create Location Intent
-        else if (lowerInput.includes('create location') || lowerInput.includes('add location')) {
-          const nameMatch = input.match(/(?:named|name is|location) ["']?([^"']+)["']?/i);
-          if (nameMatch) {
-            const name = nameMatch[1];
-            response = `🏗️ **System Action: Creating Location...**`;
-            
-            const apiRes = await createLocation({ name });
-            dispatch(addLocation(apiRes.data));
-            
-            response = `✅ **Success!**\n\nI have registered **"${name}"** as a new location in the system database.`;
-          } else {
-            response = `🤔 Please specify the location name. E.g., *"Add location named 'Chennai'"*`;
-          }
-        }
-        // 3. Create Division Intent
-        else if (lowerInput.includes('create division') || lowerInput.includes('add division')) {
-          const nameMatch = input.match(/(?:named|name is|division) ["']?([^"']+)["']?/i);
-          if (nameMatch) {
-            const name = nameMatch[1];
-            response = `🏗️ **System Action: Creating Division...**`;
-            
-            const apiRes = await createDivision({ name });
-            dispatch(addDivision(apiRes.data));
-            
-            response = `✅ **Success!**\n\nDivision **"${name}"** has been created and categorized.`;
-          } else {
-            response = `🤔 Please specify the division name. E.g., *"Add division named 'Electronics'"*`;
-          }
-        }
-        // 4. Default: Use the improved accuracy logic
-        else {
-          response = generateAiResponse(input, outlets, locations, divisions);
-        }
-      } catch (err) {
-        console.error("AI Action Error:", err);
-        response = `❌ **Error performing action**\n\nI tried to process your request but encountered an error: ${err.message || "Unknown error"}. Please check if the backend is connected!`;
-      }
+      const response = await aiService.processMessage(input, {
+        user,
+        outlets,
+        locations,
+        divisions,
+        dispatch
+      });
       
       const aiMessage = {
         id: Date.now() + 1,
@@ -1504,46 +1448,28 @@ const ProfileDrawer = ({ open, onClose }) => {
       
       <Box sx={{ p: 3, flex: 1 }}>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', mb: 2 }}>AI Assistant</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', mb: 2 }}>Display Preferences</Typography>
           <Box sx={{ 
-            backgroundColor: aiAssistant.enabled ? '#f0fdf4' : '#f8fafc', 
+            backgroundColor: darkMode ? '#f0fdf4' : '#f8fafc', 
             borderRadius: '12px', 
             p: 2,
-            border: `1px solid ${aiAssistant.enabled ? '#10b981' : '#e2e8f0'}`
+            border: `1px solid ${darkMode ? '#10b981' : '#e2e8f0'}`
           }}>
             <FormControlLabel
               control={
                 <Switch 
-                  checked={aiAssistant.enabled} 
-                  onChange={(e) => handleAiToggle(e.target.checked)}
+                  checked={darkMode} 
+                  onChange={(e) => setDarkMode(e.target.checked)}
                 />
               }
               label={
                 <Box sx={{ ml: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>Enable AI Assistant</Typography>
-                  <Typography variant="caption" sx={{ color: '#64748b' }}>Get intelligent help based on your data</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>Dark Mode</Typography>
+                  <Typography variant="caption" sx={{ color: '#64748b' }}>Switch between light and dark themes</Typography>
                 </Box>
               }
               sx={{ width: '100%', m: 0 }}
             />
-            {aiAssistant.enabled && (
-              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                <Button
-                  onClick={() => setCurrentView('aiChat')}
-                  variant="contained"
-                  size="small"
-                  sx={{
-                    backgroundColor: '#8b5cf6',
-                    '&:hover': { backgroundColor: '#7c3aed' },
-                    textTransform: 'none',
-                    borderRadius: '8px',
-                    flex: 1
-                  }}
-                >
-                  Open AI Chat
-                </Button>
-              </Box>
-            )}
           </Box>
         </Box>
       </Box>
@@ -1681,7 +1607,6 @@ const ProfileDrawer = ({ open, onClose }) => {
       case 'messages': return renderMessagesView();
       case 'activity': return renderActivityView();
       case 'settings': return renderSettingsView();
-      case 'aiChat': return renderAiChatView();
       case 'help': return renderHelpView();
       default: return renderMainView();
     }

@@ -4,8 +4,10 @@ import "./Login.css";
 import bgImage from "../../assets/outlet-bg.jpg";
 import icon from "../../assets/login-icon.png";
 import { loginUser } from "../../services/authService"; 
+import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
+    const { login } = useAuth();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -17,14 +19,10 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
 
-        if (isLoading) return; // Prevent multiple submissions
+        if (isLoading) return;
 
         if (!username || !password) {
             setError("Enter username and password");
-            return;
-        }
-        if (password.length < 4) {
-            setError("Password must be at least 4 characters");
             return;
         }
         
@@ -32,29 +30,26 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            console.log('🔐 Login attempt to:', import.meta.env.VITE_API_BASE_URL);
-            
             const res = await loginUser({ username, password });
-
-            console.log("✅ Backend response:", res.data);
-
-            const token = res.data?.data?.token || res.data?.token || res.data?.accessToken || res.data?.access_token;
+            
+            // Backend uses ApiResponse { data: { token, role, ... } }
+            const payload = res.data?.data || res.data;
+            const token = payload?.token;
 
             if (token) {
-                localStorage.setItem('token', token);
-                localStorage.setItem('username', res.data?.data?.username || res.data?.username || username);
-                localStorage.setItem('email', res.data?.data?.email || res.data?.email || `${username}@company.com`);
-                localStorage.setItem('role', res.data?.data?.role || res.data?.role || 'Administrator');
+                const userData = {
+                    username: payload.username || username,
+                    email: payload.email || "",
+                    role: payload.role || 'USER'
+                };
                 
-                document.cookie = `token=${token}; path=/; SameSite=Strict`;
-                document.cookie = `username=${username}; path=/; SameSite=Strict`;
+                login(userData, token);
                 
-                console.log('✅ Login successful, redirecting...');
-                navigate("/dashboard");
+                console.log('✅ Login successful, redirecting to dashboard...');
+                navigate("/dashboard", { replace: true });
             } else {
                 setError(res.data?.message || 'Login failed - no token received');
             }
-
         } catch (error) {
             console.error("❌ Login error:", error.response?.data || error.message);
             

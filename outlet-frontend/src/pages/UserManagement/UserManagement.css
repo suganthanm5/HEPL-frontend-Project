@@ -1,0 +1,187 @@
+/* ══════════════════════════════════════════
+   User Management Page CSS
+══════════════════════════════════════════ */
+.user-mgmt-page {
+  font-family: 'Poppins', sans-serif;
+  padding: 8px 0;
+}
+
+/* ── Page Header ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-header-left .page-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin: 0;
+}
+
+.page-header-left .page-subtitle {
+  font-size: 0.8rem;
+  color: #7d2ae8;
+  margin: 2px 0 0;
+}
+
+/* ── Stat Cards ── */
+.stat-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 16px;
+  padding: 20px 18px;
+  background: #ffffff;
+  border: 1px solid rgba(125, 42, 232, 0.1);
+  box-shadow: 0 2px 12px rgba(125, 42, 232, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(125, 42, 232, 0.12);
+}
+
+.stat-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-card-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  line-height: 1.1;
+}
+
+.stat-card-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ── Table Card ── */
+.table-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(125, 42, 232, 0.07);
+  border: 1px solid rgba(125, 42, 232, 0.08);
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(125, 42, 232, 0.08);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f0ff;
+  border: 1.5px solid transparent;
+  border-radius: 50px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  width: 260px;
+}
+
+.table-search:focus-within {
+  border-color: #7d2ae8;
+  box-shadow: 0 0 0 3px rgba(125, 42, 232, 0.1);
+  background: #fff;
+}
+
+/* ── Role Chip ── */
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.role-chip.admin   { background: #f3e8ff; color: #7d2ae8; }
+.role-chip.manager { background: #e0f2fe; color: #0284c7; }
+.role-chip.user    { background: #dcfce7; color: #16a34a; }
+
+/* ── Status Chip ── */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.status-chip.active   { background: #dcfce7; color: #16a34a; }
+.status-chip.inactive { background: #fee2e2; color: #ef4444; }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ── Dialog / Modal ── */
+.user-dialog-title {
+  background: linear-gradient(135deg, #7d2ae8, #a855f7);
+  color: #fff;
+  padding: 20px 24px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.dialog-field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+/* ── Action buttons ── */
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn.edit   { background: #f3e8ff; color: #7d2ae8; }
+.action-btn.delete { background: #fee2e2; color: #ef4444; }
+.action-btn.edit:hover   { background: #7d2ae8; color: #fff; }
+.action-btn.delete:hover { background: #ef4444; color: #fff; }

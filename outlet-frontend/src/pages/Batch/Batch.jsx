@@ -1,0 +1,278 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  Box, Typography, ButtonBase, InputBase,
+  Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField,
+  FormControl, Select, MenuItem, Tooltip,
+  CircularProgress, Snackbar, Alert,
+} from "@mui/material";
+import {
+  AddRounded, SearchRounded, EditRounded,
+  DeleteRounded, InventoryRounded, CheckRounded,
+  WarningRounded,
+} from "@mui/icons-material";
+import { batchService } from "../../services/batchService";
+import { productService } from "../../services/productService";
+import "./Batch.css";
+import "../UserManagement/UserManagement.css"; /* shared page styles */
+
+/* ── Empty form ── */
+const emptyForm = {
+  productId: "", batchNo: "", manufactureDate: "",
+  expiryDate: "", quantity: "", purchasePrice: "",
+  sellingPrice: "", status: "ACTIVE",
+};
+
+/* ── Expiry helper ── */
+const expiryClass = (dateStr) => {
+  if (!dateStr) return "valid";
+  const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
+  if (diff < 0)   return "expired";
+  if (diff < 90)  return "warning";
+  return "valid";
+};
+
+/* ══════════════════════════════════════════
+   Batch Page
+══════════════════════════════════════════ */
+const Batch = () => {
+  const [batches,  setBatches]  = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState("");
+  const [dialog,   setDialog]   = useState({ open: false, mode: "add", data: emptyForm });
+  const [delDialog, setDelDialog] = useState({ open: false, id: null });
+  const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
+
+  /* ── Load ── */
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [bRes, pRes] = await Promise.all([
+        batchService.getAll(),
+        productService.getAll ? productService.getAll() : { data: [] },
+      ]);
+      const bData = bRes.data || [];
+      const pData = pRes.data || [];
+      
+      setBatches(Array.isArray(bData) ? bData : bData?.content || []);
+      setProducts(Array.isArray(pData) ? pData : pData?.content || []);
+    } catch {
+      setBatches([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
+
+  /* ── Filter ── */
+  const filtered = batches.filter((b) =>
+    [b.batchNo, b.productName, b.status].join(" ").toLowerCase().includes(search.toLowerCase())
+  );
+
+  /* ── Save ── */
+  const handleSave = async () => {
+    try {
+      if (dialog.mode === "add") {
+        await batchService.create(dialog.data);
+        toast("Batch created");
+      } else {
+        await batchService.update(dialog.data.id, dialog.data);
+        toast("Batch updated");
+      }
+      setDialog({ open: false, mode: "add", data: emptyForm });
+      load();
+    } catch (err) { 
+      const msg = err.response?.data?.message || "Operation failed";
+      toast(msg, "error"); 
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await batchService.delete(delDialog.id);
+      toast("Batch deleted");
+      setDelDialog({ open: false, id: null });
+      load();
+    } catch { toast("Delete failed", "error"); }
+  };
+
+  const productName = (id) =>
+    products.find((p) => String(p.id) === String(id))?.name || id;
+
+  return (
+    <Box className="batch-page">
+      {/* Header */}
+      <Box className="page-header">
+        <Box className="page-header-left">
+          <Typography className="page-title">Batch Management</Typography>
+          <Typography className="page-subtitle">Track product batches and expiry</Typography>
+        </Box>
+        <ButtonBase onClick={() => setDialog({ open: true, mode: "add", data: emptyForm })} disableRipple
+          sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)", transition: "all 0.25s ease" }}>
+          <AddRounded sx={{ fontSize: 18 }} /> Add Batch
+        </ButtonBase>
+      </Box>
+
+      {/* Stat Cards */}
+      <Box className="stat-cards-row">
+        {[
+          { label: "Total Batches", value: batches.length, bg: "#f5f0ff", color: "#7d2ae8", Icon: InventoryRounded },
+          { label: "Active",        value: batches.filter((b) => b.status === "ACTIVE").length, bg: "#dcfce7", color: "#16a34a", Icon: CheckRounded },
+          { label: "Expiring Soon", value: batches.filter((b) => expiryClass(b.expiryDate) === "warning").length, bg: "#fef9c3", color: "#ca8a04", Icon: WarningRounded },
+          { label: "Expired",       value: batches.filter((b) => expiryClass(b.expiryDate) === "expired").length, bg: "#fee2e2", color: "#ef4444", Icon: WarningRounded },
+        ].map(({ label, value, bg, color, Icon }) => (
+          <Box className="stat-card" key={label}>
+            <Box className="stat-card-icon" sx={{ background: bg }}>
+              <Icon sx={{ color, fontSize: 22 }} />
+            </Box>
+            <Box>
+              <Typography className="stat-card-value">{value}</Typography>
+              <Typography className="stat-card-label">{label}</Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Table */}
+      <Box className="table-card">
+        <Box className="table-toolbar">
+          <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>All Batches</Typography>
+          <Box className="table-search">
+            <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
+            <InputBase placeholder="Search batches…" value={search} onChange={(e) => setSearch(e.target.value)}
+              sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }} />
+          </Box>
+        </Box>
+
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ background: "#faf5ff" }}>
+                {["Batch No", "Product", "Qty", "Expiry Date", "Purchase ₹", "Selling ₹", "Status", "Actions"].map((h) => (
+                  <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No batches found</TableCell></TableRow>
+              ) : (
+                filtered.map((b) => {
+                  const ec = expiryClass(b.expiryDate);
+                  return (
+                    <TableRow key={b.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
+                      <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>{b.batchNo}</TableCell>
+                      <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{b.productName || productName(b.productId)}</TableCell>
+                      <TableCell>
+                        <Box className="stock-bar-wrap">
+                          <Box className="stock-bar"><Box className="stock-bar-fill" sx={{ width: `${Math.min((b.quantity / 500) * 100, 100)}%` }} /></Box>
+                          <Typography className="stock-qty">{b.quantity}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography className={`expiry-badge ${ec}`}>
+                          {ec === "expired" ? "⚠ " : ""}{b.expiryDate || "—"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>₹{b.purchasePrice}</TableCell>
+                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>₹{b.sellingPrice}</TableCell>
+                      <TableCell>
+                        <Typography className={`batch-status ${b.status?.toLowerCase() === "active" ? "active" : "inactive"}`}>
+                          {b.status}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", gap: 0.75 }}>
+                          <Tooltip title="Edit"><ButtonBase className="action-btn edit" onClick={() => setDialog({ open: true, mode: "edit", data: { ...b } })} disableRipple><EditRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
+                          <Tooltip title="Delete"><ButtonBase className="action-btn delete" onClick={() => setDelDialog({ open: true, id: b.id })} disableRipple><DeleteRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={dialog.open} onClose={() => setDialog({ open: false, mode: "add", data: emptyForm })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle className="user-dialog-title">{dialog.mode === "add" ? "Add Batch" : "Edit Batch"}</DialogTitle>
+        <DialogContent sx={{ pt: 3, pb: 1 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            {[
+              { key: "batchNo",       label: "Batch No",       type: "text" },
+              { key: "quantity",      label: "Quantity",        type: "number" },
+              { key: "manufactureDate", label: "Manufacture Date", type: "date" },
+              { key: "expiryDate",    label: "Expiry Date",    type: "date" },
+              { key: "purchasePrice", label: "Purchase Price ₹", type: "number" },
+              { key: "sellingPrice",  label: "Selling Price ₹",  type: "number" },
+            ].map(({ key, label, type }) => (
+              <Box key={key}>
+                <Typography className="dialog-field-label">{label}</Typography>
+                <TextField fullWidth size="small" type={type}
+                  InputLabelProps={type === "date" ? { shrink: true } : {}}
+                  value={dialog.data[key]}
+                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, [key]: e.target.value } }))}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+              </Box>
+            ))}
+            <Box>
+              <Typography className="dialog-field-label">Product</Typography>
+              <FormControl fullWidth size="small">
+                <Select value={dialog.data.productId}
+                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, productId: e.target.value } }))}
+                  sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
+                  {products.map((p) => <MenuItem key={p.id} value={p.id} sx={{ fontFamily: "Poppins, sans-serif" }}>{p.name}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Status</Typography>
+              <FormControl fullWidth size="small">
+                <Select value={dialog.data.status}
+                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, status: e.target.value } }))}
+                  sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
+                  <MenuItem value="ACTIVE" sx={{ fontFamily: "Poppins, sans-serif" }}>Active</MenuItem>
+                  <MenuItem value="INACTIVE" sx={{ fontFamily: "Poppins, sans-serif" }}>Inactive</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <ButtonBase onClick={() => setDialog({ open: false, mode: "add", data: emptyForm })} disableRipple
+            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>Cancel</ButtonBase>
+          <ButtonBase onClick={handleSave} disableRipple
+            sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600, boxShadow: "0 4px 12px rgba(125,42,232,0.35)" }}>
+            <CheckRounded sx={{ fontSize: 16 }} />{dialog.mode === "add" ? "Create" : "Save"}
+          </ButtonBase>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
+        <DialogContent><Typography sx={{ fontFamily: "Poppins, sans-serif", color: "#64748b", fontSize: "0.9rem" }}>Delete this batch? This cannot be undone.</Typography></DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <ButtonBase onClick={() => setDelDialog({ open: false, id: null })} disableRipple sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>Cancel</ButtonBase>
+          <ButtonBase onClick={handleDelete} disableRipple sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#ef4444", color: "#fff", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>Delete</ButtonBase>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+        <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "Poppins, sans-serif" }}>{snack.msg}</Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default Batch;

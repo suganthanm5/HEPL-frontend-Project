@@ -1,8 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AppBar, Toolbar, IconButton, InputBase, Badge, Avatar, Menu, MenuItem,
-  Box, Typography, Divider, Paper
+  Box,
+  Typography,
+  Avatar,
+  Badge,
+  IconButton,
+  InputBase,
+  Divider,
+  Tooltip,
+  Fade,
+  Paper,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ButtonBase,
 } from "@mui/material";
 import {
   SearchRounded,
@@ -12,239 +25,298 @@ import {
   LogoutRounded,
   StoreRounded,
   PlaceRounded,
-  AccountTreeRounded
+  AccountTreeRounded,
+  KeyboardArrowDownRounded,
 } from "@mui/icons-material";
-import ModernProfileDrawer from '../ProfileDrawer/ModernProfileDrawer';
+import ModernProfileDrawer from "../ProfileDrawer/ModernProfileDrawer";
+import "./Navbar.css";
 
+/* ── Static data ─────────────────────────────────── */
 const notifications = [
-  { id: 1, Icon: StoreRounded, text: "New outlet registered", time: "2m ago", color: "#6366f1" },
-  { id: 2, Icon: PlaceRounded, text: "Location data updated", time: "15m ago", color: "#8b5cf6" },
-  { id: 3, Icon: AccountTreeRounded, text: "Division report generated", time: "1h ago", color: "#06b6d4" },
+  { id: 1, Icon: StoreRounded,       text: "New outlet registered",     time: "2m ago",  color: "#7d2ae8" },
+  { id: 2, Icon: PlaceRounded,       text: "Location data updated",     time: "15m ago", color: "#a855f7" },
+  { id: 3, Icon: AccountTreeRounded, text: "Division report generated", time: "1h ago",  color: "#7c3aed" },
 ];
 
+/* ── Component ───────────────────────────────────── */
 const Navbar = ({ title = "Dashboard" }) => {
   const navigate = useNavigate();
+  const searchRef = useRef(null);
+
+  /* User state */
   const [user, setUser] = useState({
-    name: localStorage.getItem("username") || "Admin",
-    email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
-    role: localStorage.getItem("role") || "Administrator",
-    profilePicture: localStorage.getItem("profilePicture") || null
+    name:           localStorage.getItem("username")      || "Admin",
+    email:          localStorage.getItem("email")         || localStorage.getItem("userEmail") || "admin@company.com",
+    role:           localStorage.getItem("role")          || "Administrator",
+    profilePicture: localStorage.getItem("profilePicture")|| null,
   });
 
+  /* Clock */
   const [time, setTime] = useState(new Date());
-  const [search, setSearch] = useState("");
-  
-  // Dropdown anchors
-  const [anchorElNotif, setAnchorElNotif] = useState(null);
-  const [anchorElUser, setAnchorElUser] = useState(null);
-  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
-
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Listen for profile updates
+  /* Search */
+  const [search, setSearch] = useState("");
+
+  /* Dropdowns */
+  const [notifOpen,  setNotifOpen]  = useState(false);
+  const [userOpen,   setUserOpen]   = useState(false);
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+
+  /* Profile updates */
   useEffect(() => {
     const handleStorageChange = () => {
       setUser({
-        name: localStorage.getItem("username") || "Admin",
-        email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
-        role: localStorage.getItem("role") || "Administrator",
-        profilePicture: localStorage.getItem("profilePicture") || null
+        name:           localStorage.getItem("username")       || "Admin",
+        email:          localStorage.getItem("email")          || localStorage.getItem("userEmail") || "admin@company.com",
+        role:           localStorage.getItem("role")           || "Administrator",
+        profilePicture: localStorage.getItem("profilePicture") || null,
       });
     };
-
-    // Listen for custom profile update event
-    window.addEventListener('profileUpdated', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('profileUpdated', handleStorageChange);
-    };
+    window.addEventListener("profileUpdated", handleStorageChange);
+    return () => window.removeEventListener("profileUpdated", handleStorageChange);
   }, []);
 
-  const handleOpenProfile = () => {
-    setAnchorElUser(null);
-    setProfileDrawerOpen(true);
-  };
+  /* Click-outside to close dropdowns */
+  useEffect(() => {
+    const close = (e) => {
+      if (!e.target.closest(".navbar-notif-wrap")) setNotifOpen(false);
+      if (!e.target.closest(".navbar-user-wrap"))  setUserOpen(false);
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, []);
 
+  /* Helpers */
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     navigate("/");
   };
 
+  const handleOpenProfile = () => {
+    setUserOpen(false);
+    setProfileDrawerOpen(true);
+  };
+
   const formatTime = (d) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   const formatDate = (d) => d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 
+  /* Avatar initials */
+  const initials = user.name.charAt(0).toUpperCase();
+
+  /* ── JSX ──────────────────────────────────────── */
   return (
-    <AppBar position="sticky">
-      <Toolbar sx={{ justifyContent: "space-between", px: { xs: 2, sm: 4 } }}>
-        {/* LEFT */}
-        <Box sx={{ display: "flex", alignItems: "center", minWidth: 200 }}>
-          <Typography variant="h5" color="inherit" fontWeight="bold">
+    <>
+      <Box component="header" className="navbar">
+
+        {/* LEFT — Page title */}
+        <Box className="navbar-left">
+          <Typography className="nb-page" component="h1">
             {title}
           </Typography>
         </Box>
 
-        {/* CENTER — search */}
-        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
-          <Paper
-            elevation={0}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              width: 400,
-              p: '2px 12px',
-              borderRadius: 3,
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid',
-              borderColor: 'rgba(255, 255, 255, 0.2)',
-              color: '#ffffff',
-              '&:focus-within': {
-                borderColor: 'rgba(255, 255, 255, 0.5)',
-                boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.2)',
-              }
-            }}
-          >
-            <SearchRounded sx={{ color: 'rgba(255, 255, 255, 0.7)', mr: 1 }} />
+        {/* CENTER — Animated search */}
+        <Box className="navbar-center">
+          <Box className="navbar-search">
+            <Box className="search-icon-nb">
+              <SearchRounded sx={{ fontSize: 20, color: "#7d2ae8" }} />
+            </Box>
             <InputBase
-              sx={{ ml: 1, flex: 1, color: 'inherit' }}
-              placeholder="Search outlets, locations, divisions…"
+              inputRef={searchRef}
+              placeholder="Search outlets, locations…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              sx={{
+                flex: 1,
+                fontSize: "0.875rem",
+                fontFamily: "Poppins, sans-serif",
+                color: "#1e1b4b",
+                "& input::placeholder": { color: "#a78bfa", fontSize: "0.8rem" },
+              }}
             />
-            <Typography variant="caption" sx={{ 
-              border: '1px solid', borderColor: 'rgba(255, 255, 255, 0.2)', 
-              borderRadius: 1, px: 0.5, color: 'rgba(255, 255, 255, 0.7)',
-              display: { xs: 'none', lg: 'block' }
-            }}>
-              ⌘K
-            </Typography>
-          </Paper>
+            <Typography component="span" className="search-kbd">⌘K</Typography>
+          </Box>
         </Box>
 
         {/* RIGHT */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 200, justifyContent: "flex-end" }}>
-          
+        <Box className="navbar-right">
+
           {/* Clock */}
-          <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
-            <Typography variant="body2" color="inherit" fontWeight={600} lineHeight={1.2}>
-              {formatTime(time)}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "inherit", opacity: 0.7 }}>
-              {formatDate(time)}
-            </Typography>
+          <Box className="navbar-clock" sx={{ display: { xs: "none", sm: "flex" } }}>
+            <Typography className="clock-time">{formatTime(time)}</Typography>
+            <Typography className="clock-date">{formatDate(time)}</Typography>
           </Box>
 
-          <Divider orientation="vertical" flexItem sx={{ my: 1, display: { xs: "none", sm: "block" }, borderColor: "rgba(255, 255, 255, 0.2)" }} />
+          <Box className="navbar-divider" sx={{ display: { xs: "none", sm: "block" } }} />
 
-          {/* Bell */}
-          <IconButton onClick={(e) => setAnchorElNotif(e.currentTarget)} sx={{ color: "inherit" }}>
-            <Badge badgeContent={notifications.length} color="error" overlap="circular">
-              <NotificationsRounded sx={{ color: 'inherit' }} />
-            </Badge>
-          </IconButton>
-          
-          {/* Notifications Menu */}
-          <Menu
-            anchorEl={anchorElNotif}
-            open={Boolean(anchorElNotif)}
-            onClose={() => setAnchorElNotif(null)}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            PaperProps={{
-              sx: { width: 320, mt: 1.5, borderRadius: 3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }
-            }}
-          >
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="subtitle1" fontWeight="bold">Notifications</Typography>
-              <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>{notifications.length} new</Typography>
-            </Box>
-            <Divider />
-            {notifications.map(({ id, Icon, text, time: t, color }) => (
-              <MenuItem key={id} sx={{ p: 2, gap: 2 }} onClick={() => setAnchorElNotif(null)}>
-                <Avatar sx={{ bgcolor: `${color}15`, color: color, width: 40, height: 40 }}>
-                  <Icon />
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="body2" color="text.primary" fontWeight={500}>{text}</Typography>
-                  <Typography variant="caption" color="text.secondary">{t}</Typography>
-                </Box>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
-              </MenuItem>
-            ))}
-            <Divider />
-            <Box sx={{ p: 1, textAlign: 'center' }}>
-              <Typography variant="body2" color="primary" sx={{ cursor: 'pointer', fontWeight: 600 }}>View all notifications</Typography>
-            </Box>
-          </Menu>
-
-          {/* User */}
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }}
-            onClick={(e) => setAnchorElUser(e.currentTarget)}
-          >
-            <Avatar 
-              sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', color: '#ffffff', width: 40, height: 40 }}
-              src={user.profilePicture}
-            >
-              {!user.profilePicture && user.name.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <Typography variant="body2" fontWeight="bold" color="inherit">{user.name}</Typography>
-              <Typography variant="caption" sx={{ color: 'inherit', opacity: 0.7 }}>{user.role}</Typography>
-            </Box>
-          </Box>
-
-          {/* User Menu */}
-          <Menu
-            anchorEl={anchorElUser}
-            open={Boolean(anchorElUser)}
-            onClose={() => setAnchorElUser(null)}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            PaperProps={{
-              sx: { width: 240, mt: 1.5, borderRadius: 3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }
-            }}
-          >
-            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar 
-                sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}
-                src={user.profilePicture}
+          {/* Notification bell */}
+          <Box className="navbar-notif-wrap">
+            <Tooltip title="Notifications" placement="bottom">
+              <ButtonBase
+                className={`navbar-icon-btn${notifOpen ? " active" : ""}`}
+                onClick={(e) => { e.stopPropagation(); setNotifOpen((v) => !v); setUserOpen(false); }}
+                disableRipple
               >
-                {!user.profilePicture && user.name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box>
-                <Typography variant="subtitle2" fontWeight="bold">{user.name}</Typography>
-                <Typography variant="caption" color="text.secondary">{user.role}</Typography>
+                <NotificationsRounded sx={{ fontSize: 20 }} />
+                <Box className="notif-badge">{notifications.length}</Box>
+              </ButtonBase>
+            </Tooltip>
+
+            {/* Notification dropdown */}
+            <Fade in={notifOpen}>
+              <Box className="notif-dropdown">
+                <Box className="notif-header">
+                  <Typography className="notif-header-title">Notifications</Typography>
+                  <Typography className="notif-count">{notifications.length} new</Typography>
+                </Box>
+
+                <List className="notif-list" disablePadding>
+                  {notifications.map(({ id, Icon, text, time: t, color }) => (
+                    <ListItem
+                      key={id}
+                      className="notif-item"
+                      onClick={() => setNotifOpen(false)}
+                      disablePadding
+                    >
+                      <Box
+                        className="notif-item-icon"
+                        sx={{ background: `${color}18`, color }}
+                      >
+                        <Icon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Box className="notif-item-body">
+                        <Typography component="p">{text}</Typography>
+                        <Typography component="span">{t}</Typography>
+                      </Box>
+                      <Box className="notif-dot" sx={{ bgcolor: color }} />
+                    </ListItem>
+                  ))}
+                </List>
+
+                <Box className="notif-footer" onClick={() => setNotifOpen(false)}>
+                  View all notifications
+                </Box>
               </Box>
-            </Box>
-            <Divider />
-            <MenuItem onClick={handleOpenProfile} sx={{ gap: 2, py: 1.5 }}>
-              <PersonRounded fontSize="small" sx={{ color: 'text.secondary' }} />
-              My Profile
-            </MenuItem>
-            <MenuItem onClick={() => setAnchorElUser(null)} sx={{ gap: 2, py: 1.5 }}>
-              <SettingsRounded fontSize="small" sx={{ color: 'text.secondary' }} />
-              Settings
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout} sx={{ gap: 2, py: 1.5, color: 'error.main' }}>
-              <LogoutRounded fontSize="small" color="inherit" />
-              Sign Out
-            </MenuItem>
-          </Menu>
+            </Fade>
+          </Box>
+
+          {/* User button */}
+          <Box className="navbar-user-wrap">
+            <ButtonBase
+              className={`navbar-user${userOpen ? " active" : ""}`}
+              onClick={(e) => { e.stopPropagation(); setUserOpen((v) => !v); setNotifOpen(false); }}
+              disableRipple
+            >
+              <Avatar
+                className="user-avatar"
+                src={user.profilePicture || undefined}
+                sx={{ width: 36, height: 36, background: "linear-gradient(135deg, #7d2ae8, #a855f7)" }}
+              >
+                {!user.profilePicture && initials}
+              </Avatar>
+
+              <Box className="user-info" sx={{ display: { xs: "none", md: "flex" } }}>
+                <Typography className="user-name">{user.name}</Typography>
+                <Typography className="user-role">{user.role}</Typography>
+              </Box>
+
+              <Box className="user-chevron">
+                <KeyboardArrowDownRounded
+                  sx={{
+                    fontSize: 18,
+                    color: "#7d2ae8",
+                    transform: userOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.3s ease",
+                  }}
+                />
+              </Box>
+            </ButtonBase>
+
+            {/* User dropdown */}
+            <Fade in={userOpen}>
+              <Box className="user-dropdown">
+
+                {/* Header */}
+                <Box className="user-dropdown-header">
+                  <Avatar
+                    className="user-avatar lg"
+                    src={user.profilePicture || undefined}
+                    sx={{ width: 46, height: 46, background: "rgba(255,255,255,0.25)" }}
+                  >
+                    {!user.profilePicture && initials}
+                  </Avatar>
+                  <Box>
+                    <Typography className="ud-name">{user.name}</Typography>
+                    <Typography className="ud-role">{user.email}</Typography>
+                  </Box>
+                  <Box className="ud-status">
+                    <Box className="ud-status-dot" />
+                    Online
+                  </Box>
+                </Box>
+
+                {/* Menu items */}
+                <List component="ul" className="user-dropdown-menu" disablePadding>
+                  <ListItem
+                    component="li"
+                    onClick={handleOpenProfile}
+                    disablePadding
+                    sx={{ cursor: "pointer", borderRadius: "12px" }}
+                  >
+                    <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
+                      <PersonRounded sx={{ fontSize: 18 }} />
+                    </ListItemIcon>
+                    <ListItemText primary="My Profile" primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} />
+                  </ListItem>
+
+                  <ListItem
+                    component="li"
+                    onClick={() => setUserOpen(false)}
+                    disablePadding
+                    sx={{ cursor: "pointer", borderRadius: "12px" }}
+                  >
+                    <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
+                      <SettingsRounded sx={{ fontSize: 18 }} />
+                    </ListItemIcon>
+                    <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} />
+                  </ListItem>
+                </List>
+
+                <Divider sx={{ borderColor: "rgba(125,42,232,0.1)" }} />
+
+                {/* Logout */}
+                <Box className="user-dropdown-footer">
+                  <ButtonBase
+                    component="button"
+                    onClick={handleLogout}
+                    disableRipple
+                    sx={{ width: "100%", textAlign: "left" }}
+                  >
+                    <Box className="udm-icon">
+                      <LogoutRounded sx={{ fontSize: 18, color: "inherit" }} />
+                    </Box>
+                    Sign Out
+                  </ButtonBase>
+                </Box>
+
+              </Box>
+            </Fade>
+          </Box>
 
         </Box>
-      </Toolbar>
-      
+      </Box>
+
       {/* Profile Drawer */}
-      <ModernProfileDrawer 
-        open={profileDrawerOpen} 
-        onClose={() => setProfileDrawerOpen(false)} 
+      <ModernProfileDrawer
+        open={profileDrawerOpen}
+        onClose={() => setProfileDrawerOpen(false)}
       />
-    </AppBar>
+    </>
   );
 };
 

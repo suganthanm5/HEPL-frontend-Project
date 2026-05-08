@@ -1,8 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Importing Google Fonts - Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; }
+/* ══════════════════════════════════════════
+   Design Tokens - Light Theme (default)
+══════════════════════════════════════════ */
+:root {
+  --sidebar-width: 270px;
+  --sidebar-collapsed-width: 90px;
+  --navbar-height: 72px;
+  --primary-color: #695CFE;
+
+  /* Sidebar / theme colors */
+  --color-text-primary: #1F2936;
+  --color-text-placeholder: #798EAE;
+  --color-bg-primary: #f9fafb;
+  --color-bg-secondary: #ECECFD;
+  --color-bg-sidebar: #FFFFFF;
+  --color-border-hr: #E2E8F0;
+  --color-hover-primary: #695CFE;
+  --color-hover-secondary: #e2e2fb;
+  --color-shadow: rgba(0, 0, 0, 0.05);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
+  background-color: var(--color-bg-primary);
+  font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+html {
+  margin: 0;
+  padding: 0;
 }

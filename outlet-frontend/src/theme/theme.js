@@ -87,19 +87,7 @@ const theme = createTheme({
         },
       },
     },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          background: "linear-gradient(90deg, #0f172a 0%, #1e1b4b 100%)",
-          backdropFilter: "saturate(200%) blur(20px)",
-          borderBottom: "none",
-          color: "#ffffff",
-        },
-      },
-      defaultProps: {
-        elevation: 0,
-      },
-    },
+    /* Navbar now uses custom CSS — no MuiAppBar override needed */
     MuiMenuItem: {
       styleOverrides: {
         root: {

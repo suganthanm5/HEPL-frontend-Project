@@ -11,8 +11,7 @@ const Register = () => {
   const [userData, setUserData] = useState({ 
     username: '', 
     password: '', 
-    email: '', 
-    role: 'USER' 
+    email: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,20 +69,6 @@ const Register = () => {
             onChange={handleChange} 
             required 
           />
-          <div className="input-wrapper" style={{ marginBottom: '1rem' }}>
-            <label className="input-label">Role</label>
-            <select 
-              className="input" 
-              name="role" 
-              value={userData.role} 
-              onChange={handleChange} 
-              required
-            >
-              <option value="USER">User</option>
-              <option value="ADMIN">Admin</option>
-              <option value="MANAGER">Manager</option>
-            </select>
-          </div>
           <Input 
             label="Password" 
             name="password" 

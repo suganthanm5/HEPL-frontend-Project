@@ -1,13 +1,12 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchDashboardData } from "../../redux/dashboardSlice";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar/Navbar";
-import Sidebar from "../../components/Sidebar/Sidebar";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from "recharts";
+import { userService } from "../../services/userService";
 import "./Dashboard.css";
 
 /* ── Icons ── */
@@ -252,23 +251,17 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="edu-dashboard">
-      <Sidebar />
-      <div className="edu-main">
-        <Navbar title="Dashboard" />
-        
-        <div className="edu-content">
-          {/* Header */}
-          <div className="edu-header">
-            <div className="edu-header-left">
-              <h1>Dashboard</h1>
-              <p className="typing-text">
-                {typedText}
-                {isTyping && <span className="typing-cursor">|</span>}
-              </p>
-            </div>
-
-          </div>
+    <>
+      {/* Header */}
+      <div className="edu-header">
+        <div className="edu-header-left">
+          <h1>Dashboard</h1>
+          <p className="typing-text">
+            {typedText}
+            {isTyping && <span className="typing-cursor">|</span>}
+          </p>
+        </div>
+      </div>
 
           {/* Stats Cards */}
           <div className="edu-stats">
@@ -574,8 +567,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
