@@ -18,9 +18,9 @@ import "./UserManagement.css";
 
 /* ── Static stat colours ───────────────────────── */
 const ROLE_META = {
-  ADMIN:   { label: "Admin",   cls: "admin",   color: "#7d2ae8", bg: "#f3e8ff", Icon: AdminPanelSettingsRounded },
+  ADMIN: { label: "Admin", cls: "admin", color: "#7d2ae8", bg: "#f3e8ff", Icon: AdminPanelSettingsRounded },
   MANAGER: { label: "Manager", cls: "manager", color: "#0284c7", bg: "#e0f2fe", Icon: ManageAccountsRounded },
-  USER:    { label: "User",    cls: "user",    color: "#16a34a", bg: "#dcfce7", Icon: PersonRounded },
+  USER: { label: "User", cls: "user", color: "#16a34a", bg: "#dcfce7", Icon: PersonRounded },
 };
 
 const ROLES = ["ADMIN", "MANAGER", "USER"];
@@ -35,12 +35,12 @@ const emptyForm = { name: "", username: "", email: "", password: "", role: "USER
    UserManagement Page
 ══════════════════════════════════════════════════ */
 const UserManagement = () => {
-  const [users,   setUsers]   = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search,  setSearch]  = useState("");
-  const [dialog,  setDialog]  = useState({ open: false, mode: "add", data: emptyForm });
+  const [search, setSearch] = useState("");
+  const [dialog, setDialog] = useState({ open: false, mode: "add", data: emptyForm });
   const [delDialog, setDelDialog] = useState({ open: false, id: null, name: "" });
-  const [snack,   setSnack]   = useState({ open: false, msg: "", severity: "success" });
+  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
   /* ── Load users ── */
   const load = useCallback(async () => {
@@ -82,7 +82,7 @@ const UserManagement = () => {
         await userService.createUser(data);
         toast("User created successfully");
       } else {
-        await userService.updateUserRole(data.id, data.role);
+        await userService.updateUser(data.id, data);
         toast("User updated successfully");
       }
       setDialog({ open: false, mode: "add", data: emptyForm });
@@ -266,33 +266,31 @@ const UserManagement = () => {
         </DialogTitle>
         <DialogContent sx={{ pt: 3, pb: 1 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box>
+              <Typography className="dialog-field-label">Full Name</Typography>
+              <TextField fullWidth size="small" placeholder="Enter full name" value={dialog.data.name}
+                onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, name: e.target.value } }))}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Username</Typography>
+              <TextField fullWidth size="small" placeholder="Enter username" value={dialog.data.username}
+                onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, username: e.target.value } }))}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Email</Typography>
+              <TextField fullWidth size="small" type="email" placeholder="Enter email" value={dialog.data.email}
+                onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, email: e.target.value } }))}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+            </Box>
             {dialog.mode === "add" && (
-              <>
-                <Box>
-                  <Typography className="dialog-field-label">Full Name</Typography>
-                  <TextField fullWidth size="small" placeholder="Enter full name" value={dialog.data.name}
-                    onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, name: e.target.value } }))}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                </Box>
-                <Box>
-                  <Typography className="dialog-field-label">Username</Typography>
-                  <TextField fullWidth size="small" placeholder="Enter username" value={dialog.data.username}
-                    onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, username: e.target.value } }))}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                </Box>
-                <Box>
-                  <Typography className="dialog-field-label">Email</Typography>
-                  <TextField fullWidth size="small" type="email" placeholder="Enter email" value={dialog.data.email}
-                    onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, email: e.target.value } }))}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                </Box>
-                <Box>
-                  <Typography className="dialog-field-label">Password</Typography>
-                  <TextField fullWidth size="small" type="password" placeholder="Enter password" value={dialog.data.password}
-                    onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, password: e.target.value } }))}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                </Box>
-              </>
+              <Box>
+                <Typography className="dialog-field-label">Password</Typography>
+                <TextField fullWidth size="small" type="password" placeholder="Enter password" value={dialog.data.password}
+                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, password: e.target.value } }))}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+              </Box>
             )}
             <Box>
               <Typography className="dialog-field-label">Role</Typography>

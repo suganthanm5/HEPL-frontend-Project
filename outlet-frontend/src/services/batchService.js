@@ -1,10 +1,10 @@
 import apiClient from '../api/apiClient';
 
 export const batchService = {
-  /** Get all batches (optionally filtered by product) */
-  getAll: async (productId = null) => {
-    const url = productId ? `/api/batches?productId=${productId}` : '/api/batches';
-    const res = await apiClient.get(url);
+  /** Get all batches with optional filtering */
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const res = await apiClient.get(`/api/batches${query ? '?' + query : ''}`);
     return res.data;
   },
 

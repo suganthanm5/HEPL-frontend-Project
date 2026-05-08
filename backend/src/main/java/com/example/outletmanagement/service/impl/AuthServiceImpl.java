@@ -23,11 +23,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists");
+        if (userRepository.existsByUsernameAll(request.getUsername()) > 0) {
+            throw new RuntimeException("Username '" + request.getUsername() + "' is already taken.");
         }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+        if (userRepository.existsByEmailAll(request.getEmail()) > 0) {
+            throw new RuntimeException("Email '" + request.getEmail() + "' is already in use.");
         }
 
         User user = User.builder()

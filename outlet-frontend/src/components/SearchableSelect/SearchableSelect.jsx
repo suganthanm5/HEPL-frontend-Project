@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Popper, ClickAwayListener, Paper, InputBase, Box } from '@mui/material';
 import './SearchableSelect.css';
 
 const IconChevronDown = () => (
@@ -30,7 +31,7 @@ const SearchableSelect = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef(null);
+  const anchorRef = useRef(null);
   const searchInputRef = useRef(null);
 
   // Filter options based on search term
@@ -56,86 +57,91 @@ const SearchableSelect = ({
     setSearchTerm('');
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Focus search input when dropdown opens
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 10);
     }
   }, [isOpen]);
 
   return (
-    <div className={`searchable-select ${disabled ? 'disabled' : ''}`} ref={dropdownRef}>
-      <div 
-        className={`select-trigger ${isOpen ? 'open' : ''} ${value ? 'has-value' : ''}`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-      >
-        <span className="select-value">
-          {displayText || placeholder}
-        </span>
-        <div className="select-actions">
-          {value && !disabled && (
-            <button 
-              type="button" 
-              className="clear-btn" 
-              onClick={handleClear}
-              title="Clear selection"
-            >
-              <IconX />
-            </button>
-          )}
-          <span className="chevron">
-            <IconChevronDown />
+    <ClickAwayListener onClickAway={() => setIsOpen(false)}>
+      <Box className={`searchable-select ${disabled ? 'disabled' : ''}`} sx={{ width: '100%' }}>
+        <Box 
+          ref={anchorRef}
+          className={`select-trigger ${isOpen ? 'open' : ''} ${value ? 'has-value' : ''}`}
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+        >
+          <span className="select-value">
+            {displayText || placeholder}
           </span>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="select-dropdown">
-          <div className="search-box">
-            <IconSearch />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-          
-          <div className="options-list">
-            {filteredOptions.length === 0 ? (
-              <div className="no-options">
-                {searchTerm ? 'No locations found' : 'No locations available'}
-              </div>
-            ) : (
-              filteredOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className={`option-item ${option.id === value ? 'selected' : ''}`}
-                  onClick={() => handleSelect(option)}
-                >
-                  {option.name}
-                </div>
-              ))
+          <Box className="select-actions">
+            {value && !disabled && (
+              <button 
+                type="button" 
+                className="clear-btn" 
+                onClick={handleClear}
+                title="Clear selection"
+              >
+                <IconX />
+              </button>
             )}
-          </div>
-        </div>
-      )}
-    </div>
+            <span className="chevron">
+              <IconChevronDown />
+            </span>
+          </Box>
+        </Box>
+
+        <Popper
+          open={isOpen}
+          anchorEl={anchorRef.current}
+          placement="bottom-start"
+          disablePortal={false}
+          style={{ zIndex: 9999, width: anchorRef.current?.offsetWidth }}
+        >
+          <Paper className="select-dropdown" sx={{ mt: 0.5, borderRadius: 2, overflow: 'hidden' }}>
+            <Box className="search-box" sx={{ p: 1.5, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <IconSearch />
+              <InputBase
+                inputRef={searchInputRef}
+                placeholder={searchPlaceholder}
+                fullWidth
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ fontSize: '0.875rem', fontFamily: 'Poppins, sans-serif' }}
+              />
+            </Box>
+            
+            <Box className="options-list" sx={{ maxHeight: 250, overflowY: 'auto' }}>
+              {filteredOptions.length === 0 ? (
+                <Box className="no-options" sx={{ p: 2, textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                  {searchTerm ? 'No matches found' : 'No options available'}
+                </Box>
+              ) : (
+                filteredOptions.map((option) => (
+                  <Box
+                    key={option.id}
+                    className={`option-item ${option.id === value ? 'selected' : ''}`}
+                    onClick={() => handleSelect(option)}
+                    sx={{
+                      p: '10px 16px',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      '&:hover': { bgcolor: '#f1f5f9', color: '#6366f1' },
+                      ...(option.id === value && { bgcolor: '#eef2ff', color: '#6366f1', fontWeight: 600 })
+                    }}
+                  >
+                    {option.name}
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Paper>
+        </Popper>
+      </Box>
+    </ClickAwayListener>
   );
 };
 

@@ -13,6 +13,7 @@ import {
   Paper,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   ButtonBase,
@@ -33,9 +34,9 @@ import "./Navbar.css";
 
 /* ── Static data ─────────────────────────────────── */
 const notifications = [
-  { id: 1, Icon: StoreRounded,       text: "New outlet registered",     time: "2m ago",  color: "#7d2ae8" },
-  { id: 2, Icon: PlaceRounded,       text: "Location data updated",     time: "15m ago", color: "#a855f7" },
-  { id: 3, Icon: AccountTreeRounded, text: "Division report generated", time: "1h ago",  color: "#7c3aed" },
+  { id: 1, Icon: StoreRounded, text: "New outlet registered", time: "2m ago", color: "#7d2ae8" },
+  { id: 2, Icon: PlaceRounded, text: "Location data updated", time: "15m ago", color: "#a855f7" },
+  { id: 3, Icon: AccountTreeRounded, text: "Division report generated", time: "1h ago", color: "#7c3aed" },
 ];
 
 /* ── Component ───────────────────────────────────── */
@@ -45,10 +46,10 @@ const Navbar = ({ title = "Dashboard" }) => {
 
   /* User state */
   const [user, setUser] = useState({
-    name:           localStorage.getItem("username")      || "Admin",
-    email:          localStorage.getItem("email")         || localStorage.getItem("userEmail") || "admin@company.com",
-    role:           localStorage.getItem("role")          || "Administrator",
-    profilePicture: localStorage.getItem("profilePicture")|| null,
+    name: localStorage.getItem("username") || "Admin",
+    email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
+    role: localStorage.getItem("role") || "Administrator",
+    profilePicture: localStorage.getItem("profilePicture") || null,
   });
 
   /* Clock */
@@ -62,17 +63,17 @@ const Navbar = ({ title = "Dashboard" }) => {
   const [search, setSearch] = useState("");
 
   /* Dropdowns */
-  const [notifOpen,  setNotifOpen]  = useState(false);
-  const [userOpen,   setUserOpen]   = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
 
   /* Profile updates */
   useEffect(() => {
     const handleStorageChange = () => {
       setUser({
-        name:           localStorage.getItem("username")       || "Admin",
-        email:          localStorage.getItem("email")          || localStorage.getItem("userEmail") || "admin@company.com",
-        role:           localStorage.getItem("role")           || "Administrator",
+        name: localStorage.getItem("username") || "Admin",
+        email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
+        role: localStorage.getItem("role") || "Administrator",
         profilePicture: localStorage.getItem("profilePicture") || null,
       });
     };
@@ -84,7 +85,7 @@ const Navbar = ({ title = "Dashboard" }) => {
   useEffect(() => {
     const close = (e) => {
       if (!e.target.closest(".navbar-notif-wrap")) setNotifOpen(false);
-      if (!e.target.closest(".navbar-user-wrap"))  setUserOpen(false);
+      if (!e.target.closest(".navbar-user-wrap")) setUserOpen(false);
     };
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
@@ -262,28 +263,28 @@ const Navbar = ({ title = "Dashboard" }) => {
 
                 {/* Menu items */}
                 <List component="ul" className="user-dropdown-menu" disablePadding>
-                  <ListItem
-                    component="li"
-                    onClick={handleOpenProfile}
-                    disablePadding
-                    sx={{ cursor: "pointer", borderRadius: "12px" }}
-                  >
-                    <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
-                      <PersonRounded sx={{ fontSize: 18 }} />
-                    </ListItemIcon>
-                    <ListItemText primary="My Profile" primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} />
+                  <ListItem disablePadding sx={{ borderRadius: "12px", overflow: "hidden", mb: 0.5 }}>
+                    <ListItemButton onClick={handleOpenProfile} sx={{ py: 1 }}>
+                      <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
+                        <PersonRounded sx={{ fontSize: 18 }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="My Profile" 
+                        primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} 
+                      />
+                    </ListItemButton>
                   </ListItem>
 
-                  <ListItem
-                    component="li"
-                    onClick={() => setUserOpen(false)}
-                    disablePadding
-                    sx={{ cursor: "pointer", borderRadius: "12px" }}
-                  >
-                    <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
-                      <SettingsRounded sx={{ fontSize: 18 }} />
-                    </ListItemIcon>
-                    <ListItemText primary="Settings" primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} />
+                  <ListItem disablePadding sx={{ borderRadius: "12px", overflow: "hidden" }}>
+                    <ListItemButton onClick={() => setUserOpen(false)} sx={{ py: 1 }}>
+                      <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
+                        <SettingsRounded sx={{ fontSize: 18 }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Settings" 
+                        primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} 
+                      />
+                    </ListItemButton>
                   </ListItem>
                 </List>
 

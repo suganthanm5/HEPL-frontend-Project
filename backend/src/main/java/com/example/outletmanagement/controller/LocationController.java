@@ -30,7 +30,7 @@ public class LocationController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllLocations(
             @RequestParam(required = false) String keyword,
@@ -45,7 +45,7 @@ public class LocationController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getLocationById(@PathVariable Long id) {
         LocationResponse response = locationService.getLocationById(id);
@@ -56,7 +56,7 @@ public class LocationController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateLocation(@PathVariable Long id, @Valid @RequestBody LocationRequest request) {
         LocationResponse response = locationService.updateLocation(id, request);

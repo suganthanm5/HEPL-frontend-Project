@@ -11,6 +11,11 @@ export const userService = {
     return response.data;
   },
 
+  updateUser: async (id, userData) => {
+    const response = await apiClient.put(`/api/users/${id}`, userData);
+    return response.data;
+  },
+  
   updateUserRole: async (id, role) => {
     const response = await apiClient.patch(`/api/users/${id}/role?role=${role}`);
     return response.data;

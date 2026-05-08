@@ -88,4 +88,9 @@ public class OutletStockServiceImpl implements OutletStockService {
         }
         return stockTransactionRepository.findAll();
     }
+
+    @Override
+    public List<StockTransaction> getFilteredTransactions(Long outletId, Long productId, StockTransaction.TransactionType type) {
+        return stockTransactionRepository.findFilteredTransactions(outletId, productId, type);
+    }
 }

@@ -17,8 +17,12 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllOrders() {
-        List<Order> response = orderService.getAllOrders();
+    public ResponseEntity<ApiResponse> getAllOrders(
+            @RequestParam(required = false) Order.OrderStatus status,
+            @RequestParam(required = false) Long outletId,
+            @RequestParam(required = false) String orderNo
+    ) {
+        List<Order> response = orderService.getFilteredOrders(status, outletId, orderNo);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Orders fetched successfully")
@@ -47,8 +51,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse> createOrder(@RequestBody Order order) {
-        Order response = orderService.createOrder(order);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    public ResponseEntity<ApiResponse> createOrder(@jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.OrderRequest request) {
+        Order response = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Order created successfully")

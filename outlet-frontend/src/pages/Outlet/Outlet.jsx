@@ -58,12 +58,12 @@ import PersonIcon from "@mui/icons-material/Person";
 /* ── MUI Theme ── */
 const theme = createTheme({
   palette: {
-    primary:   { main: "#6366f1" },
+    primary: { main: "#6366f1" },
     secondary: { main: "#8b5cf6" },
-    error:     { main: "#ef4444" },
-    info:      { main: "#06b6d4" },
-    success:   { main: "#10b981" },
-    warning:   { main: "#f59e0b" },
+    error: { main: "#ef4444" },
+    info: { main: "#06b6d4" },
+    success: { main: "#10b981" },
+    warning: { main: "#f59e0b" },
   },
   typography: { fontFamily: "inherit" },
   components: {
@@ -115,16 +115,16 @@ const StyledTableContainer = styled(TableContainer)(() => ({
 }));
 
 /* ── Constants ── */
-const OUTLET_TYPES = ["Retail","Wholesale","Franchise","Online","Distribution","Warehouse","Corporate","Branch Office"];
+const OUTLET_TYPES = ["Retail", "Wholesale", "Franchise", "Online", "Distribution", "Warehouse", "Corporate", "Branch Office"];
 
 const TYPE_COLOR = {
-  Retail:          { bg: "#eef2ff", color: "#6366f1" },
-  Wholesale:       { bg: "#ecfdf5", color: "#10b981" },
-  Franchise:       { bg: "#fffbeb", color: "#f59e0b" },
-  Online:          { bg: "#ecfeff", color: "#06b6d4" },
-  Distribution:    { bg: "#fdf4ff", color: "#a855f7" },
-  Warehouse:       { bg: "#fff7ed", color: "#f97316" },
-  Corporate:       { bg: "#f0fdf4", color: "#22c55e" },
+  Retail: { bg: "#eef2ff", color: "#6366f1" },
+  Wholesale: { bg: "#ecfdf5", color: "#10b981" },
+  Franchise: { bg: "#fffbeb", color: "#f59e0b" },
+  Online: { bg: "#ecfeff", color: "#06b6d4" },
+  Distribution: { bg: "#fdf4ff", color: "#a855f7" },
+  Warehouse: { bg: "#fff7ed", color: "#f97316" },
+  Corporate: { bg: "#f0fdf4", color: "#22c55e" },
   "Branch Office": { bg: "#fef2f2", color: "#ef4444" },
 };
 
@@ -165,25 +165,27 @@ const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
 );
 
 export default function Outlet() {
-  const [outlets,           setOutlets]           = useState([]);
-  const [locations,         setLocations]         = useState([]);
-  const [divisions,         setDivisions]         = useState([]);
-  const [loading,           setLoading]           = useState(false);
-  const [error,             setError]             = useState("");
-  const [search,            setSearch]            = useState("");
-  const [pageSize,          setPageSize]          = useState(10);
-  const [page,              setPage]              = useState(1);
-  const [view,              setView]              = useState("table");
-  const [addModal,          setAddModal]          = useState(false);
-  const [editModal,         setEditModal]         = useState(null);
-  const [deleteModal,       setDeleteModal]       = useState(null);
-  const [form,              setForm]              = useState(EMPTY_FORM);
-  const [saving,            setSaving]            = useState(false);
+  const [outlets, setOutlets] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [divisions, setDivisions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
+  const [view, setView] = useState("table");
+  const [addModal, setAddModal] = useState(false);
+  const [editModal, setEditModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
   const [selectedDivisions, setSelectedDivisions] = useState([]);
   const [availableProducts, setAvailableProducts] = useState([]);
-  const [toast,             setToast]             = useState(null);
-  const [locationFilter,    setLocationFilter]    = useState("");
-  const [typeFilter,        setTypeFilter]        = useState("");
+  const [toast, setToast] = useState(null);
+  const [locationFilter, setLocationFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [divisionFilter, setDivisionFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
 
   const showToast = (message, type = "error") => setToast({ message, type });
 
@@ -191,7 +193,7 @@ export default function Outlet() {
   const handleOutletNameChange = (e) => {
     const value = e.target.value;
     if (value.startsWith(" ")) { showToast("Outlet name cannot start with a space.", "warning"); return; }
-    if (/\d/.test(value))       { showToast("Outlet name cannot contain numbers.", "warning"); return; }
+    if (/\d/.test(value)) { showToast("Outlet name cannot contain numbers.", "warning"); return; }
     if (/[\u0900-\u097F]/.test(value)) { showToast("Please enter outlet name in English only.", "warning"); return; }
     setForm((f) => ({ ...f, outletName: value }));
   };
@@ -199,7 +201,7 @@ export default function Outlet() {
   const handleOwnerNameChange = (e) => {
     const value = e.target.value;
     if (value.startsWith(" ")) { showToast("Owner name cannot start with a space.", "warning"); return; }
-    if (/\d/.test(value))       { showToast("Owner name cannot contain numbers.", "warning"); return; }
+    if (/\d/.test(value)) { showToast("Owner name cannot contain numbers.", "warning"); return; }
     if (/[\u0900-\u097F]/.test(value)) { showToast("Please enter owner name in English only.", "warning"); return; }
     setForm((f) => ({ ...f, ownerName: value }));
   };
@@ -211,11 +213,11 @@ export default function Outlet() {
   };
 
   const validateForm = () => {
-    if (!form.outletName.trim())  { showToast("Outlet name is required.", "error"); return false; }
-    if (!form.locationId)         { showToast("Location is required.", "error"); return false; }
-    if (!form.outletType)         { showToast("Outlet type is required.", "error"); return false; }
-    if (!form.ownerName.trim())   { showToast("Owner name is required.", "error"); return false; }
-    if (!form.address.trim())     { showToast("Address is required.", "error"); return false; }
+    if (!form.outletName.trim()) { showToast("Outlet name is required.", "error"); return false; }
+    if (!form.locationId) { showToast("Location is required.", "error"); return false; }
+    if (!form.outletType) { showToast("Outlet type is required.", "error"); return false; }
+    if (!form.ownerName.trim()) { showToast("Owner name is required.", "error"); return false; }
+    if (!form.address.trim()) { showToast("Address is required.", "error"); return false; }
     if (!Object.values(form.mappings).some((pids) => pids.length > 0)) {
       showToast("At least one division and product must be selected.", "error"); return false;
     }
@@ -230,10 +232,10 @@ export default function Outlet() {
 
   const extractList = (res) => {
     const data = res?.data;
-    if (Array.isArray(data))               return data;
-    if (Array.isArray(data?.data))         return data.data;
-    if (Array.isArray(data?.data?.content))return data.data.content;
-    if (Array.isArray(data?.content))      return data.content;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.content)) return data.data.content;
+    if (Array.isArray(data?.content)) return data.content;
     return [];
   };
 
@@ -247,11 +249,19 @@ export default function Outlet() {
         getDivisions(0, 1000, "", signal),
       ]);
 
-      if (lRes.status === "fulfilled") setLocations(extractList(lRes.value));
-      else setLocations([]);
+      if (lRes.status === "fulfilled") {
+        const list = extractList(lRes.value);
+        setLocations(list.map(l => ({ ...l, name: l.name || l.locationName })));
+      } else {
+        setLocations([]);
+      }
 
-      if (dRes.status === "fulfilled") setDivisions(extractList(dRes.value));
-      else setDivisions([]);
+      if (dRes.status === "fulfilled") {
+        const list = extractList(dRes.value);
+        setDivisions(list.map(d => ({ ...d, name: d.name || d.divisionName })));
+      } else {
+        setDivisions([]);
+      }
 
       if (oRes.status === "fulfilled") {
         const httpStatus = oRes.value?.data?.httpStatus;
@@ -264,11 +274,11 @@ export default function Outlet() {
           } else if (Array.isArray(o.mappings) && o.mappings.length > 0) {
             const divisionMap = new Map();
             o.mappings.forEach((mapping) => {
-              const divId   = mapping.divisionId   || mapping.division?.id;
+              const divId = mapping.divisionId || mapping.division?.id;
               const divName = mapping.divisionName || mapping.division?.name;
               if (divId) {
                 if (!divisionMap.has(divId)) divisionMap.set(divId, { id: divId, name: divName, products: [] });
-                const prodId   = mapping.productId   || mapping.product?.id;
+                const prodId = mapping.productId || mapping.product?.id;
                 const prodName = mapping.productName || mapping.product?.name;
                 const prodCode = mapping.productCode || mapping.product?.productCode;
                 if (prodId) divisionMap.get(divId).products.push({ id: prodId, name: prodName, productCode: prodCode });
@@ -287,14 +297,14 @@ export default function Outlet() {
 
           return {
             ...o,
-            locationName:  o.locationName || o.location?.name || null,
-            divisions:     divObjs,
-            divisionIds:   divObjs.map((d) => d.id).filter(Boolean),
+            locationName: o.locationName || o.location?.name || null,
+            divisions: divObjs,
+            divisionIds: divObjs.map((d) => d.id).filter(Boolean),
             divisionNames: divObjs.map((d) => d.name).filter(Boolean),
-            productNames:  allProducts.map((p) => p.name).filter(Boolean),
+            productNames: allProducts.map((p) => p.name).filter(Boolean),
             allProducts,
             ownerName: o.ownerName ?? null,
-            address:   o.address   ?? null,
+            address: o.address ?? null,
           };
         });
         setOutlets(enriched);
@@ -418,6 +428,22 @@ export default function Outlet() {
     } finally { setSaving(false); }
   };
 
+  const allFilterProducts = useMemo(() => {
+    const list = divisions.flatMap((d) =>
+      (d.products || []).map((p) => ({ ...p, name: `${p.name} (${d.name})` }))
+    );
+    // Remove duplicates by id
+    const unique = [];
+    const seen = new Set();
+    list.forEach(p => {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        unique.push(p);
+      }
+    });
+    return unique;
+  }, [divisions]);
+
   const handleDelete = async () => {
     setSaving(true);
     try {
@@ -435,21 +461,23 @@ export default function Outlet() {
       [o.outletName, o.outletType, o.locationName, o.location, o.ownerName]
         .some((v) => v?.toLowerCase().includes(search.toLowerCase()))
     );
-    if (locationFilter) result = result.filter((o) => o.locationId == locationFilter || o.locationName?.toLowerCase().includes(locationFilter.toLowerCase()));
-    if (typeFilter)     result = result.filter((o) => o.outletType === typeFilter);
+    if (locationFilter) result = result.filter((o) => String(o.locationId) === String(locationFilter) || o.locationName?.toLowerCase().includes(locationFilter.toLowerCase()));
+    if (typeFilter) result = result.filter((o) => o.outletType === typeFilter);
+    if (divisionFilter) result = result.filter((o) => (o.divisionIds || []).some(id => String(id) === String(divisionFilter)));
+    if (productFilter) result = result.filter((o) => (o.allProducts || []).some(p => String(p.id) === String(productFilter)));
     return result;
-  }, [outlets, search, locationFilter, typeFilter]);
+  }, [outlets, search, locationFilter, typeFilter, divisionFilter, productFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage   = Math.min(page, totalPages);
-  const paginated  = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const start      = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const end        = Math.min(safePage * pageSize, filtered.length);
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const start = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const end = Math.min(safePage * pageSize, filtered.length);
 
   /* ── Form Fields ── */
   const renderFormFields = () => (
-    <Stack spacing={2} sx={{ pt: 1 }}>
-      <Grid container spacing={2}>
+    <Stack spacing={2} sx={{ pt: 1, overflow: "visible" }}>
+      <Grid container spacing={2} sx={{ overflow: "visible" }}>
         <Grid item xs={6}>
           <TextField fullWidth size="small" label="Outlet Name" required
             name="outletName" value={form.outletName} onChange={handleOutletNameChange} placeholder="e.g. Main Branch" />
@@ -460,7 +488,7 @@ export default function Outlet() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ overflow: "visible" }}>
         <Grid item xs={6}>
           <Box>
             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>
@@ -482,13 +510,19 @@ export default function Outlet() {
           </Box>
         </Grid>
         <Grid item xs={6}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Outlet Type *</InputLabel>
-            <Select label="Outlet Type *" name="outletType" value={form.outletType} onChange={handleChange}>
-              <MenuItem value="">— Select type —</MenuItem>
-              {OUTLET_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <Box>
+            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>
+              Outlet Type <span style={{ color: "#ef4444" }}>*</span>
+            </Typography>
+            <SearchableSelect
+              options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
+              value={form.outletType}
+              onChange={(id) => setForm((f) => ({ ...f, outletType: id }))}
+              placeholder="— Select type —"
+              searchPlaceholder="Search types..."
+              required
+            />
+          </Box>
         </Grid>
       </Grid>
 
@@ -502,7 +536,7 @@ export default function Outlet() {
           <span style={{ fontWeight: 400, marginLeft: 6, color: "#94a3b8" }}>(select division then its products)</span>
         </Typography>
 
-        <Grid container spacing={2} sx={{ mb: 1.5 }}>
+        <Grid container spacing={2} sx={{ mb: 1.5, overflow: "visible" }}>
           <Grid item xs={6}>
             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>Select Division</Typography>
             <SearchableSelect
@@ -586,10 +620,10 @@ export default function Outlet() {
 
         {/* ── Stats ── */}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-          <StatCard label="Total Outlets"  value={loading ? "—" : outlets.length}  color="#6366f1" bg="#eef2ff" icon={<HomeWorkIcon />} />
-          <StatCard label="Filtered"       value={loading ? "—" : filtered.length} color="#10b981" bg="#ecfdf5" icon={<SearchIcon />} />
+          <StatCard label="Total Outlets" value={loading ? "—" : outlets.length} color="#6366f1" bg="#eef2ff" icon={<HomeWorkIcon />} />
+          <StatCard label="Filtered" value={loading ? "—" : filtered.length} color="#10b981" bg="#ecfdf5" icon={<SearchIcon />} />
           <StatCard label="Locations Used" value={loading ? "—" : [...new Set(outlets.map((o) => o.locationName).filter(Boolean))].length} color="#f59e0b" bg="#fffbeb" icon={<LocationOnIcon />} />
-          <StatCard label="Types"          value={loading ? "—" : [...new Set(outlets.map((o) => o.outletType).filter(Boolean))].length} color="#06b6d4" bg="#ecfeff" icon={<GridViewIcon />} />
+          <StatCard label="Types" value={loading ? "—" : [...new Set(outlets.map((o) => o.outletType).filter(Boolean))].length} color="#06b6d4" bg="#ecfeff" icon={<GridViewIcon />} />
         </Stack>
 
         {/* ── Error ── */}
@@ -615,29 +649,51 @@ export default function Outlet() {
             />
 
             {/* Filters */}
-            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>All Locations</InputLabel>
-                <Select label="All Locations" value={locationFilter}
-                  onChange={(e) => { setLocationFilter(e.target.value); setPage(1); }}>
-                  <MenuItem value="">All Locations</MenuItem>
-                  {locations.map((l) => <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>)}
-                </Select>
-              </FormControl>
+            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ flex: 1 }}>
+              <Box sx={{ minWidth: 160 }}>
+                <SearchableSelect
+                  options={locations}
+                  value={locationFilter}
+                  onChange={(id) => { setLocationFilter(id); setPage(1); }}
+                  placeholder="All Locations"
+                  searchPlaceholder="Search locations..."
+                />
+              </Box>
 
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>All Types</InputLabel>
-                <Select label="All Types" value={typeFilter}
-                  onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
-                  <MenuItem value="">All Types</MenuItem>
-                  {OUTLET_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-                </Select>
-              </FormControl>
+              <Box sx={{ minWidth: 160 }}>
+                <SearchableSelect
+                  options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
+                  value={typeFilter}
+                  onChange={(id) => { setTypeFilter(id); setPage(1); }}
+                  placeholder="All Types"
+                  searchPlaceholder="Search types..."
+                />
+              </Box>
 
-              {(locationFilter || typeFilter || search) && (
+              <Box sx={{ minWidth: 160 }}>
+                <SearchableSelect
+                  options={divisions}
+                  value={divisionFilter}
+                  onChange={(id) => { setDivisionFilter(id); setPage(1); }}
+                  placeholder="All Divisions"
+                  searchPlaceholder="Search divisions..."
+                />
+              </Box>
+
+              <Box sx={{ minWidth: 160 }}>
+                <SearchableSelect
+                  options={allFilterProducts}
+                  value={productFilter}
+                  onChange={(id) => { setProductFilter(id); setPage(1); }}
+                  placeholder="All Products"
+                  searchPlaceholder="Search products..."
+                />
+              </Box>
+
+              {(locationFilter || typeFilter || divisionFilter || productFilter || search) && (
                 <Button size="small" variant="outlined" color="inherit"
-                  sx={{ color: "#64748b", borderColor: "#e2e8f0", height: 40 }}
-                  onClick={() => { setLocationFilter(""); setTypeFilter(""); setSearch(""); setPage(1); }}>
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0", height: 42, borderRadius: 2, px: 2 }}
+                  onClick={() => { setLocationFilter(""); setTypeFilter(""); setDivisionFilter(""); setProductFilter(""); setSearch(""); setPage(1); }}>
                   Clear
                 </Button>
               )}
@@ -670,14 +726,14 @@ export default function Outlet() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {["#","Outlet Name","Code","Type","Location","Divisions","Products","Owner Name","Address","Actions"].map((h) => (
+                  {["#", "Outlet Name", "Code", "Type", "Location", "Divisions", "Products", "Owner Name", "Address", "Actions"].map((h) => (
                     <TableCell key={h}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
-                  [1,2,3,4,5].map((i) => (
+                  [1, 2, 3, 4, 5].map((i) => (
                     <TableRow key={i}>
                       {Array(10).fill(0).map((_, j) => (
                         <TableCell key={j}><Skeleton variant="text" width={j === 1 ? 140 : 80} /></TableCell>
@@ -791,7 +847,7 @@ export default function Outlet() {
         {view === "card" && (
           <Grid container spacing={2}>
             {loading ? (
-              [1,2,3,4,5,6].map((i) => (
+              [1, 2, 3, 4, 5, 6].map((i) => (
                 <Grid item xs={12} sm={6} md={4} key={i}>
                   <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
                     <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1 }} />
@@ -886,10 +942,10 @@ export default function Outlet() {
         )}
 
         {/* ── Add Modal ── */}
-        <Dialog open={addModal} onClose={() => { setAddModal(false); setForm(EMPTY_FORM); }} maxWidth="sm" fullWidth>
+        <Dialog open={addModal} onClose={() => { setAddModal(false); setForm(EMPTY_FORM); }} maxWidth="sm" fullWidth PaperProps={{ sx: { overflow: "visible !important" } }}>
           <ModalIconHeader icon={<AddIcon />} title="Add Outlet" subtitle="Register a new outlet" accent="#6366f1"
             onClose={() => { setAddModal(false); setForm(EMPTY_FORM); }} />
-          <DialogContent sx={{ pt: 2 }}>{renderFormFields()}</DialogContent>
+          <DialogContent sx={{ pt: 2, pb: 12, overflow: "visible !important", minHeight: "550px" }}>{renderFormFields()}</DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
             <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
               onClick={() => { setAddModal(false); setForm(EMPTY_FORM); }}>Cancel</Button>
@@ -901,10 +957,10 @@ export default function Outlet() {
         </Dialog>
 
         {/* ── Edit Modal ── */}
-        <Dialog open={!!editModal} onClose={() => { setEditModal(null); setForm(EMPTY_FORM); }} maxWidth="sm" fullWidth>
+        <Dialog open={!!editModal} onClose={() => { setEditModal(null); setForm(EMPTY_FORM); }} maxWidth="sm" fullWidth PaperProps={{ sx: { overflow: "visible !important" } }}>
           <ModalIconHeader icon={<EditIcon />} title="Edit Outlet" subtitle={editModal ? `Editing: ${editModal.outletName}` : ""} accent="#8b5cf6"
             onClose={() => { setEditModal(null); setForm(EMPTY_FORM); }} />
-          <DialogContent sx={{ pt: 2 }}>{renderFormFields()}</DialogContent>
+          <DialogContent sx={{ pt: 2, pb: 12, overflow: "visible !important", minHeight: "550px" }}>{renderFormFields()}</DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
             <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
               onClick={() => { setEditModal(null); setForm(EMPTY_FORM); }}>Cancel</Button>

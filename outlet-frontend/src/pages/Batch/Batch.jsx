@@ -5,13 +5,14 @@ import {
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
-  CircularProgress, Snackbar, Alert,
+  CircularProgress, Snackbar, Alert, IconButton, Paper,
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, EditRounded,
   DeleteRounded, InventoryRounded, CheckRounded,
-  WarningRounded,
+  WarningRounded, CloseRounded,
 } from "@mui/icons-material";
+import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { batchService } from "../../services/batchService";
 import { productService } from "../../services/productService";
 import "./Batch.css";
@@ -41,6 +42,7 @@ const Batch = () => {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
+  const [filters,  setFilters]  = useState({ productId: "", status: "" });
   const [dialog,   setDialog]   = useState({ open: false, mode: "add", data: emptyForm });
   const [delDialog, setDelDialog] = useState({ open: false, id: null });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
@@ -49,21 +51,27 @@ const Batch = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const activeFilters = {};
+      if (filters.productId) activeFilters.productId = filters.productId;
+      if (filters.status) activeFilters.status = filters.status;
+
       const [bRes, pRes] = await Promise.all([
-        batchService.getAll(),
-        productService.getAll ? productService.getAll() : { data: [] },
+        batchService.getAll(activeFilters),
+        productService.getAll ? productService.getAll(0, 1000) : { data: [] },
       ]);
-      const bData = bRes.data || [];
-      const pData = pRes.data || [];
+
+      const bData = bRes.data?.data || bRes.data || [];
+      const pData = pRes.data?.data || pRes.data || [];
       
       setBatches(Array.isArray(bData) ? bData : bData?.content || []);
       setProducts(Array.isArray(pData) ? pData : pData?.content || []);
-    } catch {
+    } catch (err) {
+      console.error("Batch load error:", err);
       setBatches([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -76,19 +84,33 @@ const Batch = () => {
 
   /* ── Save ── */
   const handleSave = async () => {
+    // Frontend Validation
+    const d = dialog.data;
+    if (!d.productId || !d.batchNo || !d.manufactureDate || !d.expiryDate || 
+        !d.quantity || !d.purchasePrice || !d.sellingPrice) {
+      return toast("All fields are required. Please check your inputs.", "warning");
+    }
+
     try {
       if (dialog.mode === "add") {
         await batchService.create(dialog.data);
-        toast("Batch created");
+        toast("Batch created successfully");
       } else {
         await batchService.update(dialog.data.id, dialog.data);
-        toast("Batch updated");
+        toast("Batch updated successfully");
       }
       setDialog({ open: false, mode: "add", data: emptyForm });
       load();
     } catch (err) { 
-      const msg = err.response?.data?.message || "Operation failed";
-      toast(msg, "error"); 
+      // Handle backend validation errors
+      if (err.response?.status === 400 && err.response?.data?.data) {
+        const errors = err.response.data.data;
+        const firstError = Object.values(errors)[0];
+        toast(firstError, "error");
+      } else {
+        const msg = err.response?.data?.message || "Operation failed";
+        toast(msg, "error");
+      }
     }
   };
 
@@ -141,7 +163,33 @@ const Batch = () => {
       {/* Table */}
       <Box className="table-card">
         <Box className="table-toolbar">
-          <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>All Batches</Typography>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
+            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>All Batches</Typography>
+            
+            {/* Product Filter */}
+            <Select 
+              size="small" displayEmpty value={filters.productId} 
+              onChange={(e) => setFilters(f => ({ ...f, productId: e.target.value }))}
+              sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+            >
+              <MenuItem value="">All Products</MenuItem>
+              {products.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+            </Select>
+
+            {/* Status Filter */}
+            <Select 
+              size="small" displayEmpty value={filters.status} 
+              onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
+              sx={{ minWidth: 120, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+            >
+              <MenuItem value="">All Statuses</MenuItem>
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="INACTIVE">Inactive</MenuItem>
+            </Select>
+
+            <ButtonBase onClick={() => setFilters({ productId: "", status: "" })} sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
+          </Box>
+
           <Box className="table-search">
             <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
             <InputBase placeholder="Search batches…" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -149,12 +197,12 @@ const Batch = () => {
           </Box>
         </Box>
 
-        <TableContainer>
-          <Table>
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
+          <Table size="small">
             <TableHead>
-              <TableRow sx={{ background: "#faf5ff" }}>
+              <TableRow sx={{ background: "#fafafa" }}>
                 {["Batch No", "Product", "Qty", "Expiry Date", "Purchase ₹", "Selling ₹", "Status", "Actions"].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>{h}</TableCell>
+                  <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -167,7 +215,7 @@ const Batch = () => {
                 filtered.map((b) => {
                   const ec = expiryClass(b.expiryDate);
                   return (
-                    <TableRow key={b.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
+                    <TableRow key={b.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
                       <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>{b.batchNo}</TableCell>
                       <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{b.productName || productName(b.productId)}</TableCell>
                       <TableCell>
@@ -205,7 +253,12 @@ const Batch = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialog.open} onClose={() => setDialog({ open: false, mode: "add", data: emptyForm })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle className="user-dialog-title">{dialog.mode === "add" ? "Add Batch" : "Edit Batch"}</DialogTitle>
+        <DialogTitle className="user-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {dialog.mode === "add" ? "Add Batch" : "Edit Batch"}
+          <IconButton onClick={() => setDialog({ open: false, mode: "add", data: emptyForm })} size="small" sx={{ color: "#64748b" }}>
+            <CloseRounded />
+          </IconButton>
+        </DialogTitle>
         <DialogContent sx={{ pt: 3, pb: 1 }}>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             {[
@@ -217,8 +270,8 @@ const Batch = () => {
               { key: "sellingPrice",  label: "Selling Price ₹",  type: "number" },
             ].map(({ key, label, type }) => (
               <Box key={key}>
-                <Typography className="dialog-field-label">{label}</Typography>
-                <TextField fullWidth size="small" type={type}
+                <Typography className="dialog-field-label">{label} *</Typography>
+                <TextField fullWidth size="small" type={type} required
                   InputLabelProps={type === "date" ? { shrink: true } : {}}
                   value={dialog.data[key]}
                   onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, [key]: e.target.value } }))}
@@ -226,18 +279,18 @@ const Batch = () => {
               </Box>
             ))}
             <Box>
-              <Typography className="dialog-field-label">Product</Typography>
-              <FormControl fullWidth size="small">
-                <Select value={dialog.data.productId}
-                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, productId: e.target.value } }))}
-                  sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
-                  {products.map((p) => <MenuItem key={p.id} value={p.id} sx={{ fontFamily: "Poppins, sans-serif" }}>{p.name}</MenuItem>)}
-                </Select>
-              </FormControl>
+              <Typography className="dialog-field-label">Product *</Typography>
+              <SearchableSelect
+                options={products}
+                value={dialog.data.productId}
+                onChange={(id) => setDialog((d) => ({ ...d, data: { ...d.data, productId: id } }))}
+                placeholder="— Select Product —"
+                searchPlaceholder="Search products..."
+              />
             </Box>
             <Box>
-              <Typography className="dialog-field-label">Status</Typography>
-              <FormControl fullWidth size="small">
+              <Typography className="dialog-field-label">Status *</Typography>
+              <FormControl fullWidth size="small" required>
                 <Select value={dialog.data.status}
                   onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, status: e.target.value } }))}
                   sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
@@ -260,7 +313,12 @@ const Batch = () => {
 
       {/* Delete Dialog */}
       <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Confirm Delete
+          <IconButton onClick={() => setDelDialog({ open: false, id: null })} size="small" sx={{ color: "#64748b" }}>
+            <CloseRounded />
+          </IconButton>
+        </DialogTitle>
         <DialogContent><Typography sx={{ fontFamily: "Poppins, sans-serif", color: "#64748b", fontSize: "0.9rem" }}>Delete this batch? This cannot be undone.</Typography></DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <ButtonBase onClick={() => setDelDialog({ open: false, id: null })} disableRipple sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>Cancel</ButtonBase>

@@ -16,55 +16,63 @@ import java.util.List;
 public class ProductBatchController {
     private final ProductBatchService productBatchService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllBatches() {
-        List<ProductBatch> response = productBatchService.getAllBatches();
+    public ResponseEntity<ApiResponse> getAllBatches(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) ProductBatch.Status status) {
+        
+        List<ProductBatch> batches;
+        if (productId != null || status != null) {
+            batches = productBatchService.getFilteredBatches(productId, status);
+        } else {
+            batches = productBatchService.getAllBatches();
+        }
+        
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Batches fetched successfully")
-                .data(response)
+                .data(batches)
                 .build());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping("/product/{productId}")
     public ResponseEntity<ApiResponse> getBatchesByProduct(@PathVariable Long productId) {
-        List<ProductBatch> response = productBatchService.getBatchesByProduct(productId);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Batches fetched successfully")
-                .data(response)
+                .data(productBatchService.getBatchesByProduct(productId))
                 .build());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getBatchById(@PathVariable Long id) {
-        ProductBatch response = productBatchService.getBatchById(id);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Batch fetched successfully")
-                .data(response)
+                .data(productBatchService.getBatchById(id))
                 .build());
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse> createBatch(@RequestBody ProductBatch batch) {
-        ProductBatch response = productBatchService.createBatch(batch);
+    public ResponseEntity<ApiResponse> createBatch(@jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.ProductBatchRequest batch) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Batch created successfully")
-                .data(response)
+                .data(productBatchService.createBatch(batch))
                 .build());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse> updateBatch(@PathVariable Long id, @RequestBody ProductBatch batch) {
-        ProductBatch response = productBatchService.updateBatch(id, batch);
+    public ResponseEntity<ApiResponse> updateBatch(@PathVariable Long id, @jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.ProductBatchRequest batch) {
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Batch updated successfully")
-                .data(response)
+                .data(productBatchService.updateBatch(id, batch))
                 .build());
     }
 

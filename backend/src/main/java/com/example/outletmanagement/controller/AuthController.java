@@ -5,6 +5,7 @@ import com.example.outletmanagement.payload.dto.request.LoginRequest;
 import com.example.outletmanagement.payload.dto.request.RegisterRequest;
 import com.example.outletmanagement.payload.dto.response.AuthResponse;
 import com.example.outletmanagement.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         
         if (response.getToken() == null) {
@@ -36,7 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())

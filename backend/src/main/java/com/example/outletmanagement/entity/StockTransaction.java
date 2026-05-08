@@ -1,12 +1,8 @@
 package com.example.outletmanagement.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "stock_transactions")
@@ -21,9 +17,6 @@ public class StockTransaction extends BaseAuditEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private TransactionType transactionType;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
@@ -36,16 +29,21 @@ public class StockTransaction extends BaseAuditEntity {
     @JoinColumn(name = "outlet_id")
     private Outlet outlet;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(nullable = false)
     private Integer quantity;
 
-    private Long referenceId; // order_id or other reference
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType transactionType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id", nullable = false)
-    private User user;
+    private String referenceNo; // Order ID, Batch No, etc.
+    private String remarks;
 
     public enum TransactionType {
-        IN, OUT, TRANSFER
+        IN, OUT, TRANSFER, TRANSFER_IN, TRANSFER_OUT, RETURN, ADJUSTMENT
     }
 }

@@ -3,7 +3,7 @@ package com.example.outletmanagement.service.impl;
 import com.example.outletmanagement.entity.User;
 import com.example.outletmanagement.entity.User.Role;
 import com.example.outletmanagement.payload.dto.request.RegisterRequest;
-import com.example.outletmanagement.payload.dto.request.UserCreateRequest;
+import com.example.outletmanagement.payload.dto.request.UserCreationDto;
 import com.example.outletmanagement.payload.dto.response.UserResponse;
 import com.example.outletmanagement.repository.UserRepository;
 import com.example.outletmanagement.service.UserService;
@@ -21,7 +21,10 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public UserResponse createUser(UserCreateRequest request) {
+    public UserResponse createUser(UserCreationDto request) {
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new RuntimeException("Password is required for new users");
+        }
         try {
             if (userRepository.existsByUsernameAll(request.getUsername()) > 0) {
                 throw new RuntimeException("Username '" + request.getUsername() + "' is already taken (even if deleted). Please use a different one.");
@@ -57,6 +60,29 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return mapToResponse(user);
+    }
+
+    @Override
+    public UserResponse updateUser(Long id, UserCreationDto request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        user.setName(request.getName() != null ? request.getName().trim() : user.getName());
+        user.setEmail(request.getEmail() != null ? request.getEmail().trim() : user.getEmail());
+        user.setUsername(request.getUsername() != null ? request.getUsername().trim() : user.getUsername());
+        
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
+        }
+        
+        if (request.getRole() != null) {
+            user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+        }
+        
+        user.setUpdatedAt(new java.util.Date());
+        
+        User updatedUser = userRepository.save(user);
+        return mapToResponse(updatedUser);
     }
 
     @Override

@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 export const ENDPOINTS = {
-  login:     '/api/v1/auth/login',
-  register:  '/api/v1/auth/register',
-  validate:  '/api/v1/auth/validate',
+  login: '/api/v1/auth/login',
+  register: '/api/v1/auth/register',
+  validate: '/api/v1/auth/validate',
   divisions: '/api/divisions',
   locations: '/api/locations',
-  outlets:   '/api/outlets',
-  products:  '/api/products'
+  outlets: '/api/outlets',
+  products: '/api/products'
 };
 
 const API = axios.create({

@@ -57,7 +57,7 @@ public class DivisionController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateDivision(@PathVariable Long id, @Valid @RequestBody DivisionRequest request) {
         DivisionResponse response = divisionService.updateDivision(id, request);

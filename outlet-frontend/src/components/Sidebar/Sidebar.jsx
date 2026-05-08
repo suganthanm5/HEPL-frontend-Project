@@ -30,15 +30,15 @@ import "./Sidebar.css";
 
 /* All nav items with role visibility */
 const ALL_NAV = [
-  { to: "/dashboard",       label: "Dashboard",       icon: <DashboardRounded />,    roles: ["ADMIN", "MANAGER", "USER"] },
-  { to: "/users",           label: "User Management",  icon: <PeopleRounded />,       roles: ["ADMIN"] },
-  { to: "/division",        label: "Division",          icon: <AccountTreeRounded />,  roles: ["ADMIN"] },
-  { to: "/location",        label: "Location",          icon: <PlaceRounded />,        roles: ["ADMIN"] },
-  { to: "/outlet",          label: "Outlet",             icon: <StoreRounded />,        roles: ["ADMIN", "MANAGER"] },
-  { to: "/product",         label: "Product",            icon: <InventoryRounded />,    roles: ["ADMIN", "MANAGER"] },
-  { to: "/batch",           label: "Batch",              icon: <BatchIcon />,           roles: ["ADMIN", "MANAGER"] },
-  { to: "/stock",           label: "Stock",              icon: <SwapHorizRounded />,    roles: ["ADMIN", "MANAGER", "USER"] },
-  { to: "/orders",          label: "Orders",             icon: <ShoppingCartRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
+  { to: "/dashboard", label: "Dashboard", icon: <DashboardRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
+  { to: "/users", label: "User Management", icon: <PeopleRounded />, roles: ["ADMIN"] },
+  { to: "/division", label: "Division", icon: <AccountTreeRounded />, roles: ["ADMIN"] },
+  { to: "/location", label: "Location", icon: <PlaceRounded />, roles: ["ADMIN"] },
+  { to: "/outlet", label: "Outlet", icon: <StoreRounded />, roles: ["ADMIN", "MANAGER"] },
+  { to: "/product", label: "Product", icon: <InventoryRounded />, roles: ["ADMIN", "MANAGER"] },
+  { to: "/batch", label: "Batch", icon: <BatchIcon />, roles: ["ADMIN", "MANAGER"] },
+  { to: "/stock", label: "Stock", icon: <SwapHorizRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
+  { to: "/orders", label: "Orders", icon: <ShoppingCartRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
 ];
 
 const Sidebar = ({ collapsed, setCollapsed }) => {

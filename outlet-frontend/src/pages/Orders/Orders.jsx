@@ -5,83 +5,91 @@ import {
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
-  CircularProgress, Snackbar, Alert, IconButton,
+  CircularProgress, Snackbar, Alert, IconButton, Paper,
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, EditRounded,
   CheckRounded, ShoppingCartRounded, PendingRounded,
   ThumbUpRounded, ThumbDownRounded, LocalShippingRounded,
-  DeleteRounded,
+  DeleteRounded, CloseRounded,
 } from "@mui/icons-material";
 import { orderService } from "../../services/orderService";
 import { outletService } from "../../services/outletService";
 import { productService } from "../../services/productService";
 import { batchService } from "../../services/batchService";
 import { useAuth } from "../../context/AuthContext";
+import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import "./Orders.css";
 import "../UserManagement/UserManagement.css";
 
 /* ── Status meta ── */
 const STATUS_META = {
-  PENDING:   { label: "Pending",   cls: "pending",   Icon: PendingRounded },
-  APPROVED:  { label: "Approved",  cls: "approved",  Icon: ThumbUpRounded },
-  REJECTED:  { label: "Rejected",  cls: "rejected",  Icon: ThumbDownRounded },
+  PENDING: { label: "Pending", cls: "pending", Icon: PendingRounded },
+  APPROVED: { label: "Approved", cls: "approved", Icon: ThumbUpRounded },
+  REJECTED: { label: "Rejected", cls: "rejected", Icon: ThumbDownRounded },
   COMPLETED: { label: "Completed", cls: "completed", Icon: LocalShippingRounded },
 };
 
 const TIMELINE = ["PENDING", "APPROVED", "COMPLETED"];
 
 const emptyOrder = { outletId: "", items: [] };
-const emptyItem  = { productId: "", batchId: "", quantity: 1, price: 0 };
+const emptyItem = { productId: "", batchId: "", quantity: 1, price: 0 };
 
 /* ══════════════════════════════════════════
    Orders Page
    ══════════════════════════════════════════ */
 const Orders = () => {
   const { role } = useAuth();
-  const [orders,   setOrders]   = useState([]);
-  const [outlets,  setOutlets]  = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [outlets, setOutlets] = useState([]);
   const [products, setProducts] = useState([]);
-  const [batches,  setBatches]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState("");
-  const [detail,   setDetail]   = useState(null);
-  const [create,   setCreate]   = useState({ open: false, data: emptyOrder });
-  const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
+  const [batches, setBatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ status: "", outletId: "" });
+  const [detail, setDetail] = useState(null);
+  const [create, setCreate] = useState({ open: false, data: emptyOrder });
+  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
-  const isAdmin   = role === "ADMIN";
+  const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const activeFilters = {};
+      if (filters.status) activeFilters.status = filters.status;
+      if (filters.outletId) activeFilters.outletId = filters.outletId;
+      if (search) activeFilters.orderNo = search;
+
       const [oRes, otRes, pRes, bRes] = await Promise.all([
-        orderService.getAll(),
-        outletService.getAll(),
-        productService.getAll(),
-        batchService.getAll(),
+        orderService.getAll(activeFilters),
+        outletService.getAll ? outletService.getAll() : { data: [] },
+        productService.getAll ? productService.getAll(0, 1000) : { data: [] },
+        batchService.getAll ? batchService.getAll() : { data: [] },
       ]);
-      
-      const oData = oRes.data || [];
-      const otData = otRes.data || [];
-      const pData = pRes.data || [];
-      const bData = bRes.data || [];
+
+      const oData = oRes.data?.data || oRes.data || [];
+      const otData = otRes.data?.data || otRes.data || [];
+      const pData = pRes.data?.data || pRes.data || [];
+      const bData = bRes.data?.data || bRes.data || [];
 
       setOrders(Array.isArray(oData) ? oData : oData?.content || []);
       setOutlets(Array.isArray(otData) ? otData : otData?.content || []);
       setProducts(Array.isArray(pData) ? pData : pData?.content || []);
       setBatches(Array.isArray(bData) ? bData : bData?.content || []);
-    } catch { setOrders([]); }
+    } catch (err) { 
+      console.error("Order load error:", err);
+      setOrders([]); 
+    }
     finally { setLoading(false); }
-  }, []);
+  }, [filters, search]);
 
   useEffect(() => { load(); }, [load]);
 
   const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
-  const filtered = orders.filter((o) =>
-    [o.orderNo, o.outletName, o.status].join(" ").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = orders; // Filtering is now done on the backend
 
   const counts = Object.keys(STATUS_META).reduce((acc, k) => {
     acc[k] = orders.filter((o) => o.status === k).length;
@@ -97,9 +105,9 @@ const Orders = () => {
       toast("Order created successfully");
       setCreate({ open: false, data: emptyOrder });
       load();
-    } catch (err) { 
+    } catch (err) {
       const msg = err.response?.data?.message || "Creation failed";
-      toast(msg, "error"); 
+      toast(msg, "error");
     }
   };
 
@@ -109,9 +117,9 @@ const Orders = () => {
       toast(`Order ${status.toLowerCase()}`);
       load();
       setDetail(null);
-    } catch (err) { 
+    } catch (err) {
       const msg = err.response?.data?.message || "Update failed";
-      toast(msg, "error"); 
+      toast(msg, "error");
     }
   };
 
@@ -132,7 +140,7 @@ const Orders = () => {
   const updateItem = (idx, key, val) => {
     const newItems = [...create.data.items];
     newItems[idx][key] = val;
-    
+
     // Auto-fill price if batch is selected
     if (key === "batchId") {
       const b = batches.find(b => String(b.id) === String(val));
@@ -181,20 +189,53 @@ const Orders = () => {
       {/* Table */}
       <Box className="table-card">
         <Box className="table-toolbar">
-          <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>All Orders</Typography>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
+            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>All Orders</Typography>
+            
+            {/* Status Filter */}
+            <Select 
+              size="small" 
+              displayEmpty 
+              value={filters.status} 
+              onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
+              sx={{ minWidth: 120, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+            >
+              <MenuItem value="">All Statuses</MenuItem>
+              {Object.entries(STATUS_META).map(([k, v]) => (
+                <MenuItem key={k} value={k}>{v.label}</MenuItem>
+              ))}
+            </Select>
+
+            {/* Outlet Filter */}
+            <Select 
+              size="small" 
+              displayEmpty 
+              value={filters.outletId} 
+              onChange={(e) => setFilters(f => ({ ...f, outletId: e.target.value }))}
+              sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+            >
+              <MenuItem value="">All Outlets</MenuItem>
+              {outlets.map(ot => (
+                <MenuItem key={ot.id} value={ot.id}>{ot.outletName}</MenuItem>
+              ))}
+            </Select>
+
+            <ButtonBase onClick={() => setFilters({ status: "", outletId: "" })} sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
+          </Box>
+
           <Box className="table-search">
             <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
-            <InputBase placeholder="Search orders…" value={search} onChange={(e) => setSearch(e.target.value)}
+            <InputBase placeholder="Search order no…" value={search} onChange={(e) => setSearch(e.target.value)}
               sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }} />
           </Box>
         </Box>
 
-        <TableContainer>
-          <Table>
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
+          <Table size="small">
             <TableHead>
-              <TableRow sx={{ background: "#faf5ff" }}>
+              <TableRow sx={{ background: "#fafafa" }}>
                 {["Order No", "Outlet", "Items", "Status", "Date", "Actions"].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>{h}</TableCell>
+                  <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -207,7 +248,7 @@ const Orders = () => {
                 filtered.map((o) => {
                   const meta = STATUS_META[o.status] || STATUS_META.PENDING;
                   return (
-                    <TableRow key={o.id} hover sx={{ "&:hover": { background: "#faf5ff" }, cursor: "pointer" }} onClick={() => setDetail(o)}>
+                    <TableRow key={o.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 }, cursor: "pointer" }} onClick={() => setDetail(o)}>
                       <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>{o.orderNo || `ORD-${o.id}`}</TableCell>
                       <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{o.outlet?.outletName || "—"}</TableCell>
                       <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{o.items?.length || 0}</TableCell>
@@ -236,16 +277,22 @@ const Orders = () => {
 
       {/* Create Order Dialog */}
       <Dialog open={create.open} onClose={() => setCreate({ open: false, data: emptyOrder })} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle className="user-dialog-title">Create New Order</DialogTitle>
+        <DialogTitle className="user-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Create New Order
+          <IconButton onClick={() => setCreate({ open: false, data: emptyOrder })} size="small" sx={{ color: "#64748b" }}>
+            <CloseRounded />
+          </IconButton>
+        </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Box sx={{ mb: 3 }}>
             <Typography className="dialog-field-label">Select Outlet</Typography>
-            <FormControl fullWidth size="small">
-              <Select value={create.data.outletId} onChange={(e) => setCreate(p => ({ ...p, data: { ...p.data, outletId: e.target.value } }))}
-                sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
-                {outlets.map(ot => <MenuItem key={ot.id} value={ot.id} sx={{ fontFamily: "Poppins, sans-serif" }}>{ot.outletName}</MenuItem>)}
-              </Select>
-            </FormControl>
+            <SearchableSelect
+              options={outlets.map(ot => ({ id: ot.id, name: ot.outletName }))}
+              value={create.data.outletId}
+              onChange={(id) => setCreate(p => ({ ...p, data: { ...p.data, outletId: id } }))}
+              placeholder="— Select Outlet —"
+              searchPlaceholder="Search outlets..."
+            />
           </Box>
 
           <Typography sx={{ fontWeight: 700, mb: 1, fontSize: "0.9rem", color: "#1e1b4b" }}>Order Items</Typography>
@@ -254,15 +301,23 @@ const Orders = () => {
               <Box key={idx} sx={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1.2fr auto", gap: 1.5, alignItems: "center", p: 2, border: "1px solid #e2e8f0", borderRadius: 3 }}>
                 <Box>
                   <Typography className="dialog-field-label">Product</Typography>
-                  <Select fullWidth size="small" value={item.productId} onChange={(e) => updateItem(idx, "productId", e.target.value)} sx={{ borderRadius: 2 }}>
-                    {products.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-                  </Select>
+                  <SearchableSelect
+                    options={products}
+                    value={item.productId}
+                    onChange={(id) => updateItem(idx, "productId", id)}
+                    placeholder="Select"
+                    searchPlaceholder="Search..."
+                  />
                 </Box>
                 <Box>
                   <Typography className="dialog-field-label">Batch</Typography>
-                  <Select fullWidth size="small" value={item.batchId} onChange={(e) => updateItem(idx, "batchId", e.target.value)} sx={{ borderRadius: 2 }}>
-                    {batches.filter(b => String(b.product?.id) === String(item.productId)).map(b => <MenuItem key={b.id} value={b.id}>{b.batchNo} (Qty: {b.quantity})</MenuItem>)}
-                  </Select>
+                  <SearchableSelect
+                    options={batches.filter(b => String(b.product?.id || b.productId) === String(item.productId)).map(b => ({ id: b.id, name: `${b.batchNo} (Qty: ${b.quantity})` }))}
+                    value={item.batchId}
+                    onChange={(id) => updateItem(idx, "batchId", id)}
+                    placeholder="Select"
+                    searchPlaceholder="Search..."
+                  />
                 </Box>
                 <Box>
                   <Typography className="dialog-field-label">Qty</Typography>
@@ -288,7 +343,10 @@ const Orders = () => {
       <Dialog open={!!detail} onClose={() => setDetail(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}>
         {detail && (
           <>
-            <Box className="order-detail-header">
+            <Box className="order-detail-header" sx={{ position: "relative" }}>
+              <IconButton onClick={() => setDetail(null)} size="small" sx={{ position: "absolute", right: 12, top: 12, color: "#fff" }}>
+                <CloseRounded />
+              </IconButton>
               <Typography className="order-no-badge">{detail.orderNo || `ORD-${detail.id}`}</Typography>
               <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", mt: 0.5 }}>{detail.outlet?.outletName || "Outlet Order"}</Typography>
               <Typography sx={{ fontSize: "0.8rem", opacity: 0.8 }}>Status: {detail.status}</Typography>

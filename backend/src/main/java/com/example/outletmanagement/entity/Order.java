@@ -44,6 +44,6 @@ public class Order extends BaseAuditEntity {
     private List<OrderItem> items;
 
     public enum OrderStatus {
-        PENDING, APPROVED, REJECTED, COMPLETED
+        PENDING, APPROVED, REJECTED, COMPLETED, CANCELLED
     }
 }

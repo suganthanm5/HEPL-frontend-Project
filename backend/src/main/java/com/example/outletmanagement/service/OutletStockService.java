@@ -9,4 +9,5 @@ public interface OutletStockService {
     List<OutletStock> getAllStock();
     OutletStock transferStock(Long outletId, Long productId, Long batchId, Integer quantity);
     List<StockTransaction> getTransactions(Long outletId, Long productId);
+    List<StockTransaction> getFilteredTransactions(Long outletId, Long productId, StockTransaction.TransactionType type);
 }

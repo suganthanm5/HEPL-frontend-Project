@@ -30,4 +30,7 @@ public abstract class BaseAuditEntity {
 
     @LastModifiedBy
     private String updatedBy;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 }

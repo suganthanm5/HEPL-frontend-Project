@@ -5,13 +5,15 @@ import {
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
-  CircularProgress, Snackbar, Alert,
+  CircularProgress, Snackbar, Alert, IconButton, Paper,
 } from "@mui/material";
 import {
   SearchRounded, SwapHorizRounded, WarehouseRounded,
   TrendingUpRounded, TrendingDownRounded, CheckRounded,
+  CloseRounded,
 } from "@mui/icons-material";
 import { stockService } from "../../services/stockService";
+import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import "./Stock.css";
 import "../UserManagement/UserManagement.css";
 
@@ -31,8 +33,11 @@ const emptyTransfer = { outletId: "", productId: "", batchId: "", quantity: "" }
 const Stock = () => {
   const [stock,    setStock]    = useState([]);
   const [txns,     setTxns]     = useState([]);
+  const [outlets,  setOutlets]  = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
+  const [filters,  setFilters]  = useState({ productId: "", outletId: "", type: "" });
   const [tab,      setTab]      = useState("stock"); // "stock" | "history"
   const [transfer, setTransfer] = useState({ open: false, data: emptyTransfer });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
@@ -40,17 +45,37 @@ const Stock = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, tRes] = await Promise.all([
+      const activeFilters = {};
+      if (filters.productId) activeFilters.productId = filters.productId;
+      if (filters.outletId) activeFilters.outletId = filters.outletId;
+      if (filters.type) activeFilters.type = filters.type;
+
+      // Import services dynamically or ensure they are available
+      const { outletService } = await import("../../services/outletService");
+      const { productService } = await import("../../services/productService");
+
+      const [sRes, tRes, otRes, pRes] = await Promise.all([
         stockService.getAll(),
-        stockService.getTransactions(),
+        stockService.getTransactions(activeFilters),
+        outletService.getAll ? outletService.getAll() : { data: [] },
+        productService.getAll ? productService.getAll(0, 1000) : { data: [] }
       ]);
-      const sData = sRes.data || [];
-      const tData = tRes.data || [];
+
+      const sData = sRes.data?.data || sRes.data || [];
+      const tData = tRes.data?.data || tRes.data || [];
+      const otData = otRes.data?.data || otRes.data || [];
+      const pData = pRes.data?.data || pRes.data || [];
+
       setStock(Array.isArray(sData) ? sData : sData?.content || []);
       setTxns(Array.isArray(tData) ? tData : tData?.content || []);
-    } catch { setStock([]); setTxns([]); }
+      setOutlets(Array.isArray(otData) ? otData : otData?.content || []);
+      setProducts(Array.isArray(pData) ? pData : pData?.content || []);
+    } catch (err) { 
+      console.error("Stock load error:", err);
+      setStock([]); setTxns([]); 
+    }
     finally { setLoading(false); }
-  }, []);
+  }, [filters]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -120,9 +145,46 @@ const Stock = () => {
       {/* Table */}
       <Box className="table-card">
         <Box className="table-toolbar">
-          <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
-            {tab === "stock" ? "Current Stock" : "Transaction History"}
-          </Typography>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
+            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
+              {tab === "stock" ? "Current Stock" : "Transaction History"}
+            </Typography>
+
+            {tab === "history" && (
+              <>
+                <Select 
+                  size="small" displayEmpty value={filters.type} 
+                  onChange={(e) => setFilters(f => ({ ...f, type: e.target.value }))}
+                  sx={{ minWidth: 100, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                >
+                  <MenuItem value="">All Types</MenuItem>
+                  <MenuItem value="IN">IN</MenuItem>
+                  <MenuItem value="OUT">OUT</MenuItem>
+                  <MenuItem value="TRANSFER">TRANSFER</MenuItem>
+                </Select>
+
+                <Select 
+                  size="small" displayEmpty value={filters.productId} 
+                  onChange={(e) => setFilters(f => ({ ...f, productId: e.target.value }))}
+                  sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                >
+                  <MenuItem value="">All Products</MenuItem>
+                  {products.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+                </Select>
+
+                <Select 
+                  size="small" displayEmpty value={filters.outletId} 
+                  onChange={(e) => setFilters(f => ({ ...f, outletId: e.target.value }))}
+                  sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                >
+                  <MenuItem value="">All Outlets</MenuItem>
+                  {outlets.map(ot => <MenuItem key={ot.id} value={ot.id}>{ot.outletName}</MenuItem>)}
+                </Select>
+
+                <ButtonBase onClick={() => setFilters({ productId: "", outletId: "", type: "" })} sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
+              </>
+            )}
+          </Box>
           <Box className="table-search">
             <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
             <InputBase placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)}
@@ -130,13 +192,13 @@ const Stock = () => {
           </Box>
         </Box>
 
-        <TableContainer>
+        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
           {tab === "stock" ? (
-            <Table>
+            <Table size="small">
               <TableHead>
-                <TableRow sx={{ background: "#faf5ff" }}>
+                <TableRow sx={{ background: "#fafafa" }}>
                   {["Outlet", "Product", "Batch", "Available", "Reserved", "Level"].map((h) => (
-                    <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>{h}</TableCell>
+                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -149,7 +211,7 @@ const Stock = () => {
                   filteredStock.map((s) => {
                     const lvl = stockLevel(s.availableQty);
                     return (
-                      <TableRow key={s.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
+                      <TableRow key={s.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
                         <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.outletName || s.outletId}</TableCell>
                         <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
                         <TableCell sx={{ color: "#7d2ae8", fontWeight: 600, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo || s.batchId}</TableCell>
@@ -170,11 +232,11 @@ const Stock = () => {
               </TableBody>
             </Table>
           ) : (
-            <Table>
+            <Table size="small">
               <TableHead>
-                <TableRow sx={{ background: "#faf5ff" }}>
+                <TableRow sx={{ background: "#fafafa" }}>
                   {["Type", "Product", "Batch", "Outlet", "Qty", "By", "Date"].map((h) => (
-                    <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>{h}</TableCell>
+                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -185,7 +247,7 @@ const Stock = () => {
                   <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No transactions</TableCell></TableRow>
                 ) : (
                   txns.map((t) => (
-                    <TableRow key={t.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
+                    <TableRow key={t.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
                       <TableCell>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                           {t.transactionType === "IN"
@@ -212,23 +274,51 @@ const Stock = () => {
 
       {/* Transfer Dialog */}
       <Dialog open={transfer.open} onClose={() => setTransfer({ open: false, data: emptyTransfer })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}>
-        <DialogTitle className="transfer-dialog-title">Transfer Stock to Outlet</DialogTitle>
+        <DialogTitle className="transfer-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Transfer Stock to Outlet
+          <IconButton onClick={() => setTransfer({ open: false, data: emptyTransfer })} size="small" sx={{ color: "#fff" }}>
+            <CloseRounded />
+          </IconButton>
+        </DialogTitle>
         <DialogContent sx={{ pt: 3, pb: 1 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {[
-              { key: "outletId",   label: "Outlet ID" },
-              { key: "productId",  label: "Product ID" },
-              { key: "batchId",    label: "Batch ID" },
-              { key: "quantity",   label: "Quantity",  type: "number" },
-            ].map(({ key, label, type = "text" }) => (
-              <Box key={key}>
-                <Typography className="dialog-field-label">{label}</Typography>
-                <TextField fullWidth size="small" type={type} placeholder={`Enter ${label}`}
-                  value={transfer.data[key]}
-                  onChange={(e) => setTransfer((t) => ({ ...t, data: { ...t.data, [key]: e.target.value } }))}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-              </Box>
-            ))}
+            <Box>
+              <Typography className="dialog-field-label">Outlet *</Typography>
+              <SearchableSelect
+                options={outlets.map(o => ({ id: o.id, name: o.outletName }))}
+                value={transfer.data.outletId}
+                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, outletId: id } }))}
+                placeholder="— Select Outlet —"
+                searchPlaceholder="Search outlets..."
+              />
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Product *</Typography>
+              <SearchableSelect
+                options={products}
+                value={transfer.data.productId}
+                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, productId: id } }))}
+                placeholder="— Select Product —"
+                searchPlaceholder="Search products..."
+              />
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Batch *</Typography>
+              <SearchableSelect
+                options={stock.filter(s => String(s.productId) === String(transfer.data.productId)).map(s => ({ id: s.batchId, name: `${s.batchNo} (Avail: ${s.availableQty})` }))}
+                value={transfer.data.batchId}
+                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, batchId: id } }))}
+                placeholder="— Select Batch —"
+                searchPlaceholder="Search batches..."
+              />
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Quantity *</Typography>
+              <TextField fullWidth size="small" type="number" placeholder="Enter Quantity"
+                value={transfer.data.quantity}
+                onChange={(e) => setTransfer((t) => ({ ...t, data: { ...t.data, quantity: e.target.value } }))}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>

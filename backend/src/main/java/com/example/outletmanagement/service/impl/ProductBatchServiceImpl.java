@@ -13,10 +13,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductBatchServiceImpl implements ProductBatchService {
     private final ProductBatchRepository productBatchRepository;
+    private final com.example.outletmanagement.repository.ProductRepository productRepository;
+    private final com.example.outletmanagement.repository.StockTransactionRepository stockTransactionRepository;
 
     @Override
     public List<ProductBatch> getAllBatches() {
         return productBatchRepository.findAll();
+    }
+
+    @Override
+    public List<ProductBatch> getFilteredBatches(Long productId, ProductBatch.Status status) {
+        return productBatchRepository.findFilteredBatches(productId, status);
     }
 
     @Override
@@ -30,23 +37,49 @@ public class ProductBatchServiceImpl implements ProductBatchService {
                 .orElseThrow(() -> new ResourceNotFoundException("ProductBatch", "id", id));
     }
 
+
     @Override
     @Transactional
-    public ProductBatch createBatch(ProductBatch batch) {
-        return productBatchRepository.save(batch);
+    public ProductBatch createBatch(com.example.outletmanagement.payload.dto.request.ProductBatchRequest request) {
+        com.example.outletmanagement.entity.Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", request.getProductId()));
+
+        ProductBatch batch = ProductBatch.builder()
+                .product(product)
+                .batchNo(request.getBatchNo())
+                .manufactureDate(request.getManufactureDate())
+                .expiryDate(request.getExpiryDate())
+                .quantity(request.getQuantity())
+                .purchasePrice(request.getPurchasePrice())
+                .sellingPrice(request.getSellingPrice())
+                .status(ProductBatch.Status.ACTIVE)
+                .build();
+
+        ProductBatch savedBatch = productBatchRepository.save(batch);
+
+        // Log Stock Transaction (IN)
+        stockTransactionRepository.save(com.example.outletmanagement.entity.StockTransaction.builder()
+                .transactionType(com.example.outletmanagement.entity.StockTransaction.TransactionType.IN)
+                .product(product)
+                .batch(savedBatch)
+                .quantity(savedBatch.getQuantity())
+                .referenceNo(savedBatch.getBatchNo())
+                .remarks("Initial Batch Creation")
+                .build());
+
+        return savedBatch;
     }
 
     @Override
     @Transactional
-    public ProductBatch updateBatch(Long id, ProductBatch batchDetails) {
+    public ProductBatch updateBatch(Long id, com.example.outletmanagement.payload.dto.request.ProductBatchRequest request) {
         ProductBatch batch = getBatchById(id);
-        batch.setBatchNo(batchDetails.getBatchNo());
-        batch.setManufactureDate(batchDetails.getManufactureDate());
-        batch.setExpiryDate(batchDetails.getExpiryDate());
-        batch.setQuantity(batchDetails.getQuantity());
-        batch.setPurchasePrice(batchDetails.getPurchasePrice());
-        batch.setSellingPrice(batchDetails.getSellingPrice());
-        batch.setStatus(batchDetails.getStatus());
+        batch.setBatchNo(request.getBatchNo());
+        batch.setManufactureDate(request.getManufactureDate());
+        batch.setExpiryDate(request.getExpiryDate());
+        batch.setQuantity(request.getQuantity());
+        batch.setPurchasePrice(request.getPurchasePrice());
+        batch.setSellingPrice(request.getSellingPrice());
         return productBatchRepository.save(batch);
     }
 

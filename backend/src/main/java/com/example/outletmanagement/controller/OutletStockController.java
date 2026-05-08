@@ -57,8 +57,9 @@ public class OutletStockController {
     @GetMapping("/transactions")
     public ResponseEntity<ApiResponse> getTransactions(
             @RequestParam(required = false) Long outletId,
-            @RequestParam(required = false) Long productId) {
-        List<StockTransaction> response = outletStockService.getTransactions(outletId, productId);
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) StockTransaction.TransactionType type) {
+        List<StockTransaction> response = outletStockService.getFilteredTransactions(outletId, productId, type);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Transactions fetched successfully")

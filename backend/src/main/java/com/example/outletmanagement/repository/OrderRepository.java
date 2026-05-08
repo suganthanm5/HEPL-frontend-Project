@@ -9,4 +9,13 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByOutletId(Long outletId);
     List<Order> findByStatus(Order.OrderStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT o FROM Order o WHERE " +
+            "(:status IS NULL OR o.status = :status) AND " +
+            "(:outletId IS NULL OR o.outlet.id = :outletId) AND " +
+            "(:orderNo IS NULL OR o.orderNo LIKE %:orderNo%)")
+    List<Order> findFilteredOrders(
+            @org.springframework.data.repository.query.Param("status") Order.OrderStatus status,
+            @org.springframework.data.repository.query.Param("outletId") Long outletId,
+            @org.springframework.data.repository.query.Param("orderNo") String orderNo);
 }

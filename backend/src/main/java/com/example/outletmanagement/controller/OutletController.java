@@ -27,17 +27,17 @@ public class OutletController {
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Outlet created successfully")
                 .data(response)
+                .data(outletService.createOutlet(request))
                 .build());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getOutletById(@PathVariable Long id) {
-        OutletResponse response = outletService.getOutletById(id);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Outlet fetched successfully")
-                .data(response)
+                .data(outletService.getOutletById(id))
                 .build());
     }
 
@@ -62,11 +62,10 @@ public class OutletController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateOutlet(@PathVariable Long id, @Valid @RequestBody OutletRequest request) {
-        OutletResponse response = outletService.updateOutlet(id, request);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Outlet updated successfully")
-                .data(response)
+                .data(outletService.updateOutlet(id, request))
                 .build());
     }
 
