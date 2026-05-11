@@ -162,7 +162,11 @@ const Location = () => {
     setError("");
     try {
       const res = await getLocations(0, 1000, "", signal);
-      const allLocs = res?.data?.data?.content || [];
+      let allLocs = [];
+      if (Array.isArray(res)) allLocs = res;
+      else if (Array.isArray(res?.content)) allLocs = res.content;
+      else if (Array.isArray(res?.data)) allLocs = res.data;
+      else if (Array.isArray(res?.data?.content)) allLocs = res.data.content;
       setAllLocations(allLocs);
     } catch (e) {
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;

@@ -55,19 +55,39 @@ const Batch = () => {
       if (filters.productId) activeFilters.productId = filters.productId;
       if (filters.status) activeFilters.status = filters.status;
 
-      const [bRes, pRes] = await Promise.all([
-        batchService.getAll(activeFilters),
-        productService.getAll ? productService.getAll(0, 1000) : { data: [] },
-      ]);
+      // 1. Fetch Batches
+      try {
+        const bData = await batchService.getAll(activeFilters);
+        console.log("Batch API Response:", bData);
+        let extractedBatches = [];
+        if (Array.isArray(bData)) extractedBatches = bData;
+        else if (Array.isArray(bData?.content)) extractedBatches = bData.content;
+        else if (Array.isArray(bData?.data)) extractedBatches = bData.data;
+        else if (Array.isArray(bData?.data?.content)) extractedBatches = bData.data.content;
+        
+        const batches = extractedBatches;
+        
+        console.log("Batch Final array:", batches);
+        setBatches(batches);
+        console.log("Batches loaded:", batches.length);
+      } catch (err) {
+        console.error("Batch fetch error:", err);
+        setBatches([]);
+        toast("Failed to load batches: " + (err.response?.data?.message || err.message), "error");
+      }
 
-      const bData = bRes.data?.data || bRes.data || [];
-      const pData = pRes.data?.data || pRes.data || [];
-      
-      setBatches(Array.isArray(bData) ? bData : bData?.content || []);
-      setProducts(Array.isArray(pData) ? pData : pData?.content || []);
+      // 2. Fetch Products (for labels/filters)
+      try {
+        const pData = await (productService.getAll ? productService.getAll(0, 1000) : Promise.resolve([]));
+        // productService already returns an array
+        setProducts(Array.isArray(pData) ? pData : []);
+      } catch (err) {
+        console.error("Product fetch error:", err);
+      }
+
     } catch (err) {
-      console.error("Batch load error:", err);
-      setBatches([]);
+      console.error("Load general error:", err);
+      toast("Error loading page data", "error");
     } finally {
       setLoading(false);
     }
@@ -79,7 +99,7 @@ const Batch = () => {
 
   /* ── Filter ── */
   const filtered = batches.filter((b) =>
-    [b.batchNo, b.productName, b.status].join(" ").toLowerCase().includes(search.toLowerCase())
+    [b.batchNo, b.productName || b.product?.name, b.status].join(" ").toLowerCase().includes(search.toLowerCase())
   );
 
   /* ── Save ── */
@@ -100,7 +120,27 @@ const Batch = () => {
         toast("Batch updated successfully");
       }
       setDialog({ open: false, mode: "add", data: emptyForm });
-      load();
+      // Reset filters and reload immediately to show newly created/updated batch
+      setFilters({ productId: "", status: "" });
+      setSearch("");
+      // Fetch all batches without filters
+      setLoading(true);
+      try {
+        const bData = await batchService.getAll({});
+        let extractedBatches = [];
+        if (Array.isArray(bData)) extractedBatches = bData;
+        else if (Array.isArray(bData?.content)) extractedBatches = bData.content;
+        else if (Array.isArray(bData?.data)) extractedBatches = bData.data;
+        else if (Array.isArray(bData?.data?.content)) extractedBatches = bData.data.content;
+        
+        const batches = extractedBatches;
+        setBatches(batches);
+      } catch (err) {
+        console.error("Error reloading batches:", err);
+        setBatches([]);
+      } finally {
+        setLoading(false);
+      }
     } catch (err) { 
       // Handle backend validation errors
       if (err.response?.status === 400 && err.response?.data?.data) {
@@ -217,7 +257,9 @@ const Batch = () => {
                   return (
                     <TableRow key={b.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
                       <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>{b.batchNo}</TableCell>
-                      <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{b.productName || productName(b.productId)}</TableCell>
+                      <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
+                        {b.productName || b.product?.name || productName(b.productId || b.product?.id)}
+                      </TableCell>
                       <TableCell>
                         <Box className="stock-bar-wrap">
                           <Box className="stock-bar"><Box className="stock-bar-fill" sx={{ width: `${Math.min((b.quantity / 500) * 100, 100)}%` }} /></Box>

@@ -230,12 +230,12 @@ export default function Outlet() {
     return () => controller.abort();
   }, []);
 
-  const extractList = (res) => {
-    const data = res?.data;
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.data)) return data.data;
-    if (Array.isArray(data?.data?.content)) return data.data.content;
-    if (Array.isArray(data?.content)) return data.content;
+  const extractList = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (Array.isArray(val.content)) return val.content;
+    if (Array.isArray(val.data)) return val.data;
+    if (Array.isArray(val.data?.content)) return val.data.content;
     return [];
   };
 

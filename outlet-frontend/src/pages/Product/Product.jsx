@@ -162,15 +162,19 @@ const Product = () => {
     setLoading(true); setError("");
     try {
       const res = await getDivisions(0, 200, "", signal);
-      const divList = res?.data?.data?.content ?? res?.data?.data ?? [];
+      console.log("getDivisions response:", res);
+      const divList = res?.content ?? [];
+      console.log("Divisions list:", divList);
       setDivisions(divList);
       const flat = divList.flatMap((d) =>
         (Array.isArray(d.products) ? d.products : []).map((p) => ({
           ...p, divisionId: d.id, divisionName: d.name,
         }))
       );
+      console.log("Flattened products:", flat);
       setProducts(flat);
     } catch (e) {
+      console.error("fetchProducts error:", e);
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
       setError("Failed to load products. Check API connection.");
     } finally { setLoading(false); }

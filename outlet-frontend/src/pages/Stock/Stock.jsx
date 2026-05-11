@@ -54,22 +54,18 @@ const Stock = () => {
       const { outletService } = await import("../../services/outletService");
       const { productService } = await import("../../services/productService");
 
-      const [sRes, tRes, otRes, pRes] = await Promise.all([
+      const [sData, tData, otData, pData] = await Promise.all([
         stockService.getAll(),
         stockService.getTransactions(activeFilters),
-        outletService.getAll ? outletService.getAll() : { data: [] },
-        productService.getAll ? productService.getAll(0, 1000) : { data: [] }
+        outletService.getAll ? outletService.getAll() : [],
+        productService.getAll ? productService.getAll(0, 1000) : []
       ]);
 
-      const sData = sRes.data?.data || sRes.data || [];
-      const tData = tRes.data?.data || tRes.data || [];
-      const otData = otRes.data?.data || otRes.data || [];
-      const pData = pRes.data?.data || pRes.data || [];
-
-      setStock(Array.isArray(sData) ? sData : sData?.content || []);
-      setTxns(Array.isArray(tData) ? tData : tData?.content || []);
-      setOutlets(Array.isArray(otData) ? otData : otData?.content || []);
-      setProducts(Array.isArray(pData) ? pData : pData?.content || []);
+      // Services now return clean arrays
+      setStock(Array.isArray(sData) ? sData : []);
+      setTxns(Array.isArray(tData) ? tData : []);
+      setOutlets(Array.isArray(otData) ? otData : []);
+      setProducts(Array.isArray(pData) ? pData : []);
     } catch (err) { 
       console.error("Stock load error:", err);
       setStock([]); setTxns([]); 

@@ -3,22 +3,25 @@ import apiClient from '../api/apiClient';
 export const userService = {
   getAllUsers: async (page = 0, size = 10) => {
     const response = await apiClient.get(`/api/users?page=${page}&size=${size}`);
-    return response.data;
+    // response.data is ApiResponse { httpStatus, message, data: Page { content: [...], totalPages, ... } }
+    const pageData = response.data?.data;
+    // Extract content array from Page object
+    return Array.isArray(pageData?.content) ? pageData.content : [];
   },
 
   createUser: async (userData) => {
     const response = await apiClient.post('/api/users', userData);
-    return response.data;
+    return response.data?.data || response.data;
   },
 
   updateUser: async (id, userData) => {
     const response = await apiClient.put(`/api/users/${id}`, userData);
-    return response.data;
+    return response.data?.data || response.data;
   },
   
   updateUserRole: async (id, role) => {
     const response = await apiClient.patch(`/api/users/${id}/role?role=${role}`);
-    return response.data;
+    return response.data?.data || response.data;
   },
 
   deleteUser: async (id) => {

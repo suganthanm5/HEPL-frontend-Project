@@ -46,10 +46,13 @@ const UserManagement = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await userService.getAllUsers();
-      const data = res.data || [];
-      setUsers(Array.isArray(data) ? data : data?.content || []);
-    } catch {
+      console.log('[DEBUG] Fetching users...');
+      const data = await userService.getAllUsers();
+      console.log('[DEBUG] Users fetched:', data);
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("[DEBUG] Failed to load users:", err);
+      console.error("[DEBUG] Error response:", err.response?.data);
       setUsers([]);
     } finally {
       setLoading(false);

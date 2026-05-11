@@ -137,7 +137,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                 fontSize: "0.875rem",
                 fontFamily: "Poppins, sans-serif",
                 color: "#1e1b4b",
-                "& input::placeholder": { color: "#a78bfa", fontSize: "0.8rem" },
+                "& input::placeholder": { color: "#7d2ae880", fontSize: "0.85rem" },
               }}
             />
             <Typography component="span" className="search-kbd">⌘K</Typography>
@@ -268,10 +268,9 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <PersonRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <ListItemText 
-                        primary="My Profile" 
-                        primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} 
-                      />
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+                        My Profile
+                      </Typography>
                     </ListItemButton>
                   </ListItem>
 
@@ -280,10 +279,9 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <SettingsRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <ListItemText 
-                        primary="Settings" 
-                        primaryTypographyProps={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif" }} 
-                      />
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+                        Settings
+                      </Typography>
                     </ListItemButton>
                   </ListItem>
                 </List>

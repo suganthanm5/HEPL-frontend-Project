@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getOutlets }   from "../services/outletService";
+import { getOutlets } from "../services/outletService";
 import { getLocations } from "../services/locationService";
 import { getDivisions } from "../services/devisionService";
 
@@ -7,13 +7,13 @@ const extractList = (res) => {
   // Handle Promise.allSettled structure
   const data = res?.value?.data || res?.data;
   if (!data) return [];
-  
+
   // Handle different API response structures
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.data)) return data.data;
   if (Array.isArray(data.data?.content)) return data.data.content;
   if (Array.isArray(data.content)) return data.content;
-  
+
   return [];
 };
 
@@ -38,7 +38,7 @@ export const fetchDashboardData = createAsyncThunk(
       });
 
       return {
-        outlets:   extractList(o),
+        outlets: extractList(o),
         locations: extractList(l),
         divisions: extractList(d),
       };
@@ -52,17 +52,17 @@ export const fetchDashboardData = createAsyncThunk(
 const dashboardSlice = createSlice({
   name: "dashboard",
   initialState: {
-    outlets:   [],
+    outlets: [],
     locations: [],
     divisions: [],
-    loading:   true,
+    loading: true,
   },
   reducers: {
     setDashboardData: (state, action) => {
-      state.outlets   = action.payload.outlets;
+      state.outlets = action.payload.outlets;
       state.locations = action.payload.locations;
       state.divisions = action.payload.divisions;
-      state.loading   = false;
+      state.loading = false;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -83,10 +83,10 @@ const dashboardSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
-        state.outlets   = action.payload.outlets;
+        state.outlets = action.payload.outlets;
         state.locations = action.payload.locations;
         state.divisions = action.payload.divisions;
-        state.loading   = false;
+        state.loading = false;
       });
   },
 });

@@ -222,10 +222,25 @@ const Division = () => {
     setLoading(true); setError("");
     try {
       const res = await getDivisions(page - 1, pageSize, searchTerm, signal);
-      const pageData = res?.data?.data;
-      setDivisions(pageData?.content || []);
-      setTotalPages(pageData?.totalPages || 1);
-      setTotalElements(pageData?.totalElements || 0);
+      let list = [];
+      let tPages = 1;
+      let tElements = 0;
+
+      if (Array.isArray(res)) {
+          list = res;
+          tElements = list.length;
+      } else if (res && Array.isArray(res.content)) {
+          list = res.content;
+          tPages = res.totalPages || 1;
+          tElements = res.totalElements || list.length;
+      } else if (res?.data && Array.isArray(res.data.content)) {
+          list = res.data.content;
+          tPages = res.data.totalPages || 1;
+          tElements = res.data.totalElements || list.length;
+      }
+      setDivisions(list);
+      setTotalPages(tPages);
+      setTotalElements(tElements);
     } catch (e) {
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
       setError("Failed to load divisions. Check API connection.");

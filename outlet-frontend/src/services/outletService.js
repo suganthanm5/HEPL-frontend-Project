@@ -1,9 +1,25 @@
 import API, { ENDPOINTS } from '../api/apiClient';
 
-export const getOutlets   = (page = 0, size = 1000, search = "", signal) => API.get(ENDPOINTS.outlets, { params: { page, size, ...(search ? { keyword: search } : {}) }, signal });
-export const createOutlet = (data)     => API.post(ENDPOINTS.outlets, data);
-export const updateOutlet = (id, data) => API.put(`${ENDPOINTS.outlets}/${id}`, data);
-export const deleteOutlet = (id)       => API.delete(`${ENDPOINTS.outlets}/${id}`);
+const getOutlets = async (page = 0, size = 1000, search = "", signal) => {
+  const res = await API.get(ENDPOINTS.outlets, { params: { page, size, ...(search ? { keyword: search } : {}) }, signal });
+  // Extract content array from Page object
+  const pageData = res.data?.data;
+  return Array.isArray(pageData?.content) ? pageData.content : [];
+};
+
+const createOutlet = async (data) => {
+  const res = await API.post(ENDPOINTS.outlets, data);
+  return res.data?.data || res.data;
+};
+
+const updateOutlet = async (id, data) => {
+  const res = await API.put(`${ENDPOINTS.outlets}/${id}`, data);
+  return res.data?.data || res.data;
+};
+
+const deleteOutlet = async (id) => {
+  await API.delete(`${ENDPOINTS.outlets}/${id}`);
+};
 
 export const outletService = {
     getAll: getOutlets,
@@ -12,3 +28,5 @@ export const outletService = {
     updateOutlet,
     deleteOutlet
 };
+
+export { getOutlets, createOutlet, updateOutlet, deleteOutlet };

@@ -7,7 +7,10 @@ export const ENDPOINTS = {
   divisions: '/api/divisions',
   locations: '/api/locations',
   outlets: '/api/outlets',
-  products: '/api/products'
+  products: '/api/products',
+  profile: '/api/user/profile',
+  changePassword: '/api/user/change-password',
+  uploadPicture: '/api/user/upload-picture'
 };
 
 const API = axios.create({
@@ -35,8 +38,10 @@ const deleteCookie = (name) => {
 API.interceptors.request.use((config) => {
   const token = getCookie('token') || localStorage.getItem('token');
   const url = config.url || '';
+  console.log('[DEBUG] Request to:', url, 'Token present:', !!token);
   if (token && !url.includes('/login') && !url.includes('/register')) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('[DEBUG] Authorization header set');
   }
   return config;
 }, (error) => {
