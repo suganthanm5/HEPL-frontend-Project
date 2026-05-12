@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { getOutlets, createOutlet, updateOutlet, deleteOutlet } from "../../services/outletService";
 import { getLocations } from "../../services/locationService";
-import { getDivisions } from "../../services/devisionService";
+import { getDivisions, getDivisionById } from "../../services/divisionService";
 
 // Material UI imports
 import {
@@ -318,10 +318,17 @@ export default function Outlet() {
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleDivisionSelect = (divisionId) => {
+  const handleDivisionSelect = async (divisionId) => {
     if (!divisionId) return;
-    const division = divisions.find((d) => d.id == divisionId);
+    let division = divisions.find((d) => d.id == divisionId);
     if (!division || selectedDivisions.find((d) => d.id == divisionId)) return;
+    // Fetch products for this division if not already loaded
+    if (!division.products || division.products.length === 0) {
+      try {
+        const full = await getDivisionById(divisionId);
+        if (full) division = { ...division, products: full.products || [] };
+      } catch { /* use empty products */ }
+    }
     const next = [...selectedDivisions, division];
     setSelectedDivisions(next);
     setForm((f) => ({ ...f, mappings: { ...f.mappings, [divisionId]: [] } }));
@@ -395,7 +402,14 @@ export default function Outlet() {
     const locId = o.locationId ? String(o.locationId) : String(locs.find((l) => l.name === (o.locationName || ""))?.id ?? "");
     const mappings = {};
     const selectedDivs = [];
-    (o.divisions ?? []).forEach((d) => { mappings[d.id] = (d.products ?? []).map((p) => p.id); selectedDivs.push(d); });
+    // Fetch full division data (with all products) for each division in the outlet
+    for (const d of (o.divisions ?? [])) {
+      mappings[d.id] = (d.products ?? []).map((p) => p.id);
+      try {
+        const full = await getDivisionById(d.id);
+        selectedDivs.push(full ? { ...d, products: full.products || [] } : d);
+      } catch { selectedDivs.push(d); }
+    }
     setSelectedDivisions(selectedDivs);
     updateAvailableProducts(selectedDivs);
     setForm({ outletName: o.outletName ?? "", address: o.address ?? "", locationId: locId, locationName: o.locationName ?? "", mappings, outletType: o.outletType ?? "", ownerName: o.ownerName ?? "" });

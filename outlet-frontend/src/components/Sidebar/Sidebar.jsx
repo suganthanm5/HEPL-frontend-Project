@@ -43,7 +43,7 @@ const ALL_NAV = [
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
   const navigate = useNavigate();
-  const { role, logout } = useAuth();
+  const { role, logout, isLoading } = useAuth();
   const searchInputRef = useRef(null);
 
   // ── Theme ─────────────────────────────────────────────────
@@ -93,18 +93,26 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     }
   }, [collapsed]);
 
-  // ── Logout ────────────────────────────────────────────────
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  // ── Toggle ────────────────────────────────────────────────
   const handleToggle = () => setCollapsed((prev) => !prev);
 
-  // Filtered nav: first by role, then by search
+  // Get role from context or localStorage as fallback
+  const currentRole = role || localStorage.getItem("role") || "USER";
+  
   const filteredNav = ALL_NAV
-    .filter((item) => !item.roles || !role || item.roles.includes(role))
+    .filter((item) => {
+      if (!item.roles || item.roles.length === 0) return true;
+      if (!currentRole) return false;
+      
+      const userRole = currentRole.toString().toUpperCase().replace('ROLE_', '').trim();
+      const allowedRoles = item.roles.map(r => r.toString().toUpperCase().replace('ROLE_', '').trim());
+      
+      return allowedRoles.includes(userRole);
+    })
     .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()));
 
   return (

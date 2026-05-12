@@ -20,7 +20,7 @@ import org.hibernate.annotations.SQLRestriction;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @SQLDelete(sql = "UPDATE locations SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLRestriction("is_deleted = false or is_deleted is null")
 public class Location extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,4 +28,8 @@ public class Location extends BaseAuditEntity {
 
     @Column(nullable = false, unique = true)
     private String name;
+
+    private String state;
+
+    private String city;
 }

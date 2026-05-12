@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final ProductBatchRepository productBatchRepository;
     private final OutletRepository outletRepository;
+    private final OutletDivisionProductRepository mappingRepository;
 
     @Override
     public List<Order> getAllOrders() {
@@ -29,7 +31,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getFilteredOrders(Order.OrderStatus status, Long outletId, String orderNo) {
-        return orderRepository.findFilteredOrders(status, outletId, orderNo);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        Long userId = currentUser.getRole() == User.Role.USER ? currentUser.getId() : null;
+        return orderRepository.findFilteredOrders(status, outletId, orderNo, userId);
     }
 
     @Override
@@ -53,6 +59,15 @@ public class OrderServiceImpl implements OrderService {
         Outlet outlet = outletRepository.findById(request.getOutletId())
                 .orElseThrow(() -> new ResourceNotFoundException("Outlet", "id", request.getOutletId()));
 
+        // Validate that products are mapped to the outlet
+        for (var itemRequest : request.getItems()) {
+            if (!mappingRepository.existsByOutletIdAndProductId(request.getOutletId(), itemRequest.getProductId())) {
+                Product product = productRepository.findById(itemRequest.getProductId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Product", "id", itemRequest.getProductId()));
+                throw new RuntimeException("Product '" + product.getName() + "' is not mapped to outlet '" + outlet.getOutletName() + "'");
+            }
+        }
+
         Order order = Order.builder()
                 .orderNo("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .outlet(outlet)
@@ -64,10 +79,22 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product", "id", itemRequest.getProductId()));
 
+            ProductBatch batch = null;
+            BigDecimal price = product.getSellingPrice();
+
+            // If batch is specified, fetch it and use its selling price
+            if (itemRequest.getBatchId() != null) {
+                batch = productBatchRepository.findById(itemRequest.getBatchId())
+                        .orElseThrow(() -> new ResourceNotFoundException("ProductBatch", "id", itemRequest.getBatchId()));
+                price = batch.getSellingPrice() != null ? batch.getSellingPrice() : price;
+            }
+
             return OrderItem.builder()
                     .order(order)
                     .product(product)
+                    .batch(batch)
                     .quantity(itemRequest.getQuantity())
+                    .price(price)
                     .build();
         }).toList();
 
@@ -82,15 +109,51 @@ public class OrderServiceImpl implements OrderService {
         if (order.getStatus() == status)
             return order;
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
         if (status == Order.OrderStatus.APPROVED && order.getStatus() == Order.OrderStatus.PENDING) {
-            allocateStockFIFO(order);
+            allocateStockFIFO(order, currentUser);
+        }
+
+        // Deduct stock and create transaction when order is COMPLETED
+        if (status == Order.OrderStatus.COMPLETED) {
+            for (OrderItem item : order.getItems()) {
+                // Only process if batch is assigned
+                if (item.getBatch() != null) {
+                    OutletStock outletStock = outletStockRepository
+                            .findByOutletIdAndProductIdAndBatchId(order.getOutlet().getId(), 
+                                    item.getProduct().getId(), item.getBatch().getId())
+                            .orElseThrow(() -> new RuntimeException("Outlet stock not found for product: " 
+                                    + item.getProduct().getName()));
+
+                    if (outletStock.getAvailableQty() < item.getQuantity()) {
+                        throw new RuntimeException("Insufficient stock for product: " + item.getProduct().getName());
+                    }
+
+                    outletStock.setAvailableQty(outletStock.getAvailableQty() - item.getQuantity());
+                    outletStockRepository.save(outletStock);
+
+                    stockTransactionRepository.save(StockTransaction.builder()
+                            .transactionType(StockTransaction.TransactionType.OUT)
+                            .product(item.getProduct())
+                            .batch(item.getBatch())
+                            .outlet(order.getOutlet())
+                            .user(currentUser)
+                            .quantity(item.getQuantity())
+                            .referenceNo(order.getOrderNo())
+                            .remarks("Order completed: " + order.getOrderNo())
+                            .build());
+                }
+            }
         }
 
         order.setStatus(status);
         return orderRepository.save(order);
     }
 
-    private void allocateStockFIFO(Order order) {
+    private void allocateStockFIFO(Order order, User currentUser) {
         for (OrderItem item : order.getItems()) {
             int remainingToAllocate = item.getQuantity();
 
@@ -137,6 +200,7 @@ public class OrderServiceImpl implements OrderService {
                         .product(item.getProduct())
                         .batch(batch)
                         .outlet(null) // Warehouse
+                        .user(currentUser)
                         .quantity(allocationFromThisBatch)
                         .referenceNo(order.getOrderNo())
                         .remarks("FIFO Allocation for Order: " + order.getOrderNo())
@@ -148,6 +212,7 @@ public class OrderServiceImpl implements OrderService {
                         .product(item.getProduct())
                         .batch(batch)
                         .outlet(order.getOutlet())
+                        .user(currentUser)
                         .quantity(allocationFromThisBatch)
                         .referenceNo(order.getOrderNo())
                         .remarks("Stock Receipt from Order: " + order.getOrderNo())
@@ -165,6 +230,6 @@ public class OrderServiceImpl implements OrderService {
         if (order.getStatus() != Order.OrderStatus.PENDING) {
             throw new RuntimeException("Cannot delete order that is not in PENDING status");
         }
-        orderRepository.delete(order);
+        orderRepository.deleteById(id); // triggers @SQLDelete soft-delete
     }
 }

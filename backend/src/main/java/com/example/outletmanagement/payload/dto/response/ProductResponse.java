@@ -18,4 +18,6 @@ public class ProductResponse {
     private BigDecimal mrp;
     private BigDecimal sellingPrice;
     private BigDecimal purchasePrice;
+    private Long divisionId;
+    private String divisionName;
 }

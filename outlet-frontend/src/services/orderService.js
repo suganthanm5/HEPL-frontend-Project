@@ -20,8 +20,8 @@ export const orderService = {
       outletId: data.outletId,
       items: data.items.map(it => ({
         productId: it.productId,
-        batchId: it.batchId,
-        quantity: it.quantity
+        ...(it.batchId ? { batchId: Number(it.batchId) } : {}),
+        quantity: Number(it.quantity)
       }))
     };
     const res = await apiClient.post('/api/orders', formatted);
@@ -31,6 +31,7 @@ export const orderService = {
   /** Update order status */
   updateStatus: async (id, status) => {
     const res = await apiClient.patch(`/api/orders/${id}/status?status=${status}`);
+    if (res.status >= 400) throw { response: res };
     return res.data?.data || res.data;
   },
 

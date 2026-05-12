@@ -22,7 +22,12 @@ CREATE TABLE IF NOT EXISTS locations (
 -- Divisions Table
 CREATE TABLE IF NOT EXISTS divisions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    name VARCHAR(255) NOT NULL,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255)
 );
 
 -- Products Table
@@ -35,6 +40,11 @@ CREATE TABLE IF NOT EXISTS products (
     selling_price DECIMAL(19, 2),
     purchase_price DECIMAL(19, 2),
     division_id BIGINT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     FOREIGN KEY (division_id) REFERENCES divisions(id)
 );
 
@@ -47,7 +57,28 @@ CREATE TABLE IF NOT EXISTS outlets (
     owner_name VARCHAR(255),
     address TEXT,
     location_id BIGINT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     FOREIGN KEY (location_id) REFERENCES locations(id)
+);
+
+-- Outlet Division Products (Mapping Table)
+CREATE TABLE IF NOT EXISTS outlet_division_products (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    outlet_id BIGINT NOT NULL,
+    division_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    FOREIGN KEY (outlet_id) REFERENCES outlets(id),
+    FOREIGN KEY (division_id) REFERENCES divisions(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
 -- Product Batches

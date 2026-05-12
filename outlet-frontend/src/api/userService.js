@@ -31,17 +31,8 @@ const userService = {
 
   // Change password in database
   changePassword: async (passwordData) => {
-    try {
-      const response = await API.put(ENDPOINTS.changePassword, passwordData);
-      
-      return {
-        success: true,
-        message: 'Password changed successfully in database'
-      };
-    } catch (error) {
-      console.error('Failed to change password in database:', error);
-      throw new Error(`Failed to change password: ${error.response?.data?.message || error.message}`);
-    }
+    const response = await API.put(ENDPOINTS.changePassword, passwordData);
+    return response.data;
   },
 
   // Upload profile picture to database

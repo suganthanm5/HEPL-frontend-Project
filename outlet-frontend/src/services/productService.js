@@ -2,10 +2,8 @@ import API, { ENDPOINTS } from '../api/apiClient';
 
 const getProducts = async (page = 0, size = 10, signal) => {
   const res = await API.get(ENDPOINTS.products, { params: { page, size }, signal });
-  // res.data is ApiResponse { httpStatus, message, data: Page { content: [...], totalPages, ... } }
   const pageData = res.data?.data;
-  // Extract content array from Page object
-  return Array.isArray(pageData?.content) ? pageData.content : [];
+  return pageData || { content: [], totalPages: 0, totalElements: 0 };
 };
 
 const getProductsByDivision = (divisionId, signal) => 

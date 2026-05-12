@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +26,22 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Page<LocationResponse> getAllLocations(String search, Pageable pageable) {
-        return locationRepository.findAll((root, query, cb) -> {
-            if (search != null && !search.isEmpty()) {
-                return cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%");
-            }
-            return null;
-        }, pageable).map(this::mapToResponse);
+        Page<Location> locations;
+        
+        if (search != null && !search.isBlank()) {
+            locations = locationRepository.findByNameContainingIgnoreCase(search, pageable);
+        } else {
+            locations = locationRepository.findAll(pageable);
+        }
+        
+        return locations.map(this::mapToResponse);
+    }
+
+    @Override
+    public LocationResponse getLocationById(Long id) {
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
+        return mapToResponse(location);
     }
 
     @Override
@@ -55,11 +63,5 @@ public class LocationServiceImpl implements LocationService {
                 .id(location.getId())
                 .name(location.getName())
                 .build();
-    }
-
-    @Override
-    public LocationResponse getLocationById(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLocationById'");
     }
 }

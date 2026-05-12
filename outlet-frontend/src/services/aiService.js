@@ -3,7 +3,7 @@
 
 import { createOutlet } from './outletService';
 import { createLocation } from './locationService';
-import { createDivision } from './devisionService';
+import { createDivision } from './divisionService';
 
 class AIService {
   constructor() {

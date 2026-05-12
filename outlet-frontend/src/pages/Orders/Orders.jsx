@@ -55,6 +55,16 @@ const Orders = () => {
   const isAdmin   = role === "ADMIN";
   const isManager = role === "MANAGER";
 
+  /* ── Extract array from various response shapes ── */
+  const extractArr = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (Array.isArray(val.content)) return val.content;
+    if (Array.isArray(val.data)) return val.data;
+    if (Array.isArray(val.data?.content)) return val.data.content;
+    return [];
+  };
+
   /* ── Load — each service fetched independently so one failure
          doesn't wipe out the others ── */
   const load = useCallback(async () => {
@@ -72,15 +82,32 @@ const Orders = () => {
 
     const [oData, otData, pData, bData] = await Promise.all([
       safe(orderService.getAll(activeFilters)),
-      safe(outletService.getAll  ? outletService.getAll()            : Promise.resolve([])),
-      safe(productService.getAll ? productService.getAll(0, 1000)    : Promise.resolve([])),
-      safe(batchService.getAll   ? batchService.getAll()             : Promise.resolve([])),
+      safe(outletService.getOutlets ? outletService.getOutlets(0, 1000) : Promise.resolve([])),
+      safe(productService.getProducts ? productService.getProducts(0, 1000) : Promise.resolve([])),
+      safe(batchService.getAll ? batchService.getAll() : Promise.resolve([])),
     ]);
 
-    setOrders(Array.isArray(oData) ? oData : []);
-    setOutlets(Array.isArray(otData) ? otData : []);
-    setProducts(Array.isArray(pData) ? pData : []);
-    setBatches(Array.isArray(bData) ? bData : []);
+    const rawOutlets = extractArr(otData);
+    // Enrich outlets with allProducts from their mappings (same as Outlet.jsx)
+    const enrichedOutlets = rawOutlets.map((o) => {
+      if (o.allProducts) return o; // already enriched
+      const divisionMap = new Map();
+      (o.mappings || []).forEach((m) => {
+        const divId = m.divisionId || m.division?.id;
+        if (!divisionMap.has(divId)) divisionMap.set(divId, []);
+        const prodId = m.productId || m.product?.id;
+        const prodName = m.productName || m.product?.name;
+        if (prodId) divisionMap.get(divId).push({ id: prodId, name: prodName, productCode: m.productCode });
+      });
+      const allProducts = [];
+      divisionMap.forEach((prods) => allProducts.push(...prods));
+      return { ...o, allProducts };
+    });
+
+    setOrders(extractArr(oData));
+    setOutlets(enrichedOutlets);
+    setProducts(extractArr(pData));
+    setBatches(extractArr(bData));
 
     setLoading(false);
   }, [filters, search]);
@@ -167,7 +194,7 @@ const Orders = () => {
           <Typography className="page-title">Orders</Typography>
           <Typography className="page-subtitle">Track and manage batch orders</Typography>
         </Box>
-        {(role === "USER" || isManager) && (
+        {(isAdmin || isManager || role === "USER") && (
           <ButtonBase
             onClick={() => setCreate({ open: true, data: { ...emptyOrder, items: [{ ...emptyItem }] } })}
             disableRipple
@@ -358,7 +385,7 @@ const Orders = () => {
             <SearchableSelect
               options={outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))}
               value={create.data.outletId}
-              onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id } }))}
+              onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
               placeholder="— Select Outlet —"
               searchPlaceholder="Search outlets..."
             />
@@ -375,11 +402,16 @@ const Orders = () => {
                 <Box>
                   <Typography className="dialog-field-label">Product *</Typography>
                   <SearchableSelect
-                    options={products}
+                    options={(() => {
+                      const selectedOutlet = outlets.find((ot) => String(ot.id) === String(create.data.outletId));
+                      const mapped = selectedOutlet?.allProducts || selectedOutlet?.products || [];
+                      const pool = mapped.length > 0 ? mapped : products;
+                      return pool.map((p) => ({ id: p.id, name: p.name || p.productName || `Product ${p.id}` }));
+                    })()}
                     value={item.productId}
                     onChange={(id) => updateItem(idx, "productId", id)}
-                    placeholder="Select"
-                    searchPlaceholder="Search..."
+                    placeholder="Select product"
+                    searchPlaceholder="Search products..."
                   />
                 </Box>
                 <Box>

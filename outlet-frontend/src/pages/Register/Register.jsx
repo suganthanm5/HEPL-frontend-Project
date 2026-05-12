@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/Card';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
@@ -16,6 +17,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -29,11 +31,11 @@ const Register = () => {
     try {
       const res = await registerUser(userData);
       const token = res.data?.token || res.data?.data?.token || res.data?.accessToken || res.data?.data?.accessToken;
+      const user = res.data?.user || res.data?.data?.user || { username: userData.username, email: userData.email, role: 'USER' };
       if (token) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('username', userData.username);
+        login(user, token);
+        navigate('/dashboard');
       }
-      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register. Please try again.');
     } finally {

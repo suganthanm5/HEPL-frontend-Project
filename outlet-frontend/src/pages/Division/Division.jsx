@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   getDivisions, createDivision, updateDivision, deleteDivision,
-} from "../../services/devisionService";
+} from "../../services/divisionService";
 import {
   getProductsByDivision, createProduct, deleteProduct,
 } from "../../services/productService";
@@ -222,26 +222,37 @@ const Division = () => {
     setLoading(true); setError("");
     try {
       const res = await getDivisions(page - 1, pageSize, searchTerm, signal);
+      console.log('[DEBUG] getDivisions response:', res);
+      
       let list = [];
       let tPages = 1;
       let tElements = 0;
 
+      // Handle different response formats
       if (Array.isArray(res)) {
-          list = res;
-          tElements = list.length;
-      } else if (res && Array.isArray(res.content)) {
+        list = res;
+        tElements = list.length;
+      } else if (res && typeof res === 'object') {
+        // If it's a Page object with content
+        if (Array.isArray(res.content)) {
           list = res.content;
           tPages = res.totalPages || 1;
           tElements = res.totalElements || list.length;
-      } else if (res?.data && Array.isArray(res.data.content)) {
+        }
+        // If it's wrapped in data property
+        else if (res.data && Array.isArray(res.data.content)) {
           list = res.data.content;
           tPages = res.data.totalPages || 1;
           tElements = res.data.totalElements || list.length;
+        }
       }
+      
+      console.log('[DEBUG] Extracted divisions:', list, 'Total pages:', tPages, 'Total elements:', tElements);
       setDivisions(list);
       setTotalPages(tPages);
       setTotalElements(tElements);
     } catch (e) {
+      console.error('[DEBUG] fetchDivisions error:', e);
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
       setError("Failed to load divisions. Check API connection.");
     } finally { setLoading(false); }

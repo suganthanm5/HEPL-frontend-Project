@@ -10,8 +10,14 @@ import com.example.outletmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 @RequiredArgsConstructor
@@ -95,7 +101,74 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
+        String username = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (currentUser.getId().equals(id)) {
+            throw new RuntimeException("You cannot delete your own account");
+        }
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public UserResponse getCurrentUserProfile(Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return mapToResponse(user);
+    }
+
+    @Override
+    public UserResponse updateCurrentUserProfile(Authentication authentication, UserCreationDto request) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (request.getName() != null) {
+            user.setName(request.getName().trim());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail().trim());
+        }
+        
+        user.setUpdatedAt(new java.util.Date());
+        return mapToResponse(userRepository.save(user));
+    }
+
+    @Override
+    public void changePassword(Authentication authentication, String oldPassword, String newPassword) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+        
+        user.setPassword(passwordEncoder.encode(newPassword.trim()));
+        user.setUpdatedAt(new java.util.Date());
+        userRepository.save(user);
+    }
+
+    @Override
+    public String uploadProfilePicture(Authentication authentication, MultipartFile file) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        try {
+            String uploadDir = "uploads/profile-pictures";
+            Files.createDirectories(Paths.get(uploadDir));
+            
+            String filename = username + "_" + System.currentTimeMillis() + ".jpg";
+            Path filepath = Paths.get(uploadDir, filename);
+            Files.write(filepath, file.getBytes());
+            
+            return "/uploads/profile-pictures/" + filename;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload profile picture: " + e.getMessage());
+        }
     }
 
     private UserResponse mapToResponse(User user) {

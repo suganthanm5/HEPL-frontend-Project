@@ -2,21 +2,40 @@ package com.example.outletmanagement.repository;
 
 import com.example.outletmanagement.entity.ProductBatch;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long> {
-    List<ProductBatch> findByProductId(Long productId);
-    List<ProductBatch> findByStatus(ProductBatch.Status status);
     
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product ORDER BY b.id DESC")
+    List<ProductBatch> findAll();
+    
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE b.id = :id")
+    Optional<ProductBatch> findByIdWithProduct(@Param("id") Long id);
+    
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE b.product.id = :productId")
+    List<ProductBatch> findByProductId(@Param("productId") Long productId);
+    
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE b.status = :status")
+    List<ProductBatch> findByStatus(@Param("status") ProductBatch.Status status);
+    
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE " +
+           "b.product.id = :productId AND b.status = :status AND b.quantity > :quantity " +
+           "ORDER BY b.expiryDate ASC")
     List<ProductBatch> findByProductIdAndStatusAndQuantityGreaterThanOrderByExpiryDateAsc(
-        Long productId, ProductBatch.Status status, Integer quantity);
+        @Param("productId") Long productId, 
+        @Param("status") ProductBatch.Status status, 
+        @Param("quantity") Integer quantity);
 
-    @org.springframework.data.jpa.repository.Query("SELECT b FROM ProductBatch b WHERE " +
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE " +
             "(:productId IS NULL OR b.product.id = :productId) AND " +
-            "(:status IS NULL OR b.status = :status)")
+            "(:status IS NULL OR b.status = :status) " +
+            "ORDER BY b.id DESC")
     List<ProductBatch> findFilteredBatches(
-            @org.springframework.data.repository.query.Param("productId") Long productId,
-            @org.springframework.data.repository.query.Param("status") ProductBatch.Status status);
+            @Param("productId") Long productId,
+            @Param("status") ProductBatch.Status status);
 }

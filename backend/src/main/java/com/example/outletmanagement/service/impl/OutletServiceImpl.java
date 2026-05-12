@@ -10,6 +10,7 @@ import com.example.outletmanagement.service.OutletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -57,44 +58,36 @@ public class OutletServiceImpl implements OutletService {
             }
         }
 
-        return mapToResponse(savedOutlet);
+        return mapToResponse(outletRepository.findByIdWithMappings(savedOutlet.getId()).orElse(savedOutlet));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OutletResponse> getAllOutlets(String search, Long locationId, String type, Long divisionId,
             Pageable pageable) {
-        return outletRepository.findAll((root, query, cb) -> {
-            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+        Page<Outlet> outlets;
+        
+        if (search != null && !search.isBlank()) {
+            outlets = outletRepository.findByOutletNameContainingIgnoreCase(search, pageable);
+        } else {
+            outlets = outletRepository.findAll(pageable);
+        }
+        
+        List<Long> outletIds = outlets.getContent().stream().map(Outlet::getId).collect(Collectors.toList());
+        List<Outlet> outletsWithMappings = outletRepository.findAllByIdWithMappings(outletIds);
+        Map<Long, Outlet> outletMap = outletsWithMappings.stream().collect(Collectors.toMap(Outlet::getId, o -> o));
 
-            if (search != null && !search.isEmpty()) {
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("outletName")), "%" + search.toLowerCase() + "%"),
-                        cb.like(cb.lower(root.get("outletCode")), "%" + search.toLowerCase() + "%"),
-                        cb.like(cb.lower(root.get("ownerName")), "%" + search.toLowerCase() + "%")));
-            }
-
-            if (locationId != null) {
-                predicates.add(cb.equal(root.get("location").get("id"), locationId));
-            }
-
-            if (type != null && !type.isEmpty()) {
-                predicates.add(cb.equal(root.get("outletType"), type));
-            }
-
-            if (divisionId != null) {
-                jakarta.persistence.criteria.Join<Outlet, OutletDivisionProduct> mappingsJoin = root.join("mappings");
-                predicates.add(cb.equal(mappingsJoin.get("division").get("id"), divisionId));
-                query.distinct(true);
-            }
-
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        }, pageable).map(this::mapToResponse);
+        List<OutletResponse> responses = outlets.getContent().stream()
+                .map(outlet -> mapToResponse(outletMap.getOrDefault(outlet.getId(), outlet)))
+                .collect(Collectors.toList());
+        
+        return new PageImpl<>(responses, pageable, outlets.getTotalElements());
     }
 
     @Override
     @Transactional
     public OutletResponse updateOutlet(Long id, OutletRequest request) {
-        Outlet outlet = outletRepository.findById(id)
+        Outlet outlet = outletRepository.findByIdWithMappings(id)
                 .orElseThrow(() -> new RuntimeException("Outlet not found"));
 
         outlet.setOutletName(request.getOutletName());
@@ -108,7 +101,6 @@ public class OutletServiceImpl implements OutletService {
             outlet.setLocation(location);
         }
 
-        // Update mappings
         if (request.getMappings() != null) {
             outlet.getMappings().clear();
             outletRepository.saveAndFlush(outlet);
@@ -128,7 +120,8 @@ public class OutletServiceImpl implements OutletService {
             }
         }
 
-        return mapToResponse(outletRepository.save(outlet));
+        outletRepository.save(outlet);
+        return mapToResponse(outletRepository.findByIdWithMappings(id).orElse(outlet));
     }
 
     @Override
@@ -138,15 +131,17 @@ public class OutletServiceImpl implements OutletService {
 
     private OutletResponse mapToResponse(Outlet outlet) {
         List<OutletResponse.MappingResponse> mappingResponses = new ArrayList<>();
-        if (outlet.getMappings() != null) {
+        if (outlet.getMappings() != null && !outlet.getMappings().isEmpty()) {
             for (OutletDivisionProduct m : outlet.getMappings()) {
-                mappingResponses.add(OutletResponse.MappingResponse.builder()
-                        .divisionId(m.getDivision().getId())
-                        .divisionName(m.getDivision().getName())
-                        .productId(m.getProduct().getId())
-                        .productName(m.getProduct().getName())
-                        .productCode(m.getProduct().getProductCode())
-                        .build());
+                if (m.getDivision() != null && m.getProduct() != null) {
+                    mappingResponses.add(OutletResponse.MappingResponse.builder()
+                            .divisionId(m.getDivision().getId())
+                            .divisionName(m.getDivision().getName())
+                            .productId(m.getProduct().getId())
+                            .productName(m.getProduct().getName())
+                            .productCode(m.getProduct().getProductCode())
+                            .build());
+                }
             }
         }
 
@@ -164,8 +159,9 @@ public class OutletServiceImpl implements OutletService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OutletResponse getOutletById(Long id) {
-        Outlet outlet = outletRepository.findById(id)
+        Outlet outlet = outletRepository.findByIdWithMappings(id)
                 .orElseThrow(() -> new RuntimeException("Outlet not found with id: " + id));
         return mapToResponse(outlet);
     }

@@ -20,7 +20,7 @@ import org.hibernate.annotations.SQLRestriction;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @SQLDelete(sql = "UPDATE outlet_division_products SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLRestriction("is_deleted = false or is_deleted is null")
 public class OutletDivisionProduct extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

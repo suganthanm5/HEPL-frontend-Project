@@ -31,7 +31,7 @@ public class OrderItem extends BaseAuditEntity {
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", nullable = false)
+    @JoinColumn(name = "batch_id")
     private ProductBatch batch;
 
     @Column(nullable = false)

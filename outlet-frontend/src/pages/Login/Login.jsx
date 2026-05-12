@@ -40,12 +40,13 @@ const Login = () => {
                 const userData = {
                     username: payload.username || username,
                     email: payload.email || "",
+                    name: payload.name || payload.username || username,
                     role: payload.role || 'USER'
                 };
                 
                 login(userData, token);
                 
-                console.log('✅ Login successful, redirecting to dashboard...');
+                console.log('✅ Login successful, user data:', userData);
                 navigate("/dashboard", { replace: true });
             } else {
                 setError(res.data?.message || 'Login failed - no token received');

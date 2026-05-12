@@ -2,9 +2,8 @@ import API, { ENDPOINTS } from '../api/apiClient';
 
 const getOutlets = async (page = 0, size = 1000, search = "", signal) => {
   const res = await API.get(ENDPOINTS.outlets, { params: { page, size, ...(search ? { keyword: search } : {}) }, signal });
-  // Extract content array from Page object
   const pageData = res.data?.data;
-  return Array.isArray(pageData?.content) ? pageData.content : [];
+  return pageData || { content: [], totalPages: 0, totalElements: 0 };
 };
 
 const createOutlet = async (data) => {

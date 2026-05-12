@@ -7,15 +7,11 @@ import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.DivisionRepository;
 import com.example.outletmanagement.repository.ProductRepository;
 import com.example.outletmanagement.service.ProductService;
-import com.example.outletmanagement.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,8 +40,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> getAllProducts(String search, Long divisionId, BigDecimal minSellingPrice, BigDecimal maxSellingPrice, BigDecimal minPurchasePrice, BigDecimal maxPurchasePrice, Pageable pageable) {
-        return productRepository.findAll(ProductSpecification.searchAndFilter(search, divisionId, minSellingPrice, maxSellingPrice, minPurchasePrice, maxPurchasePrice), pageable)
-                .map(this::mapToResponse);
+        Page<Product> products;
+        
+        if (search != null && !search.isBlank()) {
+            products = productRepository.findByNameContainingIgnoreCase(search, pageable);
+        } else {
+            products = productRepository.findAll(pageable);
+        }
+        
+        return products.map(this::mapToResponse);
     }
 
     @Override
@@ -94,6 +97,8 @@ public class ProductServiceImpl implements ProductService {
                 .mrp(product.getMrp())
                 .sellingPrice(product.getSellingPrice())
                 .purchasePrice(product.getPurchasePrice())
+                .divisionId(product.getDivision() != null ? product.getDivision().getId() : null)
+                .divisionName(product.getDivision() != null ? product.getDivision().getName() : null)
                 .build();
     }
 }

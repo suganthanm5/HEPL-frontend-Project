@@ -48,7 +48,7 @@ import {
 import { addOutlet, addLocation, addDivision } from '../../redux/dashboardSlice';
 import { createOutlet } from '../../services/outletService';
 import { createLocation } from '../../services/locationService';
-import { createDivision } from '../../services/devisionService';
+import { createDivision } from '../../services/divisionService';
 import aiService from '../../services/aiService';
 import userService from '../../api/userService';
 
@@ -392,59 +392,31 @@ const ProfileDrawer = ({ open, onClose }) => {
     }
   };
 
-  // Handle password change with database sync
   const handlePasswordChange = async () => {
+    if (!passwordForm.currentPassword) {
+      setToast({ open: true, message: 'Current password is required', severity: 'error' });
+      return;
+    }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setToast({ 
-        open: true, 
-        message: 'Passwords do not match', 
-        severity: 'error' 
-      });
+      setToast({ open: true, message: 'Passwords do not match', severity: 'error' });
       return;
     }
-    
     if (passwordForm.newPassword.length < 6) {
-      setToast({ 
-        open: true, 
-        message: 'Password must be at least 6 characters long', 
-        severity: 'error' 
-      });
+      setToast({ open: true, message: 'Password must be at least 6 characters long', severity: 'error' });
       return;
     }
-    
     setLoading(true);
     try {
-      console.log('Attempting to change password in database...');
-      
-      // Update password in database
-      const response = await userService.changePassword({
+      await userService.changePassword({
+        oldPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
-        confirmPassword: passwordForm.confirmPassword
       });
-      
-      console.log('Password change successful:', response);
-      
-      setToast({ 
-        open: true, 
-        message: 'Password changed successfully in database!', 
-        severity: 'success' 
-      });
-      
-      setPasswordForm({ 
-        currentPassword: '', 
-        newPassword: '', 
-        confirmPassword: '' 
-      });
-      
+      setToast({ open: true, message: 'Password changed successfully!', severity: 'success' });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setCurrentView('main');
-      
     } catch (error) {
-      console.error('Password change failed:', error);
-      setToast({ 
-        open: true, 
-        message: error.message || 'Failed to change password in database', 
-        severity: 'error' 
-      });
+      const msg = error.response?.data?.message || error.message || 'Failed to change password';
+      setToast({ open: true, message: msg, severity: 'error' });
     } finally {
       setLoading(false);
     }

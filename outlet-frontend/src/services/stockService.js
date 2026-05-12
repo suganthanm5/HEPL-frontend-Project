@@ -13,9 +13,9 @@ export const stockService = {
     return res.data?.data || res.data || [];
   },
 
-  /** Transfer stock to outlet */
+  /** Transfer stock between outlets */
   transfer: async (data) => {
-    // data: { outletId, productId, batchId, quantity }
+    // data: { fromOutletId, outletId (toOutletId), productId, batchId, quantity }
     const res = await apiClient.post('/api/stock/transfer', data);
     return res.data?.data || res.data;
   },

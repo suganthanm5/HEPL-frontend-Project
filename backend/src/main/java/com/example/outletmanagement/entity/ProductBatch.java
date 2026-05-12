@@ -43,6 +43,9 @@ public class ProductBatch extends BaseAuditEntity {
     private BigDecimal purchasePrice;
     private BigDecimal sellingPrice;
 
+    @Column(name = "minimum_threshold", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer minimumThreshold = 0;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

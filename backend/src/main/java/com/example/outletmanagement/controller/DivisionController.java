@@ -6,6 +6,7 @@ import com.example.outletmanagement.payload.dto.response.DivisionResponse;
 import com.example.outletmanagement.service.DivisionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/divisions")
 @RequiredArgsConstructor
+@Slf4j
 public class DivisionController {
     private final DivisionService divisionService;
     
@@ -38,7 +40,9 @@ public class DivisionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
+        log.info("Fetching divisions - page: {}, size: {}, keyword: {}", page, size, keyword);
         Page<DivisionResponse> response = divisionService.getAllDivisions(keyword, hasProducts, PageRequest.of(page, size));
+        log.info("Found {} divisions", response.getTotalElements());
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Divisions fetched successfully")

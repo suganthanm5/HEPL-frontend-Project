@@ -2,6 +2,7 @@ package com.example.outletmanagement.controller;
 
 import com.example.outletmanagement.entity.Order;
 import com.example.outletmanagement.payload.ApiResponse;
+import com.example.outletmanagement.payload.dto.response.OrderResponse;
 import com.example.outletmanagement.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,12 +18,14 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getAllOrders(
             @RequestParam(required = false) Order.OrderStatus status,
             @RequestParam(required = false) Long outletId,
             @RequestParam(required = false) String orderNo
     ) {
-        List<Order> response = orderService.getFilteredOrders(status, outletId, orderNo);
+        List<OrderResponse> response = orderService.getFilteredOrders(status, outletId, orderNo)
+                .stream().map(OrderResponse::from).toList();
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Orders fetched successfully")
@@ -32,7 +35,8 @@ public class OrderController {
 
     @GetMapping("/outlet/{outletId}")
     public ResponseEntity<ApiResponse> getOrdersByOutlet(@PathVariable Long outletId) {
-        List<Order> response = orderService.getOrdersByOutlet(outletId);
+        List<OrderResponse> response = orderService.getOrdersByOutlet(outletId)
+                .stream().map(OrderResponse::from).toList();
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Orders fetched successfully")
@@ -41,8 +45,9 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getOrderById(@PathVariable Long id) {
-        Order response = orderService.getOrderById(id);
+        OrderResponse response = OrderResponse.from(orderService.getOrderById(id));
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Order fetched successfully")
@@ -53,7 +58,7 @@ public class OrderController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> createOrder(@jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.OrderRequest request) {
-        Order response = orderService.createOrder(request);
+        OrderResponse response = OrderResponse.from(orderService.createOrder(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Order created successfully")
@@ -66,7 +71,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse> updateOrderStatus(
             @PathVariable Long id,
             @RequestParam Order.OrderStatus status) {
-        Order response = orderService.updateOrderStatus(id, status);
+        OrderResponse response = OrderResponse.from(orderService.updateOrderStatus(id, status));
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Order status updated successfully")
@@ -75,6 +80,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();

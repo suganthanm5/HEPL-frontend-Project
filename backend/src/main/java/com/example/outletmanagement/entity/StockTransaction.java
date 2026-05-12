@@ -30,7 +30,7 @@ public class StockTransaction extends BaseAuditEntity {
     private Outlet outlet;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "created_by_user_id", nullable = false)
     private User user;
 
     @Column(nullable = false)

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getOutlets } from "../services/outletService";
 import { getLocations } from "../services/locationService";
-import { getDivisions } from "../services/devisionService";
+import { getDivisions } from "../services/divisionService";
 
 const extractList = (res) => {
   // Handle Promise.allSettled structure

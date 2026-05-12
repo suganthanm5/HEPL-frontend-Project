@@ -13,6 +13,7 @@ import {
   CloseRounded,
 } from "@mui/icons-material";
 import { stockService } from "../../services/stockService";
+import { useAuth } from "../../context/AuthContext";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import "./Stock.css";
 import "../UserManagement/UserManagement.css";
@@ -25,7 +26,15 @@ const stockLevel = (qty, max = 200) => {
   return           { cls: "low",    label: "Critical" };
 };
 
-const emptyTransfer = { outletId: "", productId: "", batchId: "", quantity: "" };
+const emptyTransfer = { fromOutletId: "", outletId: "", productId: "", batchId: "", quantity: "" };
+
+/* helper — extract flat outletId/productId from stock entry regardless of shape */
+const stockOutletId = (s) => s.outletId ?? s.outlet?.id ?? "";
+const stockProductId = (s) => s.productId ?? s.product?.id ?? "";
+const stockBatchId = (s) => s.batchId ?? s.batch?.id ?? "";
+const stockBatchNo = (s) => s.batchNo ?? s.batch?.batchNo ?? s.batchId ?? "";
+const stockProductName = (s) => s.productName ?? s.product?.name ?? s.productId ?? "";
+const stockOutletName = (s) => s.outletName ?? s.outlet?.outletName ?? s.outletId ?? "";
 
 /* ══════════════════════════════════════════
    Stock Management Page
@@ -38,39 +47,54 @@ const Stock = () => {
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
   const [filters,  setFilters]  = useState({ productId: "", outletId: "", type: "" });
-  const [tab,      setTab]      = useState("stock"); // "stock" | "history"
+  const [tab,      setTab]      = useState("stock");
   const [transfer, setTransfer] = useState({ open: false, data: emptyTransfer });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
+
+  const { role } = useAuth();
+  const canTransfer = role === "ADMIN" || role === "MANAGER";
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const activeFilters = {};
       if (filters.productId) activeFilters.productId = filters.productId;
-      if (filters.outletId) activeFilters.outletId = filters.outletId;
-      if (filters.type) activeFilters.type = filters.type;
+      if (filters.outletId)  activeFilters.outletId  = filters.outletId;
+      if (filters.type)      activeFilters.type       = filters.type;
 
-      // Import services dynamically or ensure they are available
-      const { outletService } = await import("../../services/outletService");
+      const { outletService }  = await import("../../services/outletService");
       const { productService } = await import("../../services/productService");
 
       const [sData, tData, otData, pData] = await Promise.all([
         stockService.getAll(),
         stockService.getTransactions(activeFilters),
-        outletService.getAll ? outletService.getAll() : [],
-        productService.getAll ? productService.getAll(0, 1000) : []
+        outletService.getAll ? outletService.getAll() : Promise.resolve([]),
+        productService.getAll ? productService.getAll(0, 1000) : Promise.resolve([]),
       ]);
 
-      // Services now return clean arrays
+      /* outletService.getAll returns a Page object { content, totalPages, ... } */
+      const outletList = Array.isArray(otData)
+        ? otData
+        : Array.isArray(otData?.content)
+          ? otData.content
+          : [];
+
+      const productList = Array.isArray(pData)
+        ? pData
+        : Array.isArray(pData?.content)
+          ? pData.content
+          : [];
+
       setStock(Array.isArray(sData) ? sData : []);
       setTxns(Array.isArray(tData) ? tData : []);
-      setOutlets(Array.isArray(otData) ? otData : []);
-      setProducts(Array.isArray(pData) ? pData : []);
-    } catch (err) { 
+      setOutlets(outletList);
+      setProducts(productList);
+    } catch (err) {
       console.error("Stock load error:", err);
-      setStock([]); setTxns([]); 
+      setStock([]); setTxns([]);
+    } finally {
+      setLoading(false);
     }
-    finally { setLoading(false); }
   }, [filters]);
 
   useEffect(() => { load(); }, [load]);
@@ -82,14 +106,28 @@ const Stock = () => {
   );
 
   const handleTransfer = async () => {
+    const { fromOutletId, outletId, productId, batchId, quantity } = transfer.data;
+    if (!fromOutletId) return toast("Please select a source outlet", "error");
+    if (!outletId)     return toast("Please select a destination outlet", "error");
+    if (!productId)    return toast("Please select a product", "error");
+    if (!batchId)      return toast("Please select a batch", "error");
+    if (!quantity || Number(quantity) < 1) return toast("Please enter a valid quantity", "error");
+    if (String(fromOutletId) === String(outletId)) return toast("Source and destination outlets must be different", "error");
+
     try {
-      await stockService.transfer(transfer.data);
+      await stockService.transfer({
+        fromOutletId: Number(fromOutletId),
+        outletId:     Number(outletId),
+        productId:    Number(productId),
+        batchId:      Number(batchId),
+        quantity:     Number(quantity),
+      });
       toast("Stock transferred successfully");
       setTransfer({ open: false, data: emptyTransfer });
       load();
-    } catch (err) { 
-      const msg = err.response?.data?.message || "Transfer failed";
-      toast(msg, "error"); 
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Transfer failed";
+      toast(msg, "error");
     }
   };
 
@@ -104,10 +142,12 @@ const Stock = () => {
           <Typography className="page-title">Stock Management</Typography>
           <Typography className="page-subtitle">Monitor and transfer outlet stock</Typography>
         </Box>
+        {canTransfer && (
         <ButtonBase onClick={() => setTransfer({ open: true, data: emptyTransfer })} disableRipple
           sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}>
           <SwapHorizRounded sx={{ fontSize: 18 }} /> Transfer Stock
         </ButtonBase>
+        )}
       </Box>
 
       {/* Stat Cards */}
@@ -271,7 +311,7 @@ const Stock = () => {
       {/* Transfer Dialog */}
       <Dialog open={transfer.open} onClose={() => setTransfer({ open: false, data: emptyTransfer })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}>
         <DialogTitle className="transfer-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          Transfer Stock to Outlet
+          Transfer Stock Between Outlets
           <IconButton onClick={() => setTransfer({ open: false, data: emptyTransfer })} size="small" sx={{ color: "#fff" }}>
             <CloseRounded />
           </IconButton>
@@ -279,21 +319,35 @@ const Stock = () => {
         <DialogContent sx={{ pt: 3, pb: 1 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
-              <Typography className="dialog-field-label">Outlet *</Typography>
+              <Typography className="dialog-field-label">From Outlet *</Typography>
               <SearchableSelect
                 options={outlets.map(o => ({ id: o.id, name: o.outletName }))}
+                value={transfer.data.fromOutletId}
+                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, fromOutletId: id, batchId: "", productId: "" } }))}
+                placeholder="— Select Source Outlet —"
+                searchPlaceholder="Search outlets..."
+              />
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">To Outlet *</Typography>
+              <SearchableSelect
+                options={outlets.filter(o => String(o.id) !== String(transfer.data.fromOutletId)).map(o => ({ id: o.id, name: o.outletName }))}
                 value={transfer.data.outletId}
                 onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, outletId: id } }))}
-                placeholder="— Select Outlet —"
+                placeholder="— Select Destination Outlet —"
                 searchPlaceholder="Search outlets..."
               />
             </Box>
             <Box>
               <Typography className="dialog-field-label">Product *</Typography>
               <SearchableSelect
-                options={products}
+                options={[...new Map(
+                  stock
+                    .filter(s => String(s.outletId) === String(transfer.data.fromOutletId))
+                    .map(s => [s.productId, { id: s.productId, name: s.productName }])
+                ).values()]}
                 value={transfer.data.productId}
-                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, productId: id } }))}
+                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, productId: id, batchId: "" } }))}
                 placeholder="— Select Product —"
                 searchPlaceholder="Search products..."
               />
@@ -301,7 +355,10 @@ const Stock = () => {
             <Box>
               <Typography className="dialog-field-label">Batch *</Typography>
               <SearchableSelect
-                options={stock.filter(s => String(s.productId) === String(transfer.data.productId)).map(s => ({ id: s.batchId, name: `${s.batchNo} (Avail: ${s.availableQty})` }))}
+                options={stock
+                  .filter(s => String(s.productId) === String(transfer.data.productId)
+                    && String(s.outletId) === String(transfer.data.fromOutletId))
+                  .map(s => ({ id: s.batchId, name: `${s.batchNo} (Avail: ${s.availableQty})` }))}
                 value={transfer.data.batchId}
                 onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, batchId: id } }))}
                 placeholder="— Select Batch —"

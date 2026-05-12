@@ -12,7 +12,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -83,5 +86,73 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse> getCurrentUserProfile(Authentication authentication) {
+        UserResponse response = userService.getCurrentUserProfile(authentication);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("User profile fetched successfully")
+                .data(response)
+                .build());
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse> updateCurrentUserProfile(
+            Authentication authentication,
+            @Valid @RequestBody UserCreationDto request) {
+        UserResponse response = userService.updateCurrentUserProfile(authentication, request);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("User profile updated successfully")
+                .data(response)
+                .build());
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse> changePassword(
+            Authentication authentication,
+            @RequestBody Map<String, String> request) {
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+        
+        if (oldPassword == null || oldPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST.value())
+                    .message("Old password is required")
+                    .build());
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST.value())
+                    .message("New password is required")
+                    .build());
+        }
+        
+        try {
+            userService.changePassword(authentication, oldPassword, newPassword);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .httpStatus(HttpStatus.OK.value())
+                    .message("Password changed successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST.value())
+                    .message(e.getMessage())
+                    .build());
+        }
+    }
+
+    @PostMapping("/upload-picture")
+    public ResponseEntity<ApiResponse> uploadProfilePicture(
+            Authentication authentication,
+            @RequestParam("profilePicture") MultipartFile file) {
+        String picturePath = userService.uploadProfilePicture(authentication, file);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Profile picture uploaded successfully")
+                .data(java.util.Map.of("profilePictureUrl", picturePath))
+                .build());
     }
 }

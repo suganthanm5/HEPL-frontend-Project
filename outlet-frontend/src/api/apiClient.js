@@ -8,9 +8,9 @@ export const ENDPOINTS = {
   locations: '/api/locations',
   outlets: '/api/outlets',
   products: '/api/products',
-  profile: '/api/user/profile',
-  changePassword: '/api/user/change-password',
-  uploadPicture: '/api/user/upload-picture'
+  profile: '/api/users/profile',
+  changePassword: '/api/users/change-password',
+  uploadPicture: '/api/users/upload-picture'
 };
 
 const API = axios.create({
@@ -26,22 +26,11 @@ const API = axios.create({
   }
 });
 
-const getCookie = (name) => {
-  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-  return match ? decodeURIComponent(match[1]) : null;
-};
-
-const deleteCookie = (name) => {
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-};
-
 API.interceptors.request.use((config) => {
-  const token = getCookie('token') || localStorage.getItem('token');
+  const token = localStorage.getItem('token');
   const url = config.url || '';
-  console.log('[DEBUG] Request to:', url, 'Token present:', !!token);
   if (token && !url.includes('/login') && !url.includes('/register')) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log('[DEBUG] Authorization header set');
   }
   return config;
 }, (error) => {
@@ -49,15 +38,14 @@ API.interceptors.request.use((config) => {
 });
 
 API.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response?.status === 401 && window.location.pathname !== '/') {
-      deleteCookie('token');
-      deleteCookie('username');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('username');
+      localStorage.removeItem('email');
+      localStorage.removeItem('role');
       window.location.href = '/';
     }
     return Promise.reject(error);

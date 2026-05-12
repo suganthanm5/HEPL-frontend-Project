@@ -35,7 +35,6 @@ const RoleRoute = ({ children, title, roles }) => (
     <MainLayout title={title}>{children}</MainLayout>
   </ProtectedRoute>
 );
-
 /* ── Routes ──────────────────────────────────────── */
 const AppRoutes = () => (
   <Routes>

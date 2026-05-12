@@ -1,9 +1,10 @@
 package com.example.outletmanagement.controller;
 
-import com.example.outletmanagement.entity.OutletStock;
 import com.example.outletmanagement.entity.StockTransaction;
 import com.example.outletmanagement.payload.ApiResponse;
 import com.example.outletmanagement.payload.dto.request.StockTransferRequest;
+import com.example.outletmanagement.payload.dto.response.OutletStockResponse;
+import com.example.outletmanagement.payload.dto.response.StockTransactionResponse;
 import com.example.outletmanagement.service.OutletStockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class OutletStockController {
 
     @GetMapping
     public ResponseEntity<ApiResponse> getAllStock() {
-        List<OutletStock> response = outletStockService.getAllStock();
+        List<OutletStockResponse> response = outletStockService.getAllStock();
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Stock fetched successfully")
@@ -30,7 +31,7 @@ public class OutletStockController {
 
     @GetMapping("/outlet/{outletId}")
     public ResponseEntity<ApiResponse> getStockByOutlet(@PathVariable Long outletId) {
-        List<OutletStock> response = outletStockService.getStockByOutlet(outletId);
+        List<OutletStockResponse> response = outletStockService.getStockByOutlet(outletId);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Stock fetched successfully")
@@ -40,12 +41,14 @@ public class OutletStockController {
 
     @PostMapping("/transfer")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse> transferStock(@RequestBody StockTransferRequest request) {
-        OutletStock response = outletStockService.transferStock(
+    public ResponseEntity<ApiResponse> transferStock(@jakarta.validation.Valid @RequestBody StockTransferRequest request) {
+        OutletStockResponse response = outletStockService.transferStock(
+                request.getFromOutletId(),
                 request.getOutletId(),
                 request.getProductId(),
                 request.getBatchId(),
-                request.getQuantity()
+                request.getQuantity(),
+                request.getRemarks()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
                 .httpStatus(HttpStatus.CREATED.value())
@@ -59,7 +62,7 @@ public class OutletStockController {
             @RequestParam(required = false) Long outletId,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) StockTransaction.TransactionType type) {
-        List<StockTransaction> response = outletStockService.getFilteredTransactions(outletId, productId, type);
+        List<StockTransactionResponse> response = outletStockService.getFilteredTransactions(outletId, productId, type);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Transactions fetched successfully")

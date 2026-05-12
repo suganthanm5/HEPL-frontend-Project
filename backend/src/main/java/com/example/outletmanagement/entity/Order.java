@@ -20,7 +20,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @SQLDelete(sql = "UPDATE orders SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLRestriction("is_deleted = false or is_deleted is null")
 public class Order extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

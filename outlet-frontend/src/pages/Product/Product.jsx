@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { addProduct, updateProduct, deleteProduct } from "../../services/productService";
-import { getDivisions } from "../../services/devisionService";
+import { getDivisions } from "../../services/divisionService";
+import API, { ENDPOINTS } from '../../api/apiClient';
 
 // Material UI imports
 import {
@@ -155,29 +156,36 @@ const Product = () => {
   useEffect(() => {
     const controller = new AbortController();
     fetchProducts(controller.signal);
+    fetchDivisions(controller.signal);
     return () => controller.abort();
   }, []);
 
-  const fetchProducts = async (signal) => {
-    setLoading(true); setError("");
+  const fetchDivisions = async (signal) => {
     try {
       const res = await getDivisions(0, 200, "", signal);
-      console.log("getDivisions response:", res);
       const divList = res?.content ?? [];
-      console.log("Divisions list:", divList);
       setDivisions(divList);
-      const flat = divList.flatMap((d) =>
-        (Array.isArray(d.products) ? d.products : []).map((p) => ({
-          ...p, divisionId: d.id, divisionName: d.name,
-        }))
-      );
-      console.log("Flattened products:", flat);
-      setProducts(flat);
+    } catch (e) {
+      console.error("fetchDivisions error:", e);
+    }
+  };
+
+  const fetchProducts = async (signal) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await API.get(ENDPOINTS.products, { params: { page: 0, size: 1000 }, signal });
+      const pageData = res.data?.data;
+      const productList = pageData?.content ?? [];
+      console.log("Products fetched:", productList);
+      setProducts(productList);
     } catch (e) {
       console.error("fetchProducts error:", e);
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
       setError("Failed to load products. Check API connection.");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateProductCode = () => {
@@ -188,7 +196,7 @@ const Product = () => {
   };
 
   const divMap = useMemo(() => Object.fromEntries(divisions.map((d) => [d.id, d.name])), [divisions]);
-  const divNameOf = (p) => p.division?.name ?? divMap[p.divisionId] ?? p.divisionName ?? "—";
+  const divNameOf = (p) => p.divisionName ?? p.division?.name ?? divMap[p.divisionId] ?? "—";
   const fmt = (v) => (v == null || v === "" ? "—" : Number(v).toLocaleString());
   const numField = (v) => (v === "" ? 0 : Number(v));
 
@@ -225,7 +233,7 @@ const Product = () => {
       mrp:           p.mrp           ?? "",
       sellingPrice:  p.sellingPrice  ?? "",
       purchasePrice: p.purchasePrice ?? "",
-      divisionId:    String(p.division?.id ?? p.divisionId ?? ""),
+      divisionId:    String(p.divisionId ?? p.division?.id ?? ""),
     });
     setEditModal(p);
   };
@@ -259,7 +267,7 @@ const Product = () => {
     let result = products.filter((p) =>
       [p.name, p.productCode, divNameOf(p)].some((v) => v?.toLowerCase().includes(search.toLowerCase()))
     );
-    if (divisionFilter) result = result.filter((p) => p.divisionId == divisionFilter);
+    if (divisionFilter) result = result.filter((p) => (p.division?.id ?? p.divisionId) == divisionFilter);
     if (priceRangeFilter) {
       result = result.filter((p) => {
         const mrp = Number(p.mrp) || 0;

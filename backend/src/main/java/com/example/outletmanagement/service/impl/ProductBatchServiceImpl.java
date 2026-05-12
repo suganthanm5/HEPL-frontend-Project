@@ -15,6 +15,7 @@ public class ProductBatchServiceImpl implements ProductBatchService {
     private final ProductBatchRepository productBatchRepository;
     private final com.example.outletmanagement.repository.ProductRepository productRepository;
     private final com.example.outletmanagement.repository.StockTransactionRepository stockTransactionRepository;
+    private final com.example.outletmanagement.repository.UserRepository userRepository;
 
     @Override
     public List<ProductBatch> getAllBatches() {
@@ -33,7 +34,7 @@ public class ProductBatchServiceImpl implements ProductBatchService {
 
     @Override
     public ProductBatch getBatchById(Long id) {
-        return productBatchRepository.findById(id)
+        return productBatchRepository.findByIdWithProduct(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductBatch", "id", id));
     }
 
@@ -52,22 +53,11 @@ public class ProductBatchServiceImpl implements ProductBatchService {
                 .quantity(request.getQuantity())
                 .purchasePrice(request.getPurchasePrice())
                 .sellingPrice(request.getSellingPrice())
+                .minimumThreshold(0)
                 .status(ProductBatch.Status.ACTIVE)
                 .build();
 
-        ProductBatch savedBatch = productBatchRepository.save(batch);
-
-        // Log Stock Transaction (IN)
-        stockTransactionRepository.save(com.example.outletmanagement.entity.StockTransaction.builder()
-                .transactionType(com.example.outletmanagement.entity.StockTransaction.TransactionType.IN)
-                .product(product)
-                .batch(savedBatch)
-                .quantity(savedBatch.getQuantity())
-                .referenceNo(savedBatch.getBatchNo())
-                .remarks("Initial Batch Creation")
-                .build());
-
-        return savedBatch;
+        return productBatchRepository.save(batch);
     }
 
     @Override

@@ -9,25 +9,19 @@ public class ProductRequest {
     @NotBlank(message = "Product name is required")
     private String name;
 
-    @NotBlank(message = "Product code is required")
     private String productCode;
 
-    @NotNull(message = "UIM Price is required")
-    @Positive(message = "UIM Price must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "UIM Price must be greater than or equal to 0")
     private BigDecimal uimPrice;
 
-    @NotNull(message = "MRP is required")
-    @Positive(message = "MRP must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "MRP must be greater than or equal to 0")
     private BigDecimal mrp;
 
-    @NotNull(message = "Selling price is required")
-    @Positive(message = "Selling price must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Selling price must be greater than or equal to 0")
     private BigDecimal sellingPrice;
 
-    @NotNull(message = "Purchase price is required")
-    @Positive(message = "Purchase price must be positive")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Purchase price must be greater than or equal to 0")
     private BigDecimal purchasePrice;
 
-    @NotNull(message = "Division ID is required")
     private Long divisionId;
 }

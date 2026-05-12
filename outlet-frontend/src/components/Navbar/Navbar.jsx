@@ -45,12 +45,12 @@ const Navbar = ({ title = "Dashboard" }) => {
   const searchRef = useRef(null);
 
   /* User state */
-  const [user, setUser] = useState({
+  const [user, setUser] = useState(() => ({
     name: localStorage.getItem("username") || "Admin",
     email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
     role: localStorage.getItem("role") || "Administrator",
     profilePicture: localStorage.getItem("profilePicture") || null,
-  });
+  }));
 
   /* Clock */
   const [time, setTime] = useState(new Date());
@@ -67,7 +67,7 @@ const Navbar = ({ title = "Dashboard" }) => {
   const [userOpen, setUserOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
 
-  /* Profile updates */
+  /* Profile updates and sync across tabs */
   useEffect(() => {
     const handleStorageChange = () => {
       setUser({
@@ -77,8 +77,20 @@ const Navbar = ({ title = "Dashboard" }) => {
         profilePicture: localStorage.getItem("profilePicture") || null,
       });
     };
+    
+    const handleStorageEvent = (e) => {
+      if (e.key === "username" || e.key === "email" || e.key === "role" || e.key === "profilePicture") {
+        handleStorageChange();
+      }
+    };
+    
     window.addEventListener("profileUpdated", handleStorageChange);
-    return () => window.removeEventListener("profileUpdated", handleStorageChange);
+    window.addEventListener("storage", handleStorageEvent);
+    
+    return () => {
+      window.removeEventListener("profileUpdated", handleStorageChange);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
   }, []);
 
   /* Click-outside to close dropdowns */
@@ -95,6 +107,9 @@ const Navbar = ({ title = "Dashboard" }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
@@ -107,7 +122,7 @@ const Navbar = ({ title = "Dashboard" }) => {
   const formatDate = (d) => d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 
   /* Avatar initials */
-  const initials = user.name.charAt(0).toUpperCase();
+  const initials = (user.name || "A").charAt(0).toUpperCase();
 
   /* ── JSX ──────────────────────────────────────── */
   return (
@@ -222,8 +237,8 @@ const Navbar = ({ title = "Dashboard" }) => {
               </Avatar>
 
               <Box className="user-info" sx={{ display: { xs: "none", md: "flex" } }}>
-                <Typography className="user-name">{user.name}</Typography>
-                <Typography className="user-role">{user.role}</Typography>
+                <Typography className="user-name">{user.name || "User"}</Typography>
+                <Typography className="user-role">{user.role || "User"}</Typography>
               </Box>
 
               <Box className="user-chevron">

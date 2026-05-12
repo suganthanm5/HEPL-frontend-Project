@@ -7,9 +7,12 @@ import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.DivisionRepository;
 import com.example.outletmanagement.service.DivisionService;
 import com.example.outletmanagement.specification.DivisionSpecification;
+
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,9 +35,27 @@ public class DivisionServiceImpl implements DivisionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<DivisionResponse> getAllDivisions(String search, Boolean hasProducts, Pageable pageable) {
-        return divisionRepository.findAll(DivisionSpecification.searchAndFilter(search, hasProducts), pageable)
-                .map(this::mapToResponse);
+        // Fetch all divisions with products (no lazy loading issue)
+        List<Division> allWithProducts;
+        if (search != null && !search.isBlank()) {
+            allWithProducts = divisionRepository.findByNameContainingIgnoreCaseWithProducts(search);
+        } else {
+            allWithProducts = divisionRepository.findAllWithProducts();
+        }
+
+        // Apply pagination manually
+        int total = allWithProducts.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+        List<Division> pageContent = start >= total ? List.of() : allWithProducts.subList(start, end);
+
+        List<DivisionResponse> responses = pageContent.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, total);
     }
 
     @Override
@@ -52,8 +73,9 @@ public class DivisionServiceImpl implements DivisionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DivisionResponse getDivisionById(Long id) {
-        Division division = divisionRepository.findById(id)
+        Division division = divisionRepository.findByIdWithProducts(id)
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + id));
         return mapToResponse(division);
     }
@@ -70,8 +92,13 @@ public class DivisionServiceImpl implements DivisionService {
         return DivisionResponse.builder()
                 .id(division.getId())
                 .name(division.getName())
-                .products(division.getProducts() == null ? List.of() : 
+                .createdAt(division.getCreatedAt())
+                .updatedAt(division.getUpdatedAt())
+                .createdBy(division.getCreatedBy())
+                .updatedBy(division.getUpdatedBy())
+                .products(division.getProducts() == null || division.getProducts().isEmpty() ? List.of() : 
                         division.getProducts().stream()
+                                .filter(p -> p != null)
                                 .map(p -> ProductResponse.builder()
                                         .id(p.getId())
                                         .name(p.getName())
@@ -80,6 +107,8 @@ public class DivisionServiceImpl implements DivisionService {
                                         .mrp(p.getMrp())
                                         .sellingPrice(p.getSellingPrice())
                                         .purchasePrice(p.getPurchasePrice())
+                                        .divisionId(division.getId())
+                                        .divisionName(division.getName())
                                         .build())
                                 .collect(Collectors.toList()))
                 .build();

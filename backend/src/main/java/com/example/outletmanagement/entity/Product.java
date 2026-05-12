@@ -10,6 +10,7 @@ import lombok.ToString;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "products")
@@ -20,7 +21,7 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false")
+@SQLRestriction("is_deleted = false or is_deleted is null")
 public class Product extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +37,7 @@ public class Product extends BaseAuditEntity {
     private BigDecimal sellingPrice;
     private BigDecimal purchasePrice;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "division_id")
     private Division division;

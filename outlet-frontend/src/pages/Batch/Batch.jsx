@@ -79,8 +79,13 @@ const Batch = () => {
       // 2. Fetch Products (for labels/filters)
       try {
         const pData = await (productService.getAll ? productService.getAll(0, 1000) : Promise.resolve([]));
-        // productService already returns an array
-        setProducts(Array.isArray(pData) ? pData : []);
+        // productService.getAll returns a Page object { content, totalPages, ... }
+        const productList = Array.isArray(pData)
+          ? pData
+          : Array.isArray(pData?.content)
+            ? pData.content
+            : [];
+        setProducts(productList);
       } catch (err) {
         console.error("Product fetch error:", err);
       }
@@ -323,9 +328,20 @@ const Batch = () => {
             <Box>
               <Typography className="dialog-field-label">Product *</Typography>
               <SearchableSelect
-                options={products}
+                options={products.map((p) => ({ id: p.id, name: p.name }))}
                 value={dialog.data.productId}
-                onChange={(id) => setDialog((d) => ({ ...d, data: { ...d.data, productId: id } }))}
+                onChange={(id) => {
+                  const selected = products.find((p) => String(p.id) === String(id));
+                  setDialog((d) => ({
+                    ...d,
+                    data: {
+                      ...d.data,
+                      productId: id,
+                      purchasePrice: selected?.purchasePrice ?? d.data.purchasePrice,
+                      sellingPrice:  selected?.sellingPrice  ?? d.data.sellingPrice,
+                    },
+                  }));
+                }}
                 placeholder="— Select Product —"
                 searchPlaceholder="Search products..."
               />

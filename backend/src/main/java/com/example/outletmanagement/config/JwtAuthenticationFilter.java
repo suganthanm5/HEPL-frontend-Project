@@ -75,15 +75,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                filterChain.doFilter(request, response);
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
                 response.getWriter().write("{\"status\":401,\"message\":\"Invalid token\",\"data\":null}");
+                return;
             }
-        } else if (username != null) {
-            filterChain.doFilter(request, response);
         }
+        filterChain.doFilter(request, response);
     }
 }

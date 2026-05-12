@@ -6,6 +6,7 @@ import com.example.outletmanagement.payload.dto.response.OutletResponse;
 import com.example.outletmanagement.service.OutletService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/outlets")
 @RequiredArgsConstructor
+@Slf4j
 public class OutletController {
     private final OutletService outletService;
 
@@ -27,7 +29,6 @@ public class OutletController {
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Outlet created successfully")
                 .data(response)
-                .data(outletService.createOutlet(request))
                 .build());
     }
 
@@ -51,7 +52,9 @@ public class OutletController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
+        log.info("Fetching outlets - page: {}, size: {}, keyword: {}", page, size, keyword);
         Page<OutletResponse> response = outletService.getAllOutlets(keyword, locationId, outletType, divisionId, PageRequest.of(page, size));
+        log.info("Found {} outlets", response.getTotalElements());
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("All outlets fetched")
