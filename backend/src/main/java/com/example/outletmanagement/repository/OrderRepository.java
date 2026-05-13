@@ -15,9 +15,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "(:outletId IS NULL OR o.outlet.id = :outletId) AND " +
             "(:orderNo IS NULL OR o.orderNo LIKE %:orderNo%) AND " +
             "(:userId IS NULL OR o.user.id = :userId)")
-    List<Order> findFilteredOrders(
+    org.springframework.data.domain.Page<Order> findFilteredOrders(
             @org.springframework.data.repository.query.Param("status") Order.OrderStatus status,
             @org.springframework.data.repository.query.Param("outletId") Long outletId,
             @org.springframework.data.repository.query.Param("orderNo") String orderNo,
-            @org.springframework.data.repository.query.Param("userId") Long userId);
+            @org.springframework.data.repository.query.Param("userId") Long userId,
+            org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(i.quantity * i.price) FROM OrderItem i")
+    java.math.BigDecimal calculateTotalRevenue();
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(i.quantity * i.price) FROM OrderItem i WHERE i.order.outlet.id = :outletId")
+    java.math.BigDecimal calculateTotalRevenueByOutlet(@org.springframework.data.repository.query.Param("outletId") Long outletId);
+
+    long countByStatus(Order.OrderStatus status);
+
+    long countByOutletId(Long outletId);
+
+    long countByOutletIdAndStatus(Long outletId, Order.OrderStatus status);
 }

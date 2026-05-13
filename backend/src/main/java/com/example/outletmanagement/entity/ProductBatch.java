@@ -50,6 +50,6 @@ public class ProductBatch extends BaseAuditEntity {
     private Status status;
 
     public enum Status {
-        ACTIVE, INACTIVE
+        ACTIVE, INACTIVE, EXPIRED
     }
 }

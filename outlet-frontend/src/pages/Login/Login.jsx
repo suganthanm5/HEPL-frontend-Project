@@ -38,10 +38,12 @@ const Login = () => {
 
             if (token) {
                 const userData = {
+                    id: payload.id,
                     username: payload.username || username,
                     email: payload.email || "",
                     name: payload.name || payload.username || username,
-                    role: payload.role || 'USER'
+                    role: payload.role || 'USER',
+                    outletId: payload.outletId || null
                 };
                 
                 login(userData, token);

@@ -300,20 +300,22 @@ const Location = () => {
 
         {/* ── Toolbar ── */}
         <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2, mb: 2 }}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
 
             {/* Search */}
             <TextField
               size="small" placeholder="Search locations…" value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               sx={{ minWidth: 240, flex: 1 }}
-              InputProps={{
-                startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
-                endAdornment: search ? (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
-                  </InputAdornment>
-                ) : null,
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
+                  endAdornment: search ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
+                    </InputAdornment>
+                  ) : null,
+                }
               }}
             />
 
@@ -417,7 +419,7 @@ const Location = () => {
           <Grid container spacing={2} sx={{ mb: 2 }}>
             {loading ? (
               [1,2,3,4,5,6].map((i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
+                <Grid xs={12} sm={6} md={4} key={i}>
                   <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
                     <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1 }} />
                     <Skeleton width="60%" height={24} sx={{ mb: 0.5 }} />
@@ -426,7 +428,7 @@ const Location = () => {
                 </Grid>
               ))
             ) : locations.length === 0 ? (
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Box sx={{ py: 8, textAlign: "center" }}>
                   <LocationOnIcon sx={{ fontSize: 56, color: "#cbd5e1", mb: 1 }} />
                   <Typography color="text.secondary">{search ? "No locations match your search" : "No locations yet"}</Typography>
@@ -434,7 +436,7 @@ const Location = () => {
               </Grid>
             ) : (
               locations.map((loc, i) => (
-                <Grid item xs={12} sm={6} md={4} key={loc.id}>
+                <Grid xs={12} sm={6} md={4} key={loc.id}>
                   <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, display: "flex", flexDirection: "column", transition: "box-shadow .2s", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,.08)" } }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
                       <Avatar sx={{ width: 44, height: 44, fontSize: "1rem", fontWeight: 700, bgcolor: "#d1fae5", color: "#10b981" }}>

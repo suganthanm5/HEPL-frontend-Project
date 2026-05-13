@@ -5,558 +5,536 @@ import { useNavigate } from "react-router-dom";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
+  BarChart, Bar, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
 } from "recharts";
-import { userService } from "../../services/userService";
-import "./Dashboard.css";
+import { reportService } from "../../services/reportService";
 
-/* ── Icons ── */
-const IcStore = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z" />
-  </svg>
-);
-const IcLocation = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-  </svg>
-);
-const IcBox = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7l3-7z" />
-  </svg>
-);
-const IcDollar = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M7 15h2c0 1.08 1.37 2 3 2s3-.92 3-2c0-1.1-1.04-1.5-3.24-2.03C9.64 12.44 7 11.78 7 9c0-1.79 1.47-3.31 3.5-3.82V3h3v2.18C15.53 5.69 17 7.21 17 9h-2c0-1.08-1.37-2-3-2s-3 .92-3 2c0 1.1 1.04 1.5 3.24 2.03C14.36 11.56 17 12.22 17 15c0 1.79-1.47 3.31-3.5 3.82V21h-3v-2.18C8.47 18.31 7 16.79 7 15z" />
-  </svg>
-);
-const IcMoreVert = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-  </svg>
-);
-const IcTrendUp = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" />
-  </svg>
-);
-const IcBell = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-  </svg>
-);
-const IcCalendar = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
-  </svg>
-);
-const IcArrowRight = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M10 17l5-5-5-5v10z" />
-  </svg>
-);
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
+  Select,
+  MenuItem,
+  Avatar,
+  Chip,
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  IconButton,
+  Button,
+  FormControl,
+} from "@mui/material";
+
+import StoreIcon from "@mui/icons-material/Store";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import InventoryIcon from "@mui/icons-material/Inventory";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const outlets = useSelector(s => s.dashboard.outlets);
-  const locations = useSelector(s => s.dashboard.locations);
-  const divisions = useSelector(s => s.dashboard.divisions);
-  const loading = useSelector(s => s.dashboard.loading);
+  const outlets = useSelector((s) => s.dashboard.outlets);
+  const locations = useSelector((s) => s.dashboard.locations);
+  const divisions = useSelector((s) => s.dashboard.divisions);
 
-  useEffect(() => { dispatch(fetchDashboardData()); }, [dispatch]);
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+    const loadSummary = async () => {
+      try {
+        const [data, trans] = await Promise.all([
+          reportService.getDashboardSummary(),
+          reportService.getTransactions({ page: 0, size: 5 })
+        ]);
+        setSummary(data);
+        setRecentTransactions(trans?.content || trans || []);
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+    loadSummary();
+  }, [dispatch]);
+
+  /* ── Typing animation ── */
   const user = localStorage.getItem("username") || "Admin";
   const welcomeMessage = `Welcome back, ${user}! Here's what's happening in your outlet system today.`;
-
-  // Typing animation state
   const [typedText, setTypedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
 
-  // Typing animation effect
   useEffect(() => {
     setTypedText("");
     setIsTyping(true);
     let i = 0;
-    const typingInterval = setInterval(() => {
+    const id = setInterval(() => {
       if (i < welcomeMessage.length) {
         setTypedText(welcomeMessage.slice(0, i + 1));
         i++;
       } else {
         setIsTyping(false);
-        clearInterval(typingInterval);
+        clearInterval(id);
       }
-    }, 50); // Typing speed: 50ms per character
-
-    return () => clearInterval(typingInterval);
+    }, 50);
+    return () => clearInterval(id);
   }, [welcomeMessage]);
 
-  // Calculate totals
-  const role = localStorage.getItem("role") || "USER";
-  const totalOutlets = outlets.length;
-  const totalLocations = locations.length;
-  const totalProducts = divisions.reduce((sum, div) => sum + (div.products?.length || 0), 0);
-  const totalRevenue = totalProducts * 595; // Mock revenue calculation
+  /* ── Stats & Role ── */
+  const role = localStorage.getItem("role")?.replace('ROLE_', '').toUpperCase() || "USER";
 
-  // Filter state for both charts
+  const stats = {
+    totalUsers: summary?.totalUsers || 0,
+    totalRevenue: summary?.totalRevenue || 0,
+    lowStockCount: summary?.lowStockCount || 0,
+    totalOrders: summary?.totalOrders || 0,
+    pendingOrdersCount: summary?.pendingOrdersCount || 0,
+    totalOutlets: outlets.length,
+    totalDivisions: divisions.length,
+    totalLocations: locations.length,
+  };
+
+  /* ── Chart data ── */
   const [performanceFilter, setPerformanceFilter] = useState("This Month");
 
-  // Generate different data sets based on filter for performance
   const getPerformanceData = (filter) => {
+    if (summary?.performanceTrend) {
+      return summary.performanceTrend;
+    }
+
+
     switch (filter) {
-      case "This Month":
-        return [
-          { date: "01 May", value: 50, percentage: 50 },
-          { date: "07 May", value: 55, percentage: 55 },
-          { date: "14 May", value: 50, percentage: 50 },
-          { date: "21 May", value: 75, percentage: 75 },
-          { date: "28 May", value: 80, percentage: 80 },
-          { date: "31 May", value: 78, percentage: 78 },
-        ];
       case "Last Month":
         return [
-          { date: "01 Apr", value: 45, percentage: 45 },
-          { date: "07 Apr", value: 52, percentage: 52 },
-          { date: "14 Apr", value: 48, percentage: 48 },
-          { date: "21 Apr", value: 65, percentage: 65 },
-          { date: "28 Apr", value: 70, percentage: 70 },
-          { date: "30 Apr", value: 68, percentage: 68 },
-        ];
-      case "Last 3 Months":
-        return [
-          { date: "Mar", value: 42, percentage: 42 },
-          { date: "Mar", value: 48, percentage: 48 },
-          { date: "Apr", value: 55, percentage: 55 },
-          { date: "Apr", value: 62, percentage: 62 },
-          { date: "May", value: 70, percentage: 70 },
-          { date: "May", value: 78, percentage: 78 },
+          { date: "01 Apr", value: 45 }, { date: "07 Apr", value: 52 },
+          { date: "14 Apr", value: 48 }, { date: "21 Apr", value: 65 },
+          { date: "28 Apr", value: 70 }, { date: "30 Apr", value: 68 },
         ];
       default:
         return [
-          { date: "01 May", value: 50, percentage: 50 },
-          { date: "07 May", value: 55, percentage: 55 },
-          { date: "14 May", value: 50, percentage: 50 },
-          { date: "21 May", value: 75, percentage: 75 },
-          { date: "28 May", value: 80, percentage: 80 },
-          { date: "31 May", value: 78, percentage: 78 },
+          { date: "01 May", value: 50 }, { date: "07 May", value: 55 },
+          { date: "14 May", value: 50 }, { date: "21 May", value: 75 },
+          { date: "28 May", value: 80 }, { date: "31 May", value: 78 },
         ];
     }
   };
 
-  // Generate different data sets based on filter for division
-  const getDivisionData = (filter) => {
-    switch (filter) {
-      case "This Month":
-        return [
-          { name: "Retail", value: 35, color: "#3B82F6" },
-          { name: "Wholesale", value: 25, color: "#10B981" },
-          { name: "Franchise", value: 20, color: "#F59E0B" },
-          { name: "Online", value: 10, color: "#EF4444" },
-          { name: "Others", value: 10, color: "#8B5CF6" },
-        ];
-      case "Last Month":
-        return [
-          { name: "Retail", value: 40, color: "#3B82F6" },
-          { name: "Wholesale", value: 20, color: "#10B981" },
-          { name: "Franchise", value: 18, color: "#F59E0B" },
-          { name: "Online", value: 12, color: "#EF4444" },
-          { name: "Others", value: 10, color: "#8B5CF6" },
-        ];
-      case "Last 3 Months":
-        return [
-          { name: "Retail", value: 38, color: "#3B82F6" },
-          { name: "Wholesale", value: 22, color: "#10B981" },
-          { name: "Franchise", value: 19, color: "#F59E0B" },
-          { name: "Online", value: 11, color: "#EF4444" },
-          { name: "Others", value: 10, color: "#8B5CF6" },
-        ];
-      default:
-        return [
-          { name: "Retail", value: 35, color: "#3B82F6" },
-          { name: "Wholesale", value: 25, color: "#10B981" },
-          { name: "Franchise", value: 20, color: "#F59E0B" },
-          { name: "Online", value: 10, color: "#EF4444" },
-          { name: "Others", value: 10, color: "#8B5CF6" },
-        ];
+  const getDivisionData = () => {
+    if (summary?.divisionStats && summary.divisionStats.length > 0) {
+      const colors = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#a855f7", "#3b82f6", "#ec4899"];
+      return summary.divisionStats.map((d, i) => ({
+        name: d.name,
+        value: Math.round(d.value),
+        color: colors[i % colors.length],
+      }));
     }
+
+    if (outlets.length > 0 && divisions.length > 0) {
+      const colors = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#a855f7", "#3b82f6", "#ec4899"];
+      return divisions.map((div, i) => {
+        const count = outlets.filter(o => o.division?.id === div.id).length;
+        const percentage = (count / outlets.length) * 100;
+        return {
+          name: div.name,
+          value: Math.round(percentage) || 0,
+          color: colors[i % colors.length]
+        };
+      }).filter(d => d.value > 0);
+    }
+
+    return [
+      { name: "Retail", value: 100, color: "#6366f1" },
+    ];
   };
 
-  // Get current data based on filter
+  const getSalesData = () => {
+    if (summary?.revenueTrend) {
+      return summary.revenueTrend;
+    }
+    return [
+      { name: "Mon", sales: 4000, orders: 24, target: 3500 },
+      { name: "Tue", sales: 3000, orders: 18, target: 3500 },
+      { name: "Wed", sales: 2000, orders: 15, target: 3500 },
+      { name: "Thu", sales: 2780, orders: 20, target: 3500 },
+      { name: "Fri", sales: 1890, orders: 12, target: 3500 },
+      { name: "Sat", sales: 2390, orders: 19, target: 3500 },
+      { name: "Sun", sales: 3490, orders: 22, target: 3500 },
+    ];
+  };
+
+  const getTargetData = () => {
+    if (role === "ADMIN") {
+      return [
+        { subject: 'Sales', A: 120, fullMark: 150 },
+        { subject: 'Orders', A: 98, fullMark: 150 },
+        { subject: 'Users', A: 86, fullMark: 150 },
+        { subject: 'Inventory', A: 99, fullMark: 150 },
+        { subject: 'Growth', A: 85, fullMark: 150 },
+        { subject: 'Loyalty', A: 65, fullMark: 150 },
+      ];
+    }
+    return [
+      { subject: 'Efficiency', A: 110, fullMark: 150 },
+      { subject: 'Orders', A: 130, fullMark: 150 },
+      { subject: 'Attendance', A: 140, fullMark: 150 },
+      { subject: 'Accuracy', A: 115, fullMark: 150 },
+      { subject: 'Support', A: 90, fullMark: 150 },
+      { subject: 'Stock', A: 120, fullMark: 150 },
+    ];
+  };
+
   const attendanceData = getPerformanceData(performanceFilter);
-  const outletsByDivision = getDivisionData(performanceFilter);
-
-  // Get the latest performance percentage for display
+  const outletsByDivision = getDivisionData();
   const currentPerformance = attendanceData[attendanceData.length - 1];
-  const performanceDate = performanceFilter === "Last 3 Months" ? "May" :
-    performanceFilter === "Last Month" ? "30 Apr" : "31 May";
 
-  // Handle filter change
-  const handleFilterChange = (e) => {
-    setPerformanceFilter(e.target.value);
-  };
+  const handleFilterChange = (e) => setPerformanceFilter(e.target.value);
+  const recentOutlets = [...outlets].slice(-4).reverse();
 
-  // Custom tooltip for the chart
+  /* ── Custom Tooltip ── */
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="custom-tooltip">
-          <p className="tooltip-label">{label}</p>
-          <p className="tooltip-value">
-            Performance: <span className="tooltip-percentage">{payload[0].value}%</span>
-          </p>
-        </div>
+        <Box sx={{ background: "#fff", border: "1px solid #E5E7EB", borderRadius: 1, p: 1 }}>
+          <Typography variant="caption" display="block">{label}</Typography>
+          <Typography variant="caption">
+            Value:{" "}
+            <Box component="span" sx={{ color: "#3B82F6", fontWeight: 600 }}>
+              {payload[0].value}
+            </Box>
+          </Typography>
+        </Box>
       );
     }
     return null;
   };
 
-  // Recent Outlets
-  const recentOutlets = [...outlets].slice(-4).reverse();
+  /* ── Design System ── */
+  const cardPalette = {
+    indigo: { main: "#6366f1", bg: "#f5f3ff", gradient: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)" },
+    green: { main: "#10b981", bg: "#f0fdf4", gradient: "linear-gradient(135deg, #10b981 0%, #34d399 100%)" },
+    orange: { main: "#f59e0b", bg: "#fffbeb", gradient: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)" },
+    rose: { main: "#ef4444", bg: "#fef2f2", gradient: "linear-gradient(135deg, #ef4444 0%, #f87171 100%)" },
+    blue: { main: "#3b82f6", bg: "#eff6ff", gradient: "linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)" },
+  };
 
-  // Announcements
-  const announcements = [
-    {
-      id: 1,
-      icon: <IcBell />,
-      title: "New Outlet Opening",
-      description: "New outlet will be opened on 25 May 2024.",
-      time: "2h ago",
-      color: "#3B82F6"
-    },
-    {
-      id: 2,
-      icon: <IcCalendar />,
-      title: "Monthly Review",
-      description: "Monthly performance review scheduled.",
-      time: "5h ago",
-      color: "#F59E0B"
-    },
-    {
-      id: 3,
-      icon: <IcBox />,
-      title: "New Products Added",
-      description: "New products are added this month.",
-      time: "1d ago",
-      color: "#10B981"
-    }
-  ];
+  const StatCard = ({ color, icon, label, value, growth, growthColor }) => (
+    <Card sx={{
+      flex: 1, borderRadius: 4, position: "relative", overflow: "hidden", border: "1px solid #f1f5f9", height: "100%", minHeight: 110,
+      transition: "transform 0.3s ease, box-shadow 0.3s ease", "&:hover": { transform: "translateY(-5px)", boxShadow: "0 12px 24px rgba(0,0,0,0.05)" }
+    }}>
+      <Box sx={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: cardPalette[color].bg, opacity: 0.5 }} />
+      <CardContent sx={{ minHeight: 110, display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", zIndex: 1, p: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+          <Avatar sx={{ background: cardPalette[color].gradient, color: "#fff", width: 54, height: 54, boxShadow: `0 4px 12px ${cardPalette[color].main}44` }}>{icon}</Avatar>
+          <Chip label={growth} size="small" sx={{ bgcolor: (growthColor || cardPalette[color].main) + "11", color: growthColor || cardPalette[color].main, fontWeight: 700, borderRadius: 1 }} />
+        </Box>
+        <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mb: 0.5 }}>{label}</Typography>
+        <Typography variant="h4" fontWeight={800} sx={{ color: "#1e293b" }}>{value}</Typography>
+      </CardContent>
+    </Card>
+  );
 
-  // Upcoming Events
-  const upcomingEvents = [
-    { date: "25", month: "MAY", title: "Outlet Opening", time: "25 May 2024, 10:00 AM", color: "#3B82F6" },
-    { date: "01", month: "JUN", title: "Staff Training", time: "01 June 2024, 09:00 AM", color: "#10B981" },
-    { date: "15", month: "JUN", title: "Board Meeting", time: "15 June 2024, 11:00 AM", color: "#F59E0B" }
-  ];
+  const FilterSelect = () => (
+    <FormControl size="small"><Select value={performanceFilter} onChange={handleFilterChange} sx={{ fontSize: 13 }}>
+      <MenuItem value="This Month">This Month</MenuItem>
+      <MenuItem value="Last Month">Last Month</MenuItem>
+      <MenuItem value="Last 3 Months">Last 3 Months</MenuItem>
+    </Select></FormControl>
+  );
 
   return (
-    <>
-      {/* Header */}
-      <div className="edu-header">
-        <div className="edu-header-left">
-          <h1>Dashboard</h1>
-          <p className="typing-text">
-            {typedText}
-            {isTyping && <span className="typing-cursor">|</span>}
-          </p>
-        </div>
-      </div>
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={900} color="#1e293b" sx={{ letterSpacing: "-1px" }}>Dashboard</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>{typedText}</Typography>
+      </Box>
 
-      {/* Stats Cards - Role Based */}
-      <div className="edu-stats">
+      {/* ── Role Based Stats ── */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         {role === "ADMIN" ? (
           <>
-            <div className="stat-card blue">
-              <div className="stat-icon"><IcStore /></div>
-              <div className="stat-content">
-                <div className="stat-label">Total Users</div>
-                <div className="stat-number">12</div>
-                <div className="stat-growth"><IcTrendUp /> +2 new this week</div>
-              </div>
-            </div>
-            <div className="stat-card orange">
-              <div className="stat-icon"><IcBox /></div>
-              <div className="stat-content">
-                <div className="stat-label">Global Low Stock</div>
-                <div className="stat-number">8 Items</div>
-                <div className="stat-growth" style={{ color: "#ef4444" }}>Needs Attention</div>
-              </div>
-            </div>
-            <div className="stat-card purple">
-              <div className="stat-icon"><IcDollar /></div>
-              <div className="stat-content">
-                <div className="stat-label">Total Revenue</div>
-                <div className="stat-number">${totalRevenue.toLocaleString()}</div>
-                <div className="stat-growth"><IcTrendUp /> +15% Monthly</div>
-              </div>
-            </div>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="indigo"
+                icon={<StoreIcon />}
+                label="Total Users"
+                value={stats.totalUsers}
+                growth="+12% ↑"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="orange"
+                icon={<InventoryIcon />}
+                label="Global Low Stock"
+                value={stats.lowStockCount}
+                growth={stats.lowStockCount > 0 ? "Alert" : "Stable"}
+                growthColor={stats.lowStockCount > 0 ? "#ef4444" : "#10b981"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="indigo"
+                icon={<AttachMoneyIcon />}
+                label="Total Revenue"
+                value={`₹${(stats.totalRevenue / 100000).toFixed(1)}L`}
+                growth="+8.4% ↑"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="blue"
+                icon={<StoreIcon />}
+                label="Total Outlets"
+                value={stats.totalOutlets}
+                growth="Active"
+              />
+            </Grid>
           </>
         ) : (
           <>
-            <div className="stat-card orange">
-              <div className="stat-icon"><IcBell /></div>
-              <div className="stat-content">
-                <div className="stat-label">Pending Approvals</div>
-                <div className="stat-number">4 Orders</div>
-                <div className="stat-growth">Awaiting Review</div>
-              </div>
-            </div>
-            <div className="stat-card green">
-              <div className="stat-icon"><IcStore /></div>
-              <div className="stat-content">
-                <div className="stat-label">Outlet Stock</div>
-                <div className="stat-number">2,450 Units</div>
-                <div className="stat-growth"><IcTrendUp /> Healthy Level</div>
-              </div>
-            </div>
-            <div className="stat-card blue">
-              <div className="stat-icon"><IcTrendUp /></div>
-              <div className="stat-content">
-                <div className="stat-label">Recent Transfers</div>
-                <div className="stat-number">12 Today</div>
-                <div className="stat-growth">All Completed</div>
-              </div>
-            </div>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="orange"
+                icon={<NotificationsIcon />}
+                label="Active Orders"
+                value={stats.totalOrders}
+                growth="Processing"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="rose"
+                icon={<NotificationsIcon />}
+                label="Pending Orders"
+                value={stats.pendingOrdersCount}
+                growth={stats.pendingOrdersCount > 0 ? "Priority" : "Clear"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="green"
+                icon={<InventoryIcon />}
+                label="Low Stock"
+                value={stats.lowStockCount}
+                growth={stats.lowStockCount > 0 ? "Check" : "Healthy"}
+                growthColor={stats.lowStockCount > 0 ? "#ef4444" : "#10b981"}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                color="indigo"
+                icon={<AttachMoneyIcon />}
+                label="Revenue"
+                value={`₹${(stats.totalRevenue / 1000).toFixed(1)}K`}
+                growth="This Month"
+              />
+            </Grid>
           </>
         )}
-      </div>
+      </Grid>
 
-      {/* Main Grid */}
-      <div className="edu-grid">
-        {/* Attendance Overview */}
-        <div className="edu-card attendance-card">
-          <div className="card-header">
-            <div className="card-title">
-              <h3>Outlet Performance</h3>
-            </div>
-            <div className="card-filter">
-              <select value={performanceFilter} onChange={handleFilterChange}>
-                <option value="This Month">This Month</option>
-                <option value="Last Month">Last Month</option>
-                <option value="Last 3 Months">Last 3 Months</option>
-              </select>
-            </div>
-          </div>
-          <div className="chart-container">
-            <div className="chart-info">
-              <div className="chart-percentage">
-                <span className="percentage">{currentPerformance.value}%</span>
-                <span className="date">{performanceDate}</span>
-                <span className="label">Performance: {currentPerformance.value}%</span>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart
-                data={attendanceData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-              >
-                <defs>
-                  <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#E5E7EB"
-                  horizontal={true}
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#64748B' }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#64748B' }}
-                  domain={[0, 100]}
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ stroke: '#3B82F6', strokeWidth: 1, strokeDasharray: '5 5' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3B82F6"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorAttendance)"
-                  dot={{
-                    fill: '#3B82F6',
-                    strokeWidth: 2,
-                    stroke: '#ffffff',
-                    r: 4
-                  }}
-                  activeDot={{
-                    r: 6,
-                    fill: '#3B82F6',
-                    stroke: '#ffffff',
-                    strokeWidth: 2,
-                    style: { cursor: 'pointer' }
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      <Grid container spacing={3} alignItems="stretch">
+        {/* Row 1: Primary Metrics & Performance */}
+        {(role === "ADMIN" || role === "MANAGER") && (
+          <Grid item xs={12} md={5}>
+            <Card sx={{ borderRadius: 4, height: "100%", border: "1px solid #f1f5f9", display: "flex", flexDirection: "column", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+              <CardHeader
+                title={<Typography variant="h6" fontWeight={800} color="#1e293b">Outlet Performance</Typography>}
+                subheader="Real-time efficiency metrics"
+                action={<FilterSelect />}
+                sx={{ borderBottom: "1px solid #f8fafc", px: 3, pt: 3 }}
+              />
+              <CardContent sx={{ flexGrow: 1, p: 3, display: "flex", flexDirection: "column" }}>
+                <Box sx={{ mb: 4, display: "flex", gap: 4 }}>
+                  <Box>
+                    <Typography variant="caption" fontWeight={700} color="text.secondary">PEAK RATE</Typography>
+                    <Typography variant="h5" fontWeight={800} color="#10b981">84.2%</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" fontWeight={700} color="text.secondary">CURRENT STATUS</Typography>
+                    <Typography variant="h5" fontWeight={800} color="#6366f1">Operational</Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ height: 320, width: "100%", mt: "auto" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={attendanceData}>
+                      <defs><linearGradient id="colorPerf" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient></defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 600 }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 600 }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#6366f1"
+                        strokeWidth={4}
+                        fill="url(#colorPerf)"
+                        dot={{ fill: "#6366f1", r: 6, stroke: "#fff", strokeWidth: 3 }}
+                        activeDot={{ r: 8, stroke: "#fff", strokeWidth: 4 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
-        {/* Outlets by Division */}
-        <div className="edu-card pie-card">
-          <div className="card-header">
-            <div className="card-title">
-              <h3>Outlets by Division</h3>
-            </div>
-            <div className="card-filter">
-              <select value={performanceFilter} onChange={handleFilterChange}>
-                <option value="This Month">This Month</option>
-                <option value="Last Month">Last Month</option>
-                <option value="Last 3 Months">Last 3 Months</option>
-              </select>
-            </div>
-          </div>
-          <div className="pie-container">
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={outletsByDivision}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {outletsByDivision.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pie-center">
-              <div className="pie-total">{divisions.length}</div>
-              <div className="pie-label">Total</div>
-            </div>
-            <div className="pie-legend">
-              {outletsByDivision.map((item, index) => (
-                <div key={index} className="legend-item">
-                  <div className="legend-dot" style={{ backgroundColor: item.color }}></div>
-                  <span className="legend-name">{item.name}</span>
-                  <span className="legend-percent">{item.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Revenue Bar - Admin & Manager */}
+        {(role === "ADMIN" || role === "MANAGER") && (
+          <Grid item xs={12} md={4}>
+            <Card sx={{ borderRadius: 4, height: "100%", border: "1px solid #f1f5f9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+              <CardHeader title={<Typography variant="h6" fontWeight={800}>Revenue Stream</Typography>} subheader="Weekly targets vs actual" sx={{ borderBottom: "1px solid #f8fafc", px: 3, pt: 3 }} />
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ height: 320 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={getSalesData()} barGap={8} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 600 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 600 }} />
+                      <Tooltip cursor={{ fill: "#f8fafc" }} />
+                      <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
+                      <Bar dataKey="sales" fill="#6366f1" radius={[8, 8, 0, 0]} barSize={24} name="Actual Revenue" />
+                      <Bar dataKey="target" fill="#e2e8f0" radius={[8, 8, 0, 0]} barSize={24} name="Target Revenue" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
-        {/* Announcements */}
-        <div className="edu-card announcements-card">
-          <div className="card-header">
-            <div className="card-title">
-              <h3><IcBell /> Announcements</h3>
-            </div>
-            <div className="card-menu">
-              <IcMoreVert />
-            </div>
-          </div>
-          <div className="announcements-list">
-            {announcements.map(announcement => (
-              <div key={announcement.id} className="announcement-item">
-                <div className="announcement-icon" style={{ color: announcement.color }}>
-                  {announcement.icon}
-                </div>
-                <div className="announcement-content">
-                  <h4>{announcement.title}</h4>
-                  <p>{announcement.description}</p>
-                  <span className="announcement-time">{announcement.time}</span>
-                </div>
-              </div>
-            ))}
-            <div className="view-all-announcements" onClick={() => navigate('/dashboard')}>
-              <span>View All Announcements</span>
-              <IcArrowRight />
-            </div>
-          </div>
-        </div>
+        {/* Division Pie - Admin only */}
+        {role === "ADMIN" && (
+          <Grid item xs={12} md={3}>
+            <Card sx={{ borderRadius: 4, height: "100%", border: "1px solid #f1f5f9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+              <CardHeader title={<Typography variant="h6" fontWeight={800}>Division Analysis</Typography>} subheader="Market distribution" sx={{ borderBottom: "1px solid #f8fafc", px: 3, pt: 3 }} />
+              <CardContent sx={{ height: 320, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={outletsByDivision} innerRadius={80} outerRadius={110} paddingAngle={8} dataKey="value" stroke="none">
+                      {outletsByDivision.map((e, i) => <Cell key={i} fill={e.color} cornerRadius={6} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                {divisions.length > 0 && (
+                  <Box sx={{ position: "absolute", textAlign: "center" }}>
+                    <Typography variant="h4" fontWeight={900} color="#1e293b">{divisions.length}</Typography>
+                    <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ letterSpacing: 2 }}>DIVISIONS</Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
-        {/* Recent Outlets */}
-        <div className="edu-card recent-card">
-          <div className="card-header">
-            <div className="card-title">
-              <h3>Recent Outlets</h3>
-            </div>
-            <div className="view-all-btn" onClick={() => navigate('/outlet')}>View All</div>
-          </div>
-          <div className="recent-table">
-            <div className="table-header">
-              <div className="th">#</div>
-              <div className="th">Name</div>
-              <div className="th">Division</div>
-              <div className="th">Location</div>
-              <div className="th">Registration Date</div>
-              <div className="th">Status</div>
-              <div className="th"></div>
-            </div>
-            {recentOutlets.map((outlet, index) => (
-              <div key={outlet.id || index} className="table-row">
-                <div className="td">{index + 1}</div>
-                <div className="td">
-                  <div className="user-info">
-                    <div className="user-avatar">
-                      {(outlet.outletName || "O").charAt(0).toUpperCase()}
-                    </div>
-                    <span>{outlet.outletName ? outlet.outletName.replace(/\b\w/g, l => l.toUpperCase()) : "Unknown Outlet"}</span>
-                  </div>
-                </div>
-                <div className="td">{outlet.division?.name ? outlet.division.name.replace(/\b\w/g, l => l.toUpperCase()) : "General"}</div>
-                <div className="td">{outlet.location?.name ? outlet.location.name.replace(/\b\w/g, l => l.toUpperCase()) : "N/A"}</div>
-                <div className="td">{new Date().toLocaleDateString()}</div>
-                <div className="td">
-                  <span className="status-badge active">Active</span>
-                </div>
-                <div className="td">
-                  <IcMoreVert />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Row 2: Secondary Insights */}
+        <Grid item xs={12} md={4}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, height: "100%" }}>
+            <Card sx={{ borderRadius: 4, flex: 1, border: "1px solid #f1f5f9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+              <CardHeader title={<Typography variant="h6" fontWeight={800}>KPI Targets</Typography>} subheader={role === "USER" ? "Personal performance" : "Team goals"} sx={{ borderBottom: "1px solid #f8fafc", px: 3, pt: 3 }} />
+              <CardContent sx={{ height: 320 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius={65} margin={{ top: 20, right: 30, bottom: 20, left: 30 }} data={getTargetData()}>
+                    <PolarGrid stroke="#e2e8f0" /><PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 12, fontWeight: 600 }} />
+                    <Radar name="Performance" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
-        {/* Upcoming Events */}
-        <div className="edu-card events-card">
-          <div className="card-header">
-            <div className="card-title">
-              <h3><IcCalendar /> Upcoming Events</h3>
-            </div>
-            <div className="card-menu">
-              <IcMoreVert />
-            </div>
-          </div>
-          <div className="events-list">
-            {upcomingEvents.map((event, index) => (
-              <div key={index} className="event-item">
-                <div className="event-date" style={{ backgroundColor: event.color }}>
-                  <div className="event-month">{event.month}</div>
-                  <div className="event-day">{event.date}</div>
-                </div>
-                <div className="event-info">
-                  <h4>{event.title}</h4>
-                  <p>{event.time}</p>
-                </div>
-              </div>
-            ))}
-            <div className="view-all-events" onClick={() => navigate('/dashboard')}>
-              <span>View All Events</span>
-              <IcArrowRight />
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+            <Card sx={{ borderRadius: 4, flex: 1, border: "1px solid #f1f5f9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+              <CardHeader title={<Typography variant="h6" fontWeight={800}>Recent Activity</Typography>} subheader="Latest system events" sx={{ borderBottom: "1px solid #f8fafc", px: 3, pt: 3 }} />
+              <CardContent sx={{ pt: 3 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
+                  {recentTransactions.length > 0 ? (
+                    recentTransactions.map((tx, i) => {
+                      const isSale = tx.type?.toLowerCase().includes("sale") || tx.type?.toLowerCase().includes("out");
+                      return (
+                        <Box key={i} sx={{ display: "flex", gap: 2.5 }}>
+                          <Avatar sx={{
+                            background: isSale
+                              ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)"
+                              : "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+                            color: "#fff", width: 44, height: 44, borderRadius: 2,
+                            boxShadow: isSale ? "0 4px 10px #10b98133" : "0 4px 10px #6366f133"
+                          }}>
+                            {isSale ? <AttachMoneyIcon /> : <InventoryIcon />}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={800} color="#1e293b" noWrap>{tx.productName || tx.type || "Transaction"}</Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
+                              {tx.quantity ? `${tx.quantity} units` : ""} {tx.outletName ? `at ${tx.outletName}` : ""}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })
+                  ) : (
+                    <Box sx={{ textAlign: "center", py: 3, color: "text.secondary" }}>
+                      <NotificationsIcon sx={{ fontSize: 32, mb: 1, opacity: 0.3 }} />
+                      <Typography variant="body2">No recent activity</Typography>
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        </Grid>
+
+        {/* Recent Reg - Admin & Manager */}
+        {(role === "ADMIN" || role === "MANAGER") && (
+          <Grid item xs={12} md={8}>
+            <Card sx={{ borderRadius: 4, height: "100%", border: "1px solid #f1f5f9", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+              <CardHeader
+                title={<Typography variant="h6" fontWeight={800}>Recent Registrations</Typography>}
+                subheader="Newest network additions"
+                action={<Button size="small" onClick={() => navigate("/outlet")} sx={{ textTransform: "none", fontWeight: 800 }}>View All</Button>}
+                sx={{ borderBottom: "1px solid #f8fafc", px: 3, pt: 3 }}
+              />
+              <CardContent sx={{ p: 0 }}>
+                {recentOutlets.length === 0 ? (
+                  <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+                    <StoreIcon sx={{ fontSize: 44, mb: 1, opacity: 0.2 }} />
+                    <Typography variant="body1" fontWeight={600}>No outlets registered yet</Typography>
+                  </Box>
+                ) : (
+                  <Table size="small">
+                    <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 800, py: 2, pl: 3, color: "#64748b" }}>OUTLET</TableCell>
+                        <TableCell sx={{ fontWeight: 800, color: "#64748b" }}>DIVISION</TableCell>
+                        <TableCell sx={{ fontWeight: 800, color: "#64748b" }}>STATUS</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {recentOutlets.map((o, i) => (
+                        <TableRow key={i} hover>
+                          <TableCell sx={{ py: 2, pl: 3, fontWeight: 700, color: "#1e293b" }}>{o.outletName}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: "#475569" }}>{o.division?.name}</TableCell>
+                          <TableCell><Chip label="Active" size="small" sx={{ bgcolor: "#f0fdf4", color: "#10b981", fontWeight: 800, fontSize: 10 }} /></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+    </Box>
   );
 }

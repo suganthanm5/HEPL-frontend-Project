@@ -54,6 +54,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("username", userData.username || userData.name || "");
       localStorage.setItem("role", userData.role || "USER");
       localStorage.setItem("email", userData.email || "");
+      if (userData.outletId) {
+        localStorage.setItem("outletId", userData.outletId);
+      }
     } else if (!userData && token) {
       localStorage.removeItem('token');
     }
@@ -69,6 +72,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("username", normalizedUserData.username || normalizedUserData.name || "");
     localStorage.setItem("email", normalizedUserData.email || "");
     localStorage.setItem("role", normalizedUserData.role);
+    if (normalizedUserData.outletId) {
+      localStorage.setItem("outletId", normalizedUserData.outletId);
+    }
     setUser(normalizedUserData);
     window.dispatchEvent(new Event('storage'));
   }, []);
@@ -80,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("username");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
+    localStorage.removeItem("outletId");
     setUser(null);
     window.dispatchEvent(new Event('storage'));
   }, []);

@@ -8,6 +8,7 @@ import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.*;
 import com.example.outletmanagement.service.OutletService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
@@ -24,6 +25,7 @@ public class OutletServiceImpl implements OutletService {
     private final DivisionRepository divisionRepository;
     private final ProductRepository productRepository;
     private final OutletDivisionProductRepository mappingRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -67,6 +69,19 @@ public class OutletServiceImpl implements OutletService {
             Pageable pageable) {
         Page<Outlet> outlets;
         
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        if (currentUser.getRole() != User.Role.ADMIN) {
+            if (currentUser.getOutlet() == null) {
+                return Page.empty(pageable);
+            }
+            OutletResponse response = mapToResponse(outletRepository.findByIdWithMappings(currentUser.getOutlet().getId())
+                    .orElse(currentUser.getOutlet()));
+            return new PageImpl<>(Collections.singletonList(response), pageable, 1);
+        }
+
         if (search != null && !search.isBlank()) {
             outlets = outletRepository.findByOutletNameContainingIgnoreCase(search, pageable);
         } else {

@@ -3,9 +3,8 @@ import apiClient from '../api/apiClient';
 export const orderService = {
   /** Get all orders */
   getAll: async (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    const res = await apiClient.get(`/api/orders${query ? '?' + query : ''}`);
-    return res.data?.data || [];
+    const res = await apiClient.get('/api/orders', { params });
+    return res.data?.data;
   },
 
   /** Get single order */

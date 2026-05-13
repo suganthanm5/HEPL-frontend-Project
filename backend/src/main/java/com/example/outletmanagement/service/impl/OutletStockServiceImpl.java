@@ -8,6 +8,8 @@ import com.example.outletmanagement.repository.*;
 import com.example.outletmanagement.service.OutletStockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -56,18 +58,28 @@ public class OutletStockServiceImpl implements OutletStockService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OutletStockResponse> getStockByOutlet(Long outletId) {
-        return outletStockRepository.findByOutletId(outletId).stream()
-                .map(this::toOutletStockResponse)
-                .toList();
+    public Page<OutletStockResponse> getStockByOutlet(Long outletId, Pageable pageable) {
+        return outletStockRepository.findByOutletId(outletId, pageable)
+                .map(this::toOutletStockResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OutletStockResponse> getAllStock() {
-        return outletStockRepository.findAll().stream()
-                .map(this::toOutletStockResponse)
-                .toList();
+    public Page<OutletStockResponse> getAllStock(Pageable pageable) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        if (currentUser.getRole() != User.Role.ADMIN) {
+            if (currentUser.getOutlet() == null) {
+                return Page.empty(pageable);
+            }
+            return outletStockRepository.findByOutletId(currentUser.getOutlet().getId(), pageable)
+                    .map(this::toOutletStockResponse);
+        }
+
+        return outletStockRepository.findAll(pageable)
+                .map(this::toOutletStockResponse);
     }
 
     @Override
@@ -137,25 +149,27 @@ public class OutletStockServiceImpl implements OutletStockService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<StockTransactionResponse> getTransactions(Long outletId, Long productId) {
-        List<StockTransaction> transactions;
-        if (outletId != null) {
-            transactions = stockTransactionRepository.findByOutletId(outletId);
-        } else if (productId != null) {
-            transactions = stockTransactionRepository.findByProductId(productId);
-        } else {
-            transactions = stockTransactionRepository.findAll();
-        }
-        return transactions.stream()
-                .map(this::toStockTransactionResponse)
-                .toList();
+    public Page<StockTransactionResponse> getTransactions(Long outletId, Long productId, Pageable pageable) {
+        return stockTransactionRepository.findFilteredTransactions(outletId, productId, null, pageable)
+                .map(this::toStockTransactionResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<StockTransactionResponse> getFilteredTransactions(Long outletId, Long productId, StockTransaction.TransactionType type) {
-        return stockTransactionRepository.findFilteredTransactions(outletId, productId, type).stream()
-                .map(this::toStockTransactionResponse)
-                .toList();
+    public Page<StockTransactionResponse> getFilteredTransactions(Long outletId, Long productId, StockTransaction.TransactionType type, Pageable pageable) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        Long effectiveOutletId = outletId;
+        if (currentUser.getRole() != User.Role.ADMIN) {
+            if (currentUser.getOutlet() == null) {
+                return Page.empty(pageable);
+            }
+            effectiveOutletId = currentUser.getOutlet().getId();
+        }
+
+        return stockTransactionRepository.findFilteredTransactions(effectiveOutletId, productId, type, pageable)
+                .map(this::toStockTransactionResponse);
     }
 }

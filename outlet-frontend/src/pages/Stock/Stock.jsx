@@ -20,10 +20,10 @@ import "../UserManagement/UserManagement.css";
 
 /* ── Stock level helper ── */
 const stockLevel = (qty, max = 200) => {
-  const pct = Math.min((qty / max) * 100, 100);
-  if (pct > 60)  return { cls: "high",   label: "Good" };
-  if (pct > 25)  return { cls: "medium", label: "Low" };
-  return           { cls: "low",    label: "Critical" };
+  if (qty <= 0)  return { cls: "critical", label: "Out of Stock", color: "#ef4444" };
+  if (qty < 10)  return { cls: "low",      label: "Low Stock",   color: "#f59e0b" };
+  if (qty < 30)  return { cls: "medium",   label: "Moderate",    color: "#3b82f6" };
+  return           { cls: "high",     label: "Healthy",     color: "#10b981" };
 };
 
 const emptyTransfer = { fromOutletId: "", outletId: "", productId: "", batchId: "", quantity: "" };
@@ -46,58 +46,92 @@ const Stock = () => {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
-  const [filters,  setFilters]  = useState({ productId: "", outletId: "", type: "" });
+  const { user, role } = useAuth();
+  const userOutletId = user?.outletId || "";
+  const isAdmin = role === "ADMIN";
+
+  const [filters,  setFilters]  = useState({ productId: "", outletId: userOutletId, type: "" });
   const [tab,      setTab]      = useState("stock");
   const [transfer, setTransfer] = useState({ open: false, data: emptyTransfer });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
+  
+  // Pagination state
+  const [stockPage, setStockPage] = useState(0);
+  const [txnPage,   setTxnPage]   = useState(0);
+  const [pageSize,  setPageSize]  = useState(10);
+  const [totalStockPages, setTotalStockPages] = useState(0);
+  const [totalTxnPages,   setTotalTxnPages]   = useState(0);
 
-  const { role } = useAuth();
   const canTransfer = role === "ADMIN" || role === "MANAGER";
 
-  const load = useCallback(async () => {
+  // Ensure filters are updated if user changes (rare)
+  useEffect(() => {
+    if (!isAdmin && userOutletId) {
+      setFilters(prev => ({ ...prev, outletId: userOutletId }));
+    }
+  }, [userOutletId, isAdmin]);
+
+  /* ── Load Dynamic Data (Stock/Txns) ── */
+  const loadDynamicData = useCallback(async () => {
     setLoading(true);
     try {
-      const activeFilters = {};
-      if (filters.productId) activeFilters.productId = filters.productId;
-      if (filters.outletId)  activeFilters.outletId  = filters.outletId;
-      if (filters.type)      activeFilters.type       = filters.type;
-
-      const { outletService }  = await import("../../services/outletService");
-      const { productService } = await import("../../services/productService");
-
-      const [sData, tData, otData, pData] = await Promise.all([
-        stockService.getAll(),
-        stockService.getTransactions(activeFilters),
-        outletService.getAll ? outletService.getAll() : Promise.resolve([]),
-        productService.getAll ? productService.getAll(0, 1000) : Promise.resolve([]),
-      ]);
-
-      /* outletService.getAll returns a Page object { content, totalPages, ... } */
-      const outletList = Array.isArray(otData)
-        ? otData
-        : Array.isArray(otData?.content)
-          ? otData.content
-          : [];
-
-      const productList = Array.isArray(pData)
-        ? pData
-        : Array.isArray(pData?.content)
-          ? pData.content
-          : [];
-
-      setStock(Array.isArray(sData) ? sData : []);
-      setTxns(Array.isArray(tData) ? tData : []);
-      setOutlets(outletList);
-      setProducts(productList);
+      const activeFilters = {
+        page: tab === "stock" ? stockPage : txnPage,
+        size: pageSize,
+        sort: "id,desc"
+      };
+      
+      if (tab === "stock") {
+        const sData = await stockService.getAll(activeFilters);
+        if (sData && sData.content) {
+          setStock(sData.content);
+          setTotalStockPages(sData.totalPages);
+        } else {
+          setStock(Array.isArray(sData) ? sData : []);
+        }
+      } else {
+        if (filters.productId) activeFilters.productId = filters.productId;
+        if (filters.outletId)  activeFilters.outletId  = filters.outletId;
+        if (filters.type)      activeFilters.type       = filters.type;
+        
+        const tData = await stockService.getTransactions(activeFilters);
+        if (tData && tData.content) {
+          setTxns(tData.content);
+          setTotalTxnPages(tData.totalPages);
+        } else {
+          setTxns(Array.isArray(tData) ? tData : []);
+        }
+      }
     } catch (err) {
-      console.error("Stock load error:", err);
-      setStock([]); setTxns([]);
+      console.error("Dynamic data load error:", err);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [tab, filters, stockPage, txnPage, pageSize]);
 
-  useEffect(() => { load(); }, [load]);
+  /* ── Load Metadata (Initial Only) ── */
+  const loadMetadata = useCallback(async () => {
+    try {
+      const { outletService }  = await import("../../services/outletService");
+      const { productService } = await import("../../services/productService");
+
+      const [otData, pData] = await Promise.all([
+        outletService.getOutlets ? outletService.getOutlets(0, 1000) : Promise.resolve([]),
+        productService.getProducts ? productService.getProducts(0, 1000) : Promise.resolve([]),
+      ]);
+
+      const outletList = Array.isArray(otData) ? otData : (otData?.content || []);
+      const productList = Array.isArray(pData) ? pData : (pData?.content || []);
+
+      setOutlets(outletList);
+      setProducts(productList);
+    } catch (err) {
+      console.error("Metadata load error:", err);
+    }
+  }, []);
+
+  useEffect(() => { loadMetadata(); }, [loadMetadata]);
+  useEffect(() => { loadDynamicData(); }, [loadDynamicData]);
 
   const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
@@ -124,7 +158,7 @@ const Stock = () => {
       });
       toast("Stock transferred successfully");
       setTransfer({ open: false, data: emptyTransfer });
-      load();
+      loadDynamicData();
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Transfer failed";
       toast(msg, "error");
@@ -211,13 +245,14 @@ const Stock = () => {
                 <Select 
                   size="small" displayEmpty value={filters.outletId} 
                   onChange={(e) => setFilters(f => ({ ...f, outletId: e.target.value }))}
+                  disabled={!isAdmin}
                   sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
                 >
-                  <MenuItem value="">All Outlets</MenuItem>
+                  <MenuItem value="">{isAdmin ? "All Outlets" : "Select Outlet"}</MenuItem>
                   {outlets.map(ot => <MenuItem key={ot.id} value={ot.id}>{ot.outletName}</MenuItem>)}
                 </Select>
 
-                <ButtonBase onClick={() => setFilters({ productId: "", outletId: "", type: "" })} sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
+                <ButtonBase onClick={() => setFilters({ productId: "", outletId: userOutletId, type: "" })} sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
               </>
             )}
           </Box>
@@ -246,19 +281,27 @@ const Stock = () => {
                 ) : (
                   filteredStock.map((s) => {
                     const lvl = stockLevel(s.availableQty);
+                    const isLow = s.availableQty < 10;
                     return (
-                      <TableRow key={s.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
+                      <TableRow 
+                        key={s.id} hover 
+                        sx={{ 
+                          "&:hover": { background: isLow ? "#fff1f2" : "#faf5ff" }, 
+                          "&:last-child td": { borderBottom: 0 },
+                          background: isLow ? "#fff1f2" : "inherit"
+                        }}
+                      >
                         <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.outletName || s.outletId}</TableCell>
                         <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
                         <TableCell sx={{ color: "#7d2ae8", fontWeight: 600, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo || s.batchId}</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
                         <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.reservedQty || 0}</TableCell>
                         <TableCell>
                           <Box className="stock-level">
                             <Box className="stock-level-bar">
-                              <Box className={`stock-level-fill ${lvl.cls}`} sx={{ width: `${Math.min((s.availableQty / 200) * 100, 100)}%` }} />
+                              <Box className={`stock-level-fill ${lvl.cls}`} sx={{ width: `${Math.min((s.availableQty / 200) * 100, 100)}%`, backgroundColor: lvl.color }} />
                             </Box>
-                            <Typography className={`stock-level-text ${lvl.cls}`}>{lvl.label}</Typography>
+                            <Typography className={`stock-level-text ${lvl.cls}`} sx={{ color: lvl.color }}>{lvl.label}</Typography>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -306,6 +349,29 @@ const Stock = () => {
             </Table>
           )}
         </TableContainer>
+
+        {/* Pagination */}
+        {((tab === "stock" && totalStockPages > 1) || (tab === "history" && totalTxnPages > 1)) && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 3, gap: 1 }}>
+            <ButtonBase
+              disabled={tab === "stock" ? stockPage === 0 : txnPage === 0}
+              onClick={() => tab === "stock" ? setStockPage(p => p - 1) : setTxnPage(p => p - 1)}
+              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage === 0 : txnPage === 0) ? 0.5 : 1 }}
+            >
+              Previous
+            </ButtonBase>
+            <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600 }}>
+              Page {(tab === "stock" ? stockPage : txnPage) + 1} of {tab === "stock" ? totalStockPages : totalTxnPages}
+            </Typography>
+            <ButtonBase
+              disabled={tab === "stock" ? stockPage >= totalStockPages - 1 : txnPage >= totalTxnPages - 1}
+              onClick={() => tab === "stock" ? setStockPage(p => p + 1) : setTxnPage(p => p + 1)}
+              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage >= totalStockPages - 1 : txnPage >= totalTxnPages - 1) ? 0.5 : 1 }}
+            >
+              Next
+            </ButtonBase>
+          </Box>
+        )}
       </Box>
 
       {/* Transfer Dialog */}

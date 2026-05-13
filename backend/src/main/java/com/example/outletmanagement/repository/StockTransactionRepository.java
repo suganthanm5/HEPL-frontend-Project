@@ -16,8 +16,9 @@ public interface StockTransactionRepository extends JpaRepository<StockTransacti
             "(:productId IS NULL OR t.product.id = :productId) AND " +
             "(:type IS NULL OR t.transactionType = :type) " +
             "ORDER BY t.createdAt DESC")
-    List<StockTransaction> findFilteredTransactions(
+    org.springframework.data.domain.Page<StockTransaction> findFilteredTransactions(
             @org.springframework.data.repository.query.Param("outletId") Long outletId,
             @org.springframework.data.repository.query.Param("productId") Long productId,
-            @org.springframework.data.repository.query.Param("type") StockTransaction.TransactionType type);
+            @org.springframework.data.repository.query.Param("type") StockTransaction.TransactionType type,
+            org.springframework.data.domain.Pageable pageable);
 }

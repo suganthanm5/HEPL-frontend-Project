@@ -16,74 +16,44 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Skeleton from "@mui/material/Skeleton";
 import Tooltip from "@mui/material/Tooltip";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+  IconButton,
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  Button,
+  Select,
+  MenuItem,
+  Chip,
+  TextField,
+  CircularProgress,
+} from "@mui/material";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 
 import "./Division.css";
 
-/* ── SVG Icons ── */
-const IconPlus = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-const IconEdit = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-  </svg>
-);
-const IconTrash = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-    <path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
-  </svg>
-);
-const IconSearch = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
-);
-const IconTable = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" />
-    <line x1="9" y1="9" x2="9" y2="21" />
-  </svg>
-);
-const IconGrid = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-    <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-  </svg>
-);
-const IconX = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-const IconDivision = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="5" r="2" /><circle cx="5" cy="19" r="2" /><circle cx="19" cy="19" r="2" />
-    <line x1="12" y1="7" x2="5" y2="17" /><line x1="12" y1="7" x2="19" y2="17" />
-  </svg>
-);
-const IconWarning = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-  </svg>
-);
-const IconEye = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-const IconBox = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" />
-  </svg>
-);
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SearchIcon from "@mui/icons-material/Search";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import GridViewIcon from "@mui/icons-material/GridView";
+import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import WarningIcon from "@mui/icons-material/Warning";
+import FolderIcon from "@mui/icons-material/Folder";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import FilterListIcon from "@mui/icons-material/FilterList";
 
 /* ── MUI Styled Table (same black header as original) ── */
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -105,23 +75,62 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-/* ── Modal (100% unchanged) ── */
+/* ── MUI Modal Implementation ── */
 const Modal = ({ title, subtitle, icon, onClose, children, accent = "#6366f1" }) => (
-  <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-    <div className="modal-box">
-      <div className="modal-header" style={{ "--accent": accent }}>
-        <div className="modal-header-icon" style={{ background: `${accent}20`, color: accent }}>
-          {icon}
-        </div>
-        <div>
-          <h3 className="modal-title">{title}</h3>
-          {subtitle && <p className="modal-subtitle">{subtitle}</p>}
-        </div>
-        <button className="modal-close" onClick={onClose}><IconX /></button>
-      </div>
-      <div className="modal-body">{children}</div>
-    </div>
-  </div>
+  <Dialog 
+    open={true} 
+    onClose={onClose} 
+    fullWidth 
+    maxWidth="sm"
+    PaperProps={{ 
+      sx: { 
+        borderRadius: 3, 
+        overflow: "hidden" 
+      } 
+    }}
+  >
+    <DialogTitle 
+      sx={{ 
+        display: "flex", 
+        alignItems: "center", 
+        gap: 2, 
+        borderBottom: `4px solid ${accent}`,
+        pb: 1.5,
+        pt: 2
+      }}
+    >
+      <Box 
+        sx={{ 
+          bgcolor: `${accent}22`, 
+          color: accent, 
+          p: 1.25, 
+          borderRadius: 2.5, 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center",
+          flexShrink: 0
+        }}
+      >
+        {icon}
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="caption" sx={{ color: "#64748b", display: "block", mt: -0.5 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+      <IconButton onClick={onClose} size="small" sx={{ color: "#94a3b8" }}>
+        <CloseIcon />
+      </IconButton>
+    </DialogTitle>
+    <DialogContent sx={{ mt: 2, pb: 2 }}>
+      {children}
+    </DialogContent>
+  </Dialog>
 );
 
 const PAGE_SIZES = [5, 10, 25, 50];
@@ -393,109 +402,194 @@ const Division = () => {
   return (
     <>
       {/* ── Hero ── */}
-      <div className="div-hero">
-        <div>
-          <h2 className="div-hero-title">Division Management</h2>
-        </div>
-        <button className="btn-primary" onClick={() => { setAddName(""); setAddModal(true); }}>
-          <IconPlus /> Add Division
-        </button>
-      </div>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+        <Box>
+          <Typography variant="h5" fontWeight={700} sx={{ fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+            Division Management
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#64748b" }}>
+            Manage and organize your business division units
+          </Typography>
+        </Box>
+        <Button 
+          variant="contained" 
+          onClick={() => { setAddName(""); setAddModal(true); }}
+          startIcon={<AddIcon />}
+          sx={{ 
+            borderRadius: 2.5, 
+            textTransform: "none", 
+            bgcolor: "#6366f1", 
+            "&:hover": { bgcolor: "#4f46e5" },
+            boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)",
+            px: 3,
+            py: 1.25,
+            fontWeight: 600
+          }}
+        >
+          Add Division
+        </Button>
+      </Box>
 
       {/* ── Stat Cards ── */}
-      <div className="div-stats">
-        <div className="div-stat-card">
-          <div className="div-stat-icon"><IconDivision /></div>
-          <div>
-            <div className="div-stat-value">{loading ? "—" : divisions.length}</div>
-            <div className="div-stat-label">Total Divisions</div>
-          </div>
-        </div>
-        <div className="div-stat-card">
-          <div className="div-stat-icon" style={{ background: "#f0fdf4", color: "#22c55e" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg>
-          </div>
-          <div>
-            <div className="div-stat-value">{loading ? "—" : divisions.length}</div>
-            <div className="div-stat-label">Current Page</div>
-          </div>
-        </div>
-        <div className="div-stat-card">
-          <div className="div-stat-icon" style={{ background: "#fdf4ff", color: "#a855f7" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-          </div>
-          <div>
-            <div className="div-stat-value">{loading ? "—" : totalPages}</div>
-            <div className="div-stat-label">Total Pages</div>
-          </div>
-        </div>
-      </div>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {[
+          { label: "Total Divisions", value: loading ? "—" : totalElements, icon: <FolderIcon />, color: "#6366f1", bg: "#f5f3ff" },
+          { label: "Current Page", value: loading ? "—" : safePage, icon: <TrendingUpIcon />, color: "#22c55e", bg: "#f0fdf4" },
+          { label: "Total Pages", value: loading ? "—" : totalPages, icon: <GridViewIcon />, color: "#a855f7", bg: "#fdf4ff" },
+        ].map((stat, i) => (
+          <Grid xs={12} sm={4} key={i}>
+            <Card sx={{ borderRadius: 3, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px !important" }}>
+                <Avatar sx={{ bgcolor: stat.bg, color: stat.color, width: 48, height: 48, borderRadius: 2 }}>
+                  {stat.icon}
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" fontWeight={700} sx={{ color: "#1e1b4b", lineHeight: 1.2 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="caption" fontWeight={600} sx={{ color: "#64748b" }}>
+                    {stat.label}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {/* ── Error Banner ── */}
       {error && (
-        <div className="error-banner">
-          <IconWarning /> {error}
-        </div>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+          {error}
+        </Alert>
       )}
 
       {/* ── Toolbar ── */}
-      <div className="div-toolbar">
-        <div className="toolbar-left">
-          <div className="search-wrap">
-            <span className="search-ico"><IconSearch /></span>
-            <input
-              placeholder="Search divisions…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="search-clear" onClick={() => { setSearch(""); setSearchTerm(""); setPage(1); }}>
-                <IconX />
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="toolbar-filters">
-          <select value={productCountFilter} onChange={e => { setProductCountFilter(e.target.value); setPage(1); }} className="div-filter-select">
-            <option value="">All Counts</option>
-            <option value="0">No Products (0)</option>
-            <option value="1-5">1-5 Products</option>
-            <option value="6-10">6-10 Products</option>
-            <option value="10+">10+ Products</option>
-          </select>
-          <select value={dateFilter} onChange={e => { setDateFilter(e.target.value); setPage(1); }} className="div-filter-select">
-            <option value="">All Time</option>
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-          </select>
-          {(productCountFilter || dateFilter || search) && (
-            <button className="div-clear-btn"
-              onClick={() => { setProductCountFilter(""); setDateFilter(""); setSearch(""); setSearchTerm(""); setPage(1); }}
-              title="Clear all filters">
-              Clear
-            </button>
+      <Box sx={{ 
+        display: "flex", 
+        flexWrap: "wrap", 
+        alignItems: "center", 
+        justifyContent: "space-between", 
+        gap: 2, 
+        bgcolor: "#fff", 
+        p: 2, 
+        borderRadius: 3, 
+        mb: 2, 
+        border: "1px solid #f1f5f9",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
+      }}>
+        {/* Search */}
+        <Box sx={{ position: "relative", minWidth: { xs: "100%", md: 300 } }}>
+          <Box sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
+            <SearchIcon />
+          </Box>
+          <input
+            placeholder="Search divisions…"
+            value={search}
+            style={{ 
+              width: "100%", 
+              padding: "10px 12px 10px 40px", 
+              borderRadius: "10px", 
+              border: "1px solid #e2e8f0", 
+              fontSize: "0.9rem",
+              fontFamily: "inherit"
+            }}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <IconButton 
+              onClick={() => { setSearch(""); setSearchTerm(""); setPage(1); }}
+              size="small"
+              sx={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)" }}
+            >
+              <CloseIcon />
+            </IconButton>
           )}
-        </div>
-        <div className="toolbar-right">
-          <div className="show-entries">
-            <span>Show</span>
-            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
-              {PAGE_SIZES.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <span>entries</span>
-          </div>
-          <div className="view-toggle">
-            <button className={view === "table" ? "active" : ""} onClick={() => setView("table")} title="Table view"><IconTable /></button>
-            <button className={view === "card" ? "active" : ""} onClick={() => setView("card")} title="Card view"><IconGrid /></button>
-          </div>
-        </div>
-      </div>
+        </Box>
+
+        {/* Filters */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          <Select 
+            value={productCountFilter} 
+            onChange={e => { setProductCountFilter(e.target.value); setPage(1); }}
+            displayEmpty
+            size="small"
+            sx={{ minWidth: 140, borderRadius: 2, fontSize: "0.85rem", bgcolor: "#f8fafc" }}
+          >
+            <MenuItem value="">All Counts</MenuItem>
+            <MenuItem value="0">No Products (0)</MenuItem>
+            <MenuItem value="1-5">1-5 Products</MenuItem>
+            <MenuItem value="6-10">6-10 Products</MenuItem>
+            <MenuItem value="10+">10+ Products</MenuItem>
+          </Select>
+
+          <Select 
+            value={dateFilter} 
+            onChange={e => { setDateFilter(e.target.value); setPage(1); }}
+            displayEmpty
+            size="small"
+            sx={{ minWidth: 140, borderRadius: 2, fontSize: "0.85rem", bgcolor: "#f8fafc" }}
+          >
+            <MenuItem value="">All Time</MenuItem>
+            <MenuItem value="7">Last 7 Days</MenuItem>
+            <MenuItem value="30">Last 30 Days</MenuItem>
+            <MenuItem value="90">Last 90 Days</MenuItem>
+          </Select>
+
+          {(productCountFilter || dateFilter || search) && (
+            <Button 
+              onClick={() => { setProductCountFilter(""); setDateFilter(""); setSearch(""); setSearchTerm(""); setPage(1); }}
+              size="small"
+              sx={{ textTransform: "none", color: "#6366f1", fontWeight: 600 }}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </Box>
+
+        {/* View Toggle & Page Size */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600 }}>Show</Typography>
+            <Select 
+              value={pageSize} 
+              onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+              size="small"
+              sx={{ minWidth: 70, borderRadius: 2, fontSize: "0.85rem", height: 32 }}
+            >
+              {PAGE_SIZES.map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
+            </Select>
+          </Box>
+          <Box sx={{ display: "flex", bgcolor: "#f1f5f9", p: 0.5, borderRadius: 2 }}>
+            <IconButton 
+              size="small" 
+              onClick={() => setView("table")}
+              sx={{ 
+                borderRadius: 1.5, 
+                bgcolor: view === "table" ? "#fff" : "transparent",
+                color: view === "table" ? "#6366f1" : "#64748b",
+                boxShadow: view === "table" ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                "&:hover": { bgcolor: view === "table" ? "#fff" : "#e2e8f0" }
+              }}
+            >
+              <TableChartIcon />
+            </IconButton>
+            <IconButton 
+              size="small" 
+              onClick={() => setView("card")}
+              sx={{ 
+                borderRadius: 1.5, 
+                bgcolor: view === "card" ? "#fff" : "transparent",
+                color: view === "card" ? "#6366f1" : "#64748b",
+                boxShadow: view === "card" ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                "&:hover": { bgcolor: view === "card" ? "#fff" : "#e2e8f0" }
+              }}
+            >
+              <GridViewIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
 
       {/* ── Table View — MUI Table inside original .table-wrap ── */}
       {view === "table" && (
@@ -523,15 +617,22 @@ const Division = () => {
                 ) : filteredDivisions.length === 0 ? (
                   <StyledTableRow>
                     <StyledTableCell colSpan={4}>
-                      <div className="empty-state">
-                        <div className="empty-icon"><IconDivision /></div>
-                        <p>{searchTerm ? "No divisions match your search" : "No divisions yet"}</p>
+                      <Box sx={{ py: 8, textAlign: "center", color: "#94a3b8" }}>
+                        <Box sx={{ fontSize: 64, mb: 2, opacity: 0.3 }}><FolderIcon /></Box>
+                        <Typography variant="h6" sx={{ color: "#64748b", mb: 2 }}>
+                          {searchTerm ? "No divisions match your search" : "No divisions yet"}
+                        </Typography>
                         {!searchTerm && (
-                          <button className="btn-primary sm" onClick={() => { setAddName(""); setAddModal(true); }}>
-                            <IconPlus /> Add First Division
-                          </button>
+                          <Button 
+                            onClick={() => { setAddName(""); setAddModal(true); }}
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#6366f1" }}
+                          >
+                            Add First Division
+                          </Button>
                         )}
-                      </div>
+                      </Box>
                     </StyledTableCell>
                   </StyledTableRow>
                 ) : (
@@ -550,20 +651,28 @@ const Division = () => {
                         <span className="product-count">{d.products?.length || 0}</span>
                       </StyledTableCell>
                       <StyledTableCell align="center">
-                        <div className="action-btns">
-                          <Tooltip title="View" arrow placement="top">
-                            <button className="act-btn view" onClick={() => setViewModal(d)}><IconEye /></button>
+                        <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+                          <Tooltip title="View Details" arrow>
+                            <IconButton onClick={() => setViewModal(d)} size="small" sx={{ color: "#0ea5e9", bgcolor: "#f0f9ff", "&:hover": { bgcolor: "#e0f2fe" } }}>
+                              <VisibilityIcon />
+                            </IconButton>
                           </Tooltip>
-                          <Tooltip title="Products" arrow placement="top">
-                            <button className="act-btn products" onClick={() => openProducts(d)}><IconBox /></button>
+                          <Tooltip title="Manage Products" arrow>
+                            <IconButton onClick={() => openProducts(d)} size="small" sx={{ color: "#10b981", bgcolor: "#f0fdf4", "&:hover": { bgcolor: "#dcfce7" } }}>
+                              <InventoryIcon />
+                            </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit" arrow placement="top">
-                            <button className="act-btn edit" onClick={() => openEdit(d)}><IconEdit /></button>
+                          <Tooltip title="Edit Division" arrow>
+                            <IconButton onClick={() => openEdit(d)} size="small" sx={{ color: "#8b5cf6", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}>
+                              <EditIcon />
+                            </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete" arrow placement="top">
-                            <button className="act-btn del" onClick={() => setDeleteModal(d)}><IconTrash /></button>
+                          <Tooltip title="Delete Division" arrow>
+                            <IconButton onClick={() => setDeleteModal(d)} size="small" sx={{ color: "#ef4444", bgcolor: "#fef2f2", "&:hover": { bgcolor: "#fee2e2" } }}>
+                              <DeleteIcon />
+                            </IconButton>
                           </Tooltip>
-                        </div>
+                        </Box>
                       </StyledTableCell>
                     </StyledTableRow>
                   ))
@@ -574,55 +683,105 @@ const Division = () => {
         </div>
       )}
 
-      {/* ── Card View (100% unchanged) ── */}
+      {/* ── Card View ── */}
       {view === "card" && (
-        <div className="card-grid">
+        <Grid container spacing={2}>
           {loading ? (
-            [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="div-card skeleton-card" />)
-          ) : divisions.length === 0 ? (
-            <div className="empty-state full-width">
-              <div className="empty-icon"><IconDivision /></div>
-              <p>{searchTerm ? "No divisions match your search" : "No divisions yet"}</p>
-              {!searchTerm && (
-                <button className="btn-primary sm" onClick={() => { setAddName(""); setAddModal(true); }}>
-                  <IconPlus /> Add First Division
-                </button>
-              )}
-            </div>
+            [1, 2, 3, 4, 5, 6].map(i => (
+              <Grid item xs={12} sm={6} lg={4} key={i}>
+                <Skeleton variant="rounded" height={160} sx={{ borderRadius: 3 }} />
+              </Grid>
+            ))
+          ) : filteredDivisions.length === 0 ? (
+            <Grid xs={12}>
+              <Box sx={{ py: 8, textAlign: "center", color: "#94a3b8", bgcolor: "#fff", borderRadius: 3, border: "1px solid #f1f5f9" }}>
+                <Box sx={{ fontSize: 64, mb: 2, opacity: 0.3 }}><FolderIcon /></Box>
+                <Typography variant="h6" sx={{ color: "#64748b", mb: 2 }}>
+                  {searchTerm ? "No divisions match your search" : "No divisions yet"}
+                </Typography>
+                {!searchTerm && (
+                  <Button 
+                    onClick={() => { setAddName(""); setAddModal(true); }}
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#6366f1" }}
+                  >
+                    Add First Division
+                  </Button>
+                )}
+              </Box>
+            </Grid>
           ) : (
             filteredDivisions.map((d, i) => (
-              <div className="div-card" key={d.id}>
-                <div className="div-card-header">
-                  <div className="div-card-avatar">{d.name?.charAt(0).toUpperCase()}</div>
-                  <div className="div-card-info">
-                    <div className="div-card-name">{d.name}</div>
-                    <div className="div-card-meta">
-                      <span className="product-count">{d.products?.length || 0} products</span>
-                    </div>
-                  </div>
-                  <span className="div-card-index">#{(safePage - 1) * pageSize + i + 1}</span>
-                </div>
-                <div className="div-card-actions">
-                  <button className="act-btn view" onClick={() => setViewModal(d)}><IconEye /> View</button>
-                  <button className="act-btn products" onClick={() => openProducts(d)}><IconBox /> Products</button>
-                  <button className="act-btn edit" onClick={() => openEdit(d)}><IconEdit /> Edit</button>
-                  <button className="act-btn del" onClick={() => setDeleteModal(d)}><IconTrash /> Delete</button>
-                </div>
-              </div>
+              <Grid xs={12} sm={6} lg={4} key={d.id}>
+                <Card sx={{ borderRadius: 3, transition: "all 0.3s", "&:hover": { transform: "translateY(-4px)", boxShadow: "0 12px 24px rgba(0,0,0,0.1)" }, border: "1px solid #f1f5f9" }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                      <Box sx={{ display: "flex", gap: 1.5 }}>
+                        <Avatar sx={{ bgcolor: "#f5f3ff", color: "#6366f1", fontWeight: 700, width: 44, height: 44, borderRadius: 2 }}>
+                          {d.name?.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#1e1b4b", lineHeight: 1.2 }}>{d.name}</Typography>
+                          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600 }}>
+                            {d.products?.length || 0} Products
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: "#cbd5e1" }}>
+                        #{(safePage - 1) * pageSize + i + 1}
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      <Button onClick={() => setViewModal(d)} size="small" variant="outlined" startIcon={<VisibilityIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>View</Button>
+                      <Button onClick={() => openProducts(d)} size="small" variant="outlined" color="success" startIcon={<InventoryIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>Products</Button>
+                      <Button onClick={() => openEdit(d)} size="small" variant="outlined" color="secondary" startIcon={<EditIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>Edit</Button>
+                      <Button onClick={() => setDeleteModal(d)} size="small" variant="outlined" color="error" startIcon={<DeleteIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>Delete</Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
             ))
           )}
-        </div>
+        </Grid>
       )}
 
-      {/* ── Pagination (100% unchanged) ── */}
+      {/* ── Pagination ── */}
       {!loading && filteredDivisions.length > 0 && (
-        <div className="pagination-bar">
-          <span className="pag-info">
-            Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
-          </span>
-          <div className="pag-btns">
-            <button disabled={safePage === 1} onClick={() => setPage(1)}>«</button>
-            <button disabled={safePage === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+        <Box sx={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          bgcolor: "#fff", 
+          p: 2, 
+          borderRadius: 3, 
+          mt: 2, 
+          border: "1px solid #f1f5f9" 
+        }}>
+          <Typography variant="body2" sx={{ color: "#64748b" }}>
+            Showing <strong>{start}-{end}</strong> of <strong>{totalElements}</strong> entries
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button 
+              disabled={safePage === 1} 
+              onClick={() => setPage(1)} 
+              variant="outlined" 
+              size="small"
+              sx={{ minWidth: 32, height: 32, p: 0, borderRadius: 1.5, borderColor: "#e2e8f0" }}
+            >
+              First
+            </Button>
+            <Button 
+              disabled={safePage === 1} 
+              onClick={() => setPage(p => p - 1)} 
+              variant="outlined" 
+              size="small"
+              sx={{ minWidth: 32, height: 32, p: 0, borderRadius: 1.5, borderColor: "#e2e8f0" }}
+            >
+              Prev
+            </Button>
+            
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
               .reduce((acc, p, idx, arr) => {
@@ -630,202 +789,291 @@ const Division = () => {
                 acc.push(p);
                 return acc;
               }, [])
-              .map((p, i) =>
-                p === "…"
-                  ? <span key={`e${i}`} className="pag-ellipsis">…</span>
-                  : <button key={p} className={safePage === p ? "active" : ""} onClick={() => setPage(p)}>{p}</button>
-              )}
-            <button disabled={safePage === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-            <button disabled={safePage === totalPages} onClick={() => setPage(totalPages)}>»</button>
-          </div>
-        </div>
+              .map((p, i) => (
+                p === "…" 
+                  ? <Typography key={`e${i}`} variant="body2" sx={{ color: "#94a3b8", px: 1 }}>…</Typography>
+                  : <Button 
+                      key={p} 
+                      onClick={() => setPage(p)}
+                      variant={safePage === p ? "contained" : "outlined"}
+                      size="small"
+                      sx={{ 
+                        minWidth: 32, 
+                        height: 32, 
+                        p: 0, 
+                        borderRadius: 1.5, 
+                        borderColor: safePage === p ? "transparent" : "#e2e8f0",
+                        bgcolor: safePage === p ? "#6366f1" : "transparent",
+                        color: safePage === p ? "#fff" : "#1e1b4b",
+                        boxShadow: "none",
+                        fontWeight: 600
+                      }}
+                    >
+                      {p}
+                    </Button>
+              ))}
+
+            <Button 
+              disabled={safePage === totalPages} 
+              onClick={() => setPage(p => p + 1)} 
+              variant="outlined" 
+              size="small"
+              sx={{ minWidth: 32, height: 32, p: 0, borderRadius: 1.5, borderColor: "#e2e8f0" }}
+            >
+              Next
+            </Button>
+            <Button 
+              disabled={safePage === totalPages} 
+              onClick={() => setPage(totalPages)} 
+              variant="outlined" 
+              size="small"
+              sx={{ minWidth: 32, height: 32, p: 0, borderRadius: 1.5, borderColor: "#e2e8f0" }}
+            >
+              Last
+            </Button>
+          </Box>
+        </Box>
       )}
 
-      {/* ── View Modal (100% unchanged) ── */}
+      {/* ── View Modal ── */}
       {viewModal && (
-        <Modal title="Division Details" subtitle={`Viewing: ${viewModal.name}`} icon={<IconEye />} onClose={() => setViewModal(null)} accent="#0ea5e9">
-          <div className="div-view-details">
-            <div className="div-detail-row">
-              <div className="div-detail-label">Division ID:</div>
-              <div className="div-detail-value">{viewModal.id}</div>
-            </div>
-            <div className="div-detail-row">
-              <div className="div-detail-label">Division Name:</div>
-              <div className="div-detail-value">{viewModal.name}</div>
-            </div>
-            <div className="div-detail-row">
-              <div className="div-detail-label">Total Products:</div>
-              <div className="div-detail-value"><span className="product-count">{viewModal.products?.length || 0}</span></div>
-            </div>
-            <div className="div-detail-row">
-              <div className="div-detail-label">Created Date:</div>
-              <div className="div-detail-value">
-                {new Date(viewModal.createdAt || viewModal.created_at || viewModal.dateCreated || new Date()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-              </div>
-            </div>
-            <div className="div-detail-row">
-              <div className="div-detail-label">Last Updated:</div>
-              <div className="div-detail-value">
-                {new Date(viewModal.updatedAt || viewModal.updated_at || viewModal.dateUpdated || new Date()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-              </div>
-            </div>
-            <div className="div-detail-row">
-              <div className="div-detail-label">Status:</div>
-              <div className="div-detail-value"><span className="status-badge active">Active</span></div>
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button className="modal-btn cancel" onClick={() => setViewModal(null)}>Close</button>
-            <button className="modal-btn confirm" style={{ "--btn-color": "#0ea5e9" }} onClick={() => { setViewModal(null); openEdit(viewModal); }}>
-              <IconEdit /> Edit Division
-            </button>
-          </div>
+        <Modal title="Division Details" subtitle={`Viewing: ${viewModal.name}`} icon={<VisibilityIcon />} onClose={() => setViewModal(null)} accent="#0ea5e9">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {[
+              { label: "Division ID:", value: viewModal.id },
+              { label: "Division Name:", value: viewModal.name },
+              { label: "Total Products:", value: <Typography component="span" sx={{ px: 1, py: 0.25, bgcolor: "#f1f5f9", borderRadius: 1, fontSize: "0.85rem", fontWeight: 600, color: "#1e1b4b" }}>{viewModal.products?.length || 0}</Typography> },
+              { label: "Created Date:", value: new Date(viewModal.createdAt || viewModal.created_at || viewModal.dateCreated || new Date()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) },
+              { label: "Last Updated:", value: new Date(viewModal.updatedAt || viewModal.updated_at || viewModal.dateUpdated || new Date()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) },
+              { label: "Status:", value: <Typography component="span" sx={{ px: 1, py: 0.25, bgcolor: "#dcfce7", color: "#16a34a", borderRadius: 1, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>Active</Typography> },
+            ].map((row, idx) => (
+              <Box key={idx} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1, borderBottom: "1px solid #f1f5f9" }}>
+                <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>{row.label}</Typography>
+                <Typography variant="body2" sx={{ color: "#1e1b4b", fontWeight: 600 }}>{row.value}</Typography>
+              </Box>
+            ))}
+          </Box>
+          <DialogActions sx={{ px: 0, pt: 3 }}>
+            <Button 
+              onClick={() => setViewModal(null)} 
+              variant="outlined"
+              sx={{ borderRadius: 2, textTransform: "none", color: "#64748b", borderColor: "#e2e8f0" }}
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={() => { setViewModal(null); openEdit(viewModal); }} 
+              variant="contained"
+              startIcon={<EditIcon />}
+              sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#0ea5e9", "&:hover": { bgcolor: "#0284c7" }, boxShadow: "none" }}
+            >
+              Edit Division
+            </Button>
+          </DialogActions>
         </Modal>
       )}
 
-      {/* ── Products Modal (100% unchanged) ── */}
+      {/* ── Products Modal ── */}
       {productModal && (
-        <Modal title={`Products — ${productModal.name}`} subtitle="Manage products in this division" icon={<IconBox />} onClose={() => setProductModal(null)} accent="#10b981">
-          <div className="div-prod-form">
-            <div className="div-form-row">
-              <div className="modal-field">
-                <label>Product Name <span className="req">*</span></label>
-                <input autoFocus placeholder="e.g. Cheese 500g" value={newProd.name}
-                  onChange={e => setNewProd(f => ({ ...f, name: e.target.value }))}
-                  onKeyDown={e => e.key === "Enter" && handleAddProduct()} />
-              </div>
-            </div>
-            <div className="div-form-row">
-              <div className="modal-field">
-                <label>UIM Price</label>
-                <input type="number" min="0" placeholder="0" value={newProd.uimPrice} onChange={e => setNewProd(f => ({ ...f, uimPrice: e.target.value }))} />
-              </div>
-              <div className="modal-field">
-                <label>MRP</label>
-                <input type="number" min="0" placeholder="0" value={newProd.mrp} onChange={e => setNewProd(f => ({ ...f, mrp: e.target.value }))} />
-              </div>
-            </div>
-            <div className="div-form-row">
-              <div className="modal-field">
-                <label>Selling Price</label>
-                <input type="number" min="0" placeholder="0" value={newProd.sellingPrice} onChange={e => setNewProd(f => ({ ...f, sellingPrice: e.target.value }))} />
-              </div>
-              <div className="modal-field">
-                <label>Purchase Price</label>
-                <input type="number" min="0" placeholder="0" value={newProd.purchasePrice} onChange={e => setNewProd(f => ({ ...f, purchasePrice: e.target.value }))} />
-              </div>
-            </div>
-            <div className="modal-actions" style={{ marginBottom: 20 }}>
-              <button className="modal-btn cancel" onClick={() => setNewProd(EMPTY_PROD)}>Clear</button>
-              <button className="modal-btn confirm" style={{ "--btn-color": "#10b981" }} onClick={handleAddProduct} disabled={prodSaving || !newProd.name.trim()}>
-                {prodSaving ? <span className="btn-spinner" /> : <IconPlus />}
-                {prodSaving ? "Adding…" : "Add Product"}
-              </button>
-            </div>
-          </div>
-          <div className="modal-field" style={{ marginBottom: 0 }}>
-            <label>Existing Products</label>
-            <div className="prod-list">
-              {prodLoading ? (
-                [1, 2, 3].map(i => (
-                  <div key={i} className="prod-item">
-                    <Skeleton variant="text" width="60%" />
-                  </div>
-                ))
-              ) : products.length === 0 ? (
-                <p className="prod-empty">No products yet. Add one above.</p>
-              ) : (
-                products.map(p => (
-                  <div className="prod-item" key={p.id}>
-                    <div className="prod-info">
-                      <span className="prod-name"><IconBox />{p.name}</span>
-                      <span className="prod-code">{p.productCode}</span>
-                    </div>
-                    <div className="prod-prices">
-                      <span className="prod-price">₹{p.sellingPrice || 0}</span>
-                    </div>
-                    <button className="prod-del" onClick={() => handleDeleteProduct(p.id)} title="Delete"><IconTrash /></button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+        <Modal title={`Products — ${productModal.name}`} subtitle="Manage products in this division" icon={<InventoryIcon />} onClose={() => setProductModal(null)} accent="#10b981">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 2, bgcolor: "#f8fafc", borderRadius: 2, border: "1px solid #e2e8f0" }}>
+              <TextField 
+                fullWidth size="small" label="Product Name" required autoFocus
+                placeholder="e.g. Cheese 500g" value={newProd.name}
+                onChange={e => setNewProd(f => ({ ...f, name: e.target.value }))}
+                onKeyDown={e => e.key === "Enter" && handleAddProduct()}
+              />
+              
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField fullWidth size="small" label="UIM Price" type="number" 
+                    placeholder="0" value={newProd.uimPrice}
+                    onChange={e => setNewProd(f => ({ ...f, uimPrice: e.target.value }))} />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField fullWidth size="small" label="MRP" type="number"
+                    placeholder="0" value={newProd.mrp} 
+                    onChange={e => setNewProd(f => ({ ...f, mrp: e.target.value }))} />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField fullWidth size="small" label="Selling Price" type="number"
+                    placeholder="0" value={newProd.sellingPrice} 
+                    onChange={e => setNewProd(f => ({ ...f, sellingPrice: e.target.value }))} />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField fullWidth size="small" label="Purchase Price" type="number"
+                    placeholder="0" value={newProd.purchasePrice} 
+                    onChange={e => setNewProd(f => ({ ...f, purchasePrice: e.target.value }))} />
+                </Grid>
+              </Grid>
+
+              <Box sx={{ display: "flex", gap: 1.5, justifyContent: "flex-end" }}>
+                <Button onClick={() => setNewProd(EMPTY_PROD)} size="small" variant="text" sx={{ textTransform: "none", color: "#64748b" }}>Clear</Button>
+                <Button 
+                  onClick={handleAddProduct} 
+                  disabled={prodSaving || !newProd.name.trim()} 
+                  variant="contained" 
+                  size="small"
+                  startIcon={prodSaving ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
+                  sx={{ textTransform: "none", bgcolor: "#10b981", "&:hover": { bgcolor: "#059669" }, boxShadow: "none", borderRadius: 2 }}
+                >
+                  {prodSaving ? "Adding…" : "Add Product"}
+                </Button>
+              </Box>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e1b4b", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+                Existing Products <Chip label={products.length} size="small" sx={{ height: 18, fontSize: "0.7rem", fontWeight: 700 }} />
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 300, overflowY: "auto", pr: 0.5 }}>
+                {prodLoading ? (
+                  [1, 2, 3].map(i => <Skeleton key={i} variant="rounded" height={60} sx={{ borderRadius: 2 }} />)
+                ) : products.length === 0 ? (
+                  <Typography variant="body2" sx={{ color: "#94a3b8", textAlign: "center", py: 4, bgcolor: "#f8fafc", borderRadius: 2, border: "2px dashed #e2e8f0" }}>
+                    No products yet. Add one above.
+                  </Typography>
+                ) : (
+                  products.map(p => (
+                    <Box key={p.id} sx={{ display: "flex", alignItems: "center", gap: 2, p: 1.5, bgcolor: "#fff", border: "1px solid #f1f5f9", borderRadius: 2, "&:hover": { borderColor: "#10b981", bgcolor: "#f0fdf4" }, transition: "all 0.2s" }}>
+                      <Box sx={{ bgcolor: "#f1f5f9", p: 1, borderRadius: 1.5, color: "#64748b" }}>
+                        <InventoryIcon sx={{ fontSize: 18 }} />
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e1b4b" }}>{p.name}</Typography>
+                        <Typography variant="caption" sx={{ color: "#64748b" }}>{p.productCode}</Typography>
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#10b981" }}>₹{p.sellingPrice || 0}</Typography>
+                      <IconButton onClick={() => handleDeleteProduct(p.id)} size="small" color="error" sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}>
+                        <DeleteIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Box>
+                  ))
+                )}
+              </Box>
+            </Box>
+          </Box>
         </Modal>
       )}
 
-      {/* ── Add Modal (100% unchanged) ── */}
+      {/* ── Add Modal ── */}
       {addModal && (
-        <Modal title="Add Divisions" subtitle="Create one or multiple division units" icon={<IconPlus />} onClose={() => { setAddModal(false); setAddName(""); }} accent="#6366f1">
-          <div className="div-form-row">
-            <div className="modal-field">
-              <label>Division Names <span className="req">*</span></label>
-              <input autoFocus placeholder="e.g. North Region, South Region, East Region (separate multiple divisions with commas)"
-                value={addName}
-                onChange={e => handleInputChange(e.target.value, setAddName)}
-                onKeyDown={e => e.key === "Enter" && handleAdd()} />
-              <div className="div-input-help">
-                💡 Tip: You can add multiple divisions at once by separating them with commas
-              </div>
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button className="modal-btn cancel" onClick={() => { setAddModal(false); setAddName(""); }}>Cancel</button>
-            <button className="modal-btn confirm" onClick={handleAdd} disabled={saving || !addName.trim()}>
-              {saving ? <span className="btn-spinner" /> : <IconPlus />}
+        <Modal title="Add Divisions" subtitle="Create one or multiple division units" icon={<AddIcon />} onClose={() => { setAddModal(false); setAddName(""); }} accent="#6366f1">
+          <Box sx={{ py: 1 }}>
+            <TextField 
+              fullWidth label="Division Names" required autoFocus
+              placeholder="e.g. North Region, South Region (separate with commas)"
+              value={addName}
+              onChange={e => handleInputChange(e.target.value, setAddName)}
+              onKeyDown={e => e.key === "Enter" && handleAdd()}
+              helperText="💡 Tip: You can add multiple divisions at once by separating them with commas"
+            />
+          </Box>
+          <DialogActions sx={{ px: 0, pt: 3 }}>
+            <Button 
+              onClick={() => { setAddModal(false); setAddName(""); }} 
+              variant="outlined"
+              sx={{ borderRadius: 2, textTransform: "none", color: "#64748b", borderColor: "#e2e8f0" }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAdd} 
+              disabled={saving || !addName.trim()} 
+              variant="contained"
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
+              sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, boxShadow: "none" }}
+            >
               {saving ? "Adding…" : "Add Divisions"}
-            </button>
-          </div>
+            </Button>
+          </DialogActions>
         </Modal>
       )}
 
-      {/* ── Edit Modal (100% unchanged) ── */}
+      {/* ── Edit Modal ── */}
       {editModal && (
-        <Modal title="Edit Division" subtitle={`Editing: ${editModal.name}`} icon={<IconEdit />} onClose={() => setEditModal(null)} accent="#8b5cf6">
-          <div className="div-form-row">
-            <div className="modal-field">
-              <label>Division Name <span className="req">*</span></label>
-              <input autoFocus placeholder="Division name" value={editName}
-                onChange={e => handleInputChange(e.target.value, setEditName)}
-                onKeyDown={e => e.key === "Enter" && handleUpdate()} />
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button className="modal-btn cancel" onClick={() => setEditModal(null)}>Cancel</button>
-            <button className="modal-btn confirm" style={{ "--btn-color": "#8b5cf6" }} onClick={handleUpdate} disabled={saving || !editName.trim()}>
-              {saving ? <span className="btn-spinner" /> : <IconEdit />}
+        <Modal title="Edit Division" subtitle={`Editing: ${editModal.name}`} icon={<EditIcon />} onClose={() => setEditModal(null)} accent="#8b5cf6">
+          <Box sx={{ py: 1 }}>
+            <TextField 
+              fullWidth label="Division Name" required autoFocus
+              placeholder="Division name" value={editName}
+              onChange={e => handleInputChange(e.target.value, setEditName)}
+              onKeyDown={e => e.key === "Enter" && handleUpdate()}
+            />
+          </Box>
+          <DialogActions sx={{ px: 0, pt: 3 }}>
+            <Button 
+              onClick={() => setEditModal(null)} 
+              variant="outlined"
+              sx={{ borderRadius: 2, textTransform: "none", color: "#64748b", borderColor: "#e2e8f0" }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdate} 
+              disabled={saving || !editName.trim()} 
+              variant="contained"
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <EditIcon />}
+              sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, boxShadow: "none" }}
+            >
               {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
+            </Button>
+          </DialogActions>
         </Modal>
       )}
 
-      {/* ── Delete Modal (100% unchanged) ── */}
       {deleteModal && (
-        <Modal title="Delete Division" subtitle="This action cannot be undone" icon={<IconWarning />} onClose={() => setDeleteModal(null)} accent="#ef4444">
-          <div className="delete-confirm-body">
-            <p>Are you sure you want to delete <strong>"{deleteModal.name}"</strong>?</p>
-          </div>
-          <div className="modal-actions">
-            <button className="modal-btn cancel" onClick={() => setDeleteModal(null)}>Cancel</button>
-            <button className="modal-btn danger" onClick={handleDelete} disabled={saving}>
-              {saving ? <span className="btn-spinner" /> : <IconTrash />}
+        <Modal title="Delete Division" subtitle="This action cannot be undone" icon={<WarningIcon />} onClose={() => setDeleteModal(null)} accent="#ef4444">
+          <Box sx={{ py: 1 }}>
+            <Typography variant="body1">
+              Are you sure you want to delete <strong>"{deleteModal.name}"</strong>?
+            </Typography>
+          </Box>
+          <DialogActions sx={{ px: 0, pt: 3 }}>
+            <Button 
+              onClick={() => setDeleteModal(null)} 
+              variant="outlined"
+              sx={{ borderRadius: 2, textTransform: "none", color: "#64748b", borderColor: "#e2e8f0" }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDelete} 
+              disabled={saving} 
+              variant="contained"
+              color="error"
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
+              sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}
+            >
               {saving ? "Deleting…" : "Delete Division"}
-            </button>
-          </div>
+            </Button>
+          </DialogActions>
         </Modal>
       )}
 
-      {/* ── Toast (100% unchanged) ── */}
-      {toast && (
-        <div className={`div-toast div-toast-${toast.type}`}>
-          <div className="div-toast-content">
-            <div className="div-toast-icon">
-              {toast.type === "success" ? "✓" : toast.type === "warning" ? "ⓘ" : "⚠"}
-            </div>
-            <span className="div-toast-message">{toast.message}</span>
-          </div>
-        </div>
-      )}
+      {/* ── MUI Toast Implementation ── */}
+      <Snackbar
+        open={!!toast}
+        autoHideDuration={4000}
+        onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        {toast && (
+          <Alert
+            onClose={() => setToast(null)}
+            severity={toast.type === "success" ? "success" : toast.type === "warning" ? "warning" : "error"}
+            sx={{ 
+              width: "100%", 
+              borderRadius: 2,
+              fontWeight: 500,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+            }}
+          >
+            {toast.message}
+          </Alert>
+        )}
+      </Snackbar>
     </>
   );
 };

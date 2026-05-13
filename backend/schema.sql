@@ -1,18 +1,3 @@
--- Users Table
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(20),
-    is_deleted BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by VARCHAR(255),
-    updated_by VARCHAR(255)
-);
-
 -- Locations Table
 CREATE TABLE IF NOT EXISTS locations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -63,6 +48,23 @@ CREATE TABLE IF NOT EXISTS outlets (
     created_by VARCHAR(255),
     updated_by VARCHAR(255),
     FOREIGN KEY (location_id) REFERENCES locations(id)
+);
+
+-- Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20),
+    outlet_id BIGINT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    FOREIGN KEY (outlet_id) REFERENCES outlets(id)
 );
 
 -- Outlet Division Products (Mapping Table)
@@ -172,3 +174,13 @@ CREATE TABLE IF NOT EXISTS stock_transactions (
     FOREIGN KEY (outlet_id) REFERENCES outlets(id),
     FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
+
+-- Indexes for performance
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_outlet ON orders(outlet_id);
+CREATE INDEX idx_outlet_stock_outlet ON outlet_stock(outlet_id);
+CREATE INDEX idx_outlet_stock_product ON outlet_stock(product_id);
+CREATE INDEX idx_product_batches_status ON product_batches(status);
+CREATE INDEX idx_product_batches_expiry ON product_batches(expiry_date);
+CREATE INDEX idx_stock_transactions_type ON stock_transactions(transaction_type);
+CREATE INDEX idx_stock_transactions_outlet ON stock_transactions(outlet_id);

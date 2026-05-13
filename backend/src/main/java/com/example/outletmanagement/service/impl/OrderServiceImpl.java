@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -23,19 +25,25 @@ public class OrderServiceImpl implements OrderService {
     private final ProductBatchRepository productBatchRepository;
     private final OutletRepository outletRepository;
     private final OutletDivisionProductRepository mappingRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public Page<Order> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 
     @Override
-    public List<Order> getFilteredOrders(Order.OrderStatus status, Long outletId, String orderNo) {
+    public Page<Order> getFilteredOrders(Order.OrderStatus status, Long outletId, String orderNo, Pageable pageable) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
-        Long userId = currentUser.getRole() == User.Role.USER ? currentUser.getId() : null;
-        return orderRepository.findFilteredOrders(status, outletId, orderNo, userId);
+        
+        if (currentUser.getRole() == User.Role.USER) {
+            return orderRepository.findFilteredOrders(status, outletId, orderNo, currentUser.getId(), pageable);
+        } else if (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() != null) {
+            return orderRepository.findFilteredOrders(status, currentUser.getOutlet().getId(), orderNo, null, pageable);
+        }
+        return orderRepository.findFilteredOrders(status, outletId, orderNo, null, pageable); // ADMIN
     }
 
     @Override
@@ -55,6 +63,12 @@ public class OrderServiceImpl implements OrderService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.MANAGER) {
+            if (currentUser.getOutlet() == null)
+                throw new RuntimeException("User must be assigned to an outlet first");
+            request.setOutletId(currentUser.getOutlet().getId()); // force their outlet
+        }
 
         Outlet outlet = outletRepository.findById(request.getOutletId())
                 .orElseThrow(() -> new ResourceNotFoundException("Outlet", "id", request.getOutletId()));
@@ -115,38 +129,7 @@ public class OrderServiceImpl implements OrderService {
 
         if (status == Order.OrderStatus.APPROVED && order.getStatus() == Order.OrderStatus.PENDING) {
             allocateStockFIFO(order, currentUser);
-        }
-
-        // Deduct stock and create transaction when order is COMPLETED
-        if (status == Order.OrderStatus.COMPLETED) {
-            for (OrderItem item : order.getItems()) {
-                // Only process if batch is assigned
-                if (item.getBatch() != null) {
-                    OutletStock outletStock = outletStockRepository
-                            .findByOutletIdAndProductIdAndBatchId(order.getOutlet().getId(), 
-                                    item.getProduct().getId(), item.getBatch().getId())
-                            .orElseThrow(() -> new RuntimeException("Outlet stock not found for product: " 
-                                    + item.getProduct().getName()));
-
-                    if (outletStock.getAvailableQty() < item.getQuantity()) {
-                        throw new RuntimeException("Insufficient stock for product: " + item.getProduct().getName());
-                    }
-
-                    outletStock.setAvailableQty(outletStock.getAvailableQty() - item.getQuantity());
-                    outletStockRepository.save(outletStock);
-
-                    stockTransactionRepository.save(StockTransaction.builder()
-                            .transactionType(StockTransaction.TransactionType.OUT)
-                            .product(item.getProduct())
-                            .batch(item.getBatch())
-                            .outlet(order.getOutlet())
-                            .user(currentUser)
-                            .quantity(item.getQuantity())
-                            .referenceNo(order.getOrderNo())
-                            .remarks("Order completed: " + order.getOrderNo())
-                            .build());
-                }
-            }
+            status = Order.OrderStatus.COMPLETED; // Auto-transition to COMPLETED
         }
 
         order.setStatus(status);
@@ -192,6 +175,12 @@ public class OrderServiceImpl implements OrderService {
 
                 outletStock.setAvailableQty(outletStock.getAvailableQty() + allocationFromThisBatch);
                 outletStockRepository.save(outletStock);
+
+                // SET batch on the OrderItem so COMPLETE step can find it
+                if (item.getBatch() == null) {
+                    item.setBatch(batch);
+                    orderItemRepository.save(item);
+                }
 
                 // Log Transactions
                 // 1. OUT from Warehouse

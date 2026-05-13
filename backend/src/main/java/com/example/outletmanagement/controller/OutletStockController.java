@@ -11,6 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @RestController
@@ -20,8 +23,9 @@ public class OutletStockController {
     private final OutletStockService outletStockService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllStock() {
-        List<OutletStockResponse> response = outletStockService.getAllStock();
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    public ResponseEntity<ApiResponse> getAllStock(@ParameterObject Pageable pageable) {
+        Page<OutletStockResponse> response = outletStockService.getAllStock(pageable);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Stock fetched successfully")
@@ -30,8 +34,9 @@ public class OutletStockController {
     }
 
     @GetMapping("/outlet/{outletId}")
-    public ResponseEntity<ApiResponse> getStockByOutlet(@PathVariable Long outletId) {
-        List<OutletStockResponse> response = outletStockService.getStockByOutlet(outletId);
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    public ResponseEntity<ApiResponse> getStockByOutlet(@PathVariable Long outletId, @ParameterObject Pageable pageable) {
+        Page<OutletStockResponse> response = outletStockService.getStockByOutlet(outletId, pageable);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Stock fetched successfully")
@@ -58,11 +63,13 @@ public class OutletStockController {
     }
 
     @GetMapping("/transactions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getTransactions(
             @RequestParam(required = false) Long outletId,
             @RequestParam(required = false) Long productId,
-            @RequestParam(required = false) StockTransaction.TransactionType type) {
-        List<StockTransactionResponse> response = outletStockService.getFilteredTransactions(outletId, productId, type);
+            @RequestParam(required = false) StockTransaction.TransactionType type,
+            @ParameterObject Pageable pageable) {
+        Page<StockTransactionResponse> response = outletStockService.getFilteredTransactions(outletId, productId, type, pageable);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Transactions fetched successfully")

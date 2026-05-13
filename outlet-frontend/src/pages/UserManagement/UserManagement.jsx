@@ -14,6 +14,7 @@ import {
   CheckRounded,
 } from "@mui/icons-material";
 import { userService } from "../../services/userService";
+import { outletService } from "../../services/outletService";
 import "./UserManagement.css";
 
 /* ── Static stat colours ───────────────────────── */
@@ -29,13 +30,14 @@ const ROLES = ["ADMIN", "MANAGER", "USER"];
 const initials = (name = "") =>
   name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
 
-const emptyForm = { name: "", username: "", email: "", password: "", role: "USER", status: "ACTIVE" };
+const emptyForm = { name: "", username: "", email: "", password: "", role: "USER", status: "ACTIVE", outletId: "" };
 
 /* ══════════════════════════════════════════════════
    UserManagement Page
 ══════════════════════════════════════════════════ */
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [outlets, setOutlets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dialog, setDialog] = useState({ open: false, mode: "add", data: emptyForm });
@@ -59,7 +61,10 @@ const UserManagement = () => {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load();
+    outletService.getAll(0, 1000).then(data => setOutlets(data.content || []));
+  }, [load]);
 
   /* ── Filter ── */
   const filtered = users.filter((u) =>
@@ -302,6 +307,24 @@ const UserManagement = () => {
                   onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, role: e.target.value } }))}
                   sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
                   {ROLES.map((r) => <MenuItem key={r} value={r} sx={{ fontFamily: "Poppins, sans-serif" }}>{ROLE_META[r].label}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Box>
+            <Box>
+              <Typography className="dialog-field-label">Assigned Outlet</Typography>
+              <FormControl fullWidth size="small">
+                <Select 
+                  value={dialog.data.outletId || ""}
+                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, outletId: e.target.value } }))}
+                  sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {outlets.map((o) => (
+                    <MenuItem key={o.id} value={o.id} sx={{ fontFamily: "Poppins, sans-serif" }}>
+                      {o.outletName} ({o.outletCode})
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>

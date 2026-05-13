@@ -2,15 +2,15 @@ import apiClient from '../api/apiClient';
 
 export const stockService = {
   /** Get stock for a specific outlet */
-  getByOutlet: async (outletId) => {
-    const res = await apiClient.get(`/api/stock/outlet/${outletId}`);
-    return res.data?.data || res.data || [];
+  getByOutlet: async (outletId, params = {}) => {
+    const res = await apiClient.get(`/api/stock/outlet/${outletId}`, { params });
+    return res.data?.data;
   },
 
   /** Get all stock entries */
-  getAll: async () => {
-    const res = await apiClient.get('/api/stock');
-    return res.data?.data || res.data || [];
+  getAll: async (params = {}) => {
+    const res = await apiClient.get('/api/stock', { params });
+    return res.data?.data;
   },
 
   /** Transfer stock between outlets */
@@ -22,8 +22,7 @@ export const stockService = {
 
   /** Get transaction history */
   getTransactions: async (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    const res = await apiClient.get(`/api/stock/transactions${query ? '?' + query : ''}`);
-    return res.data?.data || res.data || [];
+    const res = await apiClient.get('/api/stock/transactions', { params });
+    return res.data?.data;
   },
 };

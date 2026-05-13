@@ -10,5 +10,6 @@ public class OrderRequest {
     private Long outletId;
 
     @NotEmpty(message = "Order items cannot be empty")
+    @jakarta.validation.Valid
     private List<OrderItemRequest> items;
 }

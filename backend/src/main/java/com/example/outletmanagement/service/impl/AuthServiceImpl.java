@@ -43,6 +43,8 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
+                .name(user.getName())
+                .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
                 .build();
     }
 
@@ -62,6 +64,8 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
+                .name(user.getName())
+                .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
                 .build();
     }
 

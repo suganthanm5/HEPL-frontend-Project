@@ -475,7 +475,13 @@ export default function Outlet() {
       [o.outletName, o.outletType, o.locationName, o.location, o.ownerName]
         .some((v) => v?.toLowerCase().includes(search.toLowerCase()))
     );
-    if (locationFilter) result = result.filter((o) => String(o.locationId) === String(locationFilter) || o.locationName?.toLowerCase().includes(locationFilter.toLowerCase()));
+    if (locationFilter) {
+      const filterStr = String(locationFilter).toLowerCase();
+      result = result.filter((o) => 
+        String(o.locationId) === String(locationFilter) || 
+        o.locationName?.toLowerCase().includes(filterStr)
+      );
+    }
     if (typeFilter) result = result.filter((o) => o.outletType === typeFilter);
     if (divisionFilter) result = result.filter((o) => (o.divisionIds || []).some(id => String(id) === String(divisionFilter)));
     if (productFilter) result = result.filter((o) => (o.allProducts || []).some(p => String(p.id) === String(productFilter)));
@@ -492,18 +498,18 @@ export default function Outlet() {
   const renderFormFields = () => (
     <Stack spacing={2} sx={{ pt: 1, overflow: "visible" }}>
       <Grid container spacing={2} sx={{ overflow: "visible" }}>
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <TextField fullWidth size="small" label="Outlet Name" required
             name="outletName" value={form.outletName} onChange={handleOutletNameChange} placeholder="e.g. Main Branch" />
         </Grid>
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <TextField fullWidth size="small" label="Owner Name" required
             name="ownerName" value={form.ownerName} onChange={handleOwnerNameChange} placeholder="e.g. John Doe" />
         </Grid>
       </Grid>
 
       <Grid container spacing={2} sx={{ overflow: "visible" }}>
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <Box>
             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>
               Location <span style={{ color: "#ef4444" }}>*</span>
@@ -523,7 +529,7 @@ export default function Outlet() {
             )}
           </Box>
         </Grid>
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <Box>
             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>
               Outlet Type <span style={{ color: "#ef4444" }}>*</span>
@@ -551,7 +557,7 @@ export default function Outlet() {
         </Typography>
 
         <Grid container spacing={2} sx={{ mb: 1.5, overflow: "visible" }}>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>Select Division</Typography>
             <SearchableSelect
               options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
@@ -561,7 +567,7 @@ export default function Outlet() {
               searchPlaceholder="Search divisions..."
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>Select Product</Typography>
             <SearchableSelect
               options={availableProducts.filter((p) => {
@@ -802,7 +808,7 @@ export default function Outlet() {
                           {(!o.divisionNames || o.divisionNames.length === 0) ? (
                             <Typography variant="body2" sx={{ color: "#cbd5e1" }}>No divisions</Typography>
                           ) : (
-                            <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                            <Stack direction="row" sx={{ flexWrap: "wrap" }} gap={0.5}>
                               {o.divisionNames.map((d, idx) => (
                                 <Chip key={idx} label={d || "Unknown"} size="small"
                                   sx={{ bgcolor: "#f0fdf4", color: "#16a34a", fontSize: "0.7rem" }} />
@@ -814,7 +820,7 @@ export default function Outlet() {
                           {(!o.productNames || o.productNames.length === 0) ? (
                             <Typography variant="body2" sx={{ color: "#cbd5e1" }}>No products</Typography>
                           ) : (
-                            <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                            <Stack direction="row" sx={{ flexWrap: "wrap" }} gap={0.5}>
                               {o.productNames.map((p, idx) => (
                                 <Chip key={idx} label={p || "Unknown"} size="small"
                                   sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontSize: "0.7rem" }} />
@@ -862,7 +868,7 @@ export default function Outlet() {
           <Grid container spacing={2}>
             {loading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
+                <Grid xs={12} sm={6} md={4} key={i}>
                   <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
                     <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1 }} />
                     <Skeleton width="60%" height={24} sx={{ mb: 0.5 }} />
@@ -871,7 +877,7 @@ export default function Outlet() {
                 </Grid>
               ))
             ) : paginated.length === 0 ? (
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Box sx={{ py: 8, textAlign: "center" }}>
                   <HomeWorkIcon sx={{ fontSize: 56, color: "#cbd5e1", mb: 1 }} />
                   <Typography color="text.secondary">{search ? "No outlets match your search" : "No outlets yet"}</Typography>
@@ -881,7 +887,7 @@ export default function Outlet() {
               paginated.map((o, i) => {
                 const tc = TYPE_COLOR[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b" };
                 return (
-                  <Grid item xs={12} sm={6} md={4} key={o.id}>
+                  <Grid xs={12} sm={6} md={4} key={o.id}>
                     <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, height: "100%", display: "flex", flexDirection: "column", transition: "box-shadow .2s", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,.08)" } }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
                         <Avatar sx={{ width: 44, height: 44, fontSize: "1rem", fontWeight: 700, bgcolor: "#eef2ff", color: "#6366f1" }}>
@@ -893,7 +899,7 @@ export default function Outlet() {
                       {o.outletCode && (
                         <Typography variant="caption" sx={{ color: "#94a3b8", fontFamily: "monospace", mb: 0.75 }}>{o.outletCode}</Typography>
                       )}
-                      <Stack direction="row" spacing={0.75} flexWrap="wrap" sx={{ mb: 1 }}>
+                      <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mb: 1 }}>
                         {o.outletType && <Chip label={o.outletType} size="small" sx={{ bgcolor: tc.bg, color: tc.color, fontWeight: 700 }} />}
                         {o.locationName && (
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
@@ -904,12 +910,12 @@ export default function Outlet() {
                       </Stack>
 
                       {(o.divisionNames?.length > 0) && (
-                        <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mb: 0.75 }}>
+                        <Stack direction="row" sx={{ flexWrap: "wrap", mb: 0.75 }} gap={0.5}>
                           {o.divisionNames.map((d, idx) => <Chip key={idx} label={d} size="small" sx={{ bgcolor: "#f0fdf4", color: "#16a34a", fontSize: "0.7rem" }} />)}
                         </Stack>
                       )}
                       {(o.productNames?.length > 0) && (
-                        <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mb: 0.75 }}>
+                        <Stack direction="row" sx={{ flexWrap: "wrap", mb: 0.75 }} gap={0.5}>
                           {o.productNames.map((p, idx) => <Chip key={idx} label={p} size="small" sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontSize: "0.7rem" }} />)}
                         </Stack>
                       )}

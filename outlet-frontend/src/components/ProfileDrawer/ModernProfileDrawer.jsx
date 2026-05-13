@@ -49,7 +49,6 @@ import { addOutlet, addLocation, addDivision } from '../../redux/dashboardSlice'
 import { createOutlet } from '../../services/outletService';
 import { createLocation } from '../../services/locationService';
 import { createDivision } from '../../services/divisionService';
-import aiService from '../../services/aiService';
 import userService from '../../api/userService';
 
 const ProfileDrawer = ({ open, onClose }) => {
@@ -196,13 +195,6 @@ const ProfileDrawer = ({ open, onClose }) => {
     confirm: false
   });
 
-  const [aiAssistant, setAiAssistant] = useState({
-    enabled: false,
-    messages: [],
-    inputMessage: '',
-    isTyping: false
-  });
-
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -222,70 +214,6 @@ const ProfileDrawer = ({ open, onClose }) => {
     { id: 1, action: 'Outlet Added', details: 'Created new outlet "Tech Plaza Store" with 15 products', timestamp: '2024-01-15 10:30:00', ip: '192.168.1.100', type: 'create' },
     { id: 2, action: 'Product Updated', details: 'Updated stock quantity for "Dell Laptop" from 10 to 25 units', timestamp: '2024-01-15 09:15:00', ip: '192.168.1.100', type: 'update' }
   ]);
-
-  const handleAiToggle = (enabled) => {
-    setAiAssistant(prev => ({ 
-      ...prev, 
-      enabled,
-      messages: enabled ? [
-        {
-          id: 1,
-          type: 'assistant',
-          message: '👋 **Welcome to your AI Assistant!**\n\nI\'m here to help you with the Outlet Management System. I have comprehensive knowledge about:\n\n🏪 **Outlet Management** - Multi-location control\n📦 **Inventory System** - Real-time stock tracking\n👤 **User Management** - Profiles and authentication\n📊 **Analytics** - Performance insights\n⚙️ **System Features** - All capabilities\n\n💬 **Ask me anything about:**\n• How the system works\n• Managing outlets and inventory\n• System features and navigation\n• Technical questions\n• Best practices and tips\n\nWhat would you like to know about your outlet management system?',
-          timestamp: new Date().toLocaleTimeString()
-        }
-      ] : []
-    }));
-    
-    setToast({ 
-      open: true, 
-      message: enabled ? 'AI Assistant enabled! Ask me anything about the system.' : 'AI Assistant disabled.', 
-      severity: enabled ? 'success' : 'info'
-    });
-  };
-
-  const handleAiMessage = async () => {
-    if (!aiAssistant.inputMessage.trim()) return;
-    
-    const input = aiAssistant.inputMessage.trim();
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      message: input,
-      timestamp: new Date().toLocaleTimeString()
-    };
-    
-    setAiAssistant(prev => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      inputMessage: '',
-      isTyping: true
-    }));
-
-    // Start generating response
-    setTimeout(async () => {
-      const response = await aiService.processMessage(input, {
-        user,
-        outlets,
-        locations,
-        divisions,
-        dispatch
-      });
-      
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: 'assistant',
-        message: response,
-        timestamp: new Date().toLocaleTimeString()
-      };
-      
-      setAiAssistant(prev => ({
-        ...prev,
-        messages: [...prev.messages, aiMessage],
-        isTyping: false
-      }));
-    }, 1500);
-  };
 
   // Handle profile picture file selection
   const handleProfilePictureChange = (event) => {
@@ -420,64 +348,6 @@ const ProfileDrawer = ({ open, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateAiResponse = (userMessage) => {
-    const message = userMessage.toLowerCase().trim();
-    
-    // 1. Data-Driven Responses (Accurate counts and lists)
-    if (message.includes('how many') || message.includes('count') || message.includes('total')) {
-      if (message.includes('outlet')) {
-        return `🏪 **Accuracy Report: Outlets**\n\nYou currently have **${outlets.length}** registered outlets in the system.\n\n${outlets.length > 0 ? `The most recent one is **"${outlets[outlets.length - 1].name}"**.` : "You haven't added any outlets yet."}`;
-      }
-      if (message.includes('location')) {
-        return `📍 **Accuracy Report: Locations**\n\nThere are **${locations.length}** locations configured across your network.\n\n${locations.length > 0 ? `Your coverage includes cities like **${[...new Set(locations.slice(0, 3).map(l => l.name))].join(', ')}**.` : ""}`;
-      }
-      if (message.includes('division')) {
-        return `🗂️ **Accuracy Report: Divisions**\n\nThe system is managing **${divisions.length}** operational divisions.\n\nThis helps in categorizing your products and outlets effectively.`;
-      }
-    }
-
-    // 2. Listing items
-    if (message.includes('list') || message.includes('show all') || message.includes('what are')) {
-      if (message.includes('outlet')) {
-        if (outlets.length === 0) return "You don't have any outlets yet.";
-        const list = outlets.slice(0, 5).map(o => `• **${o.name}** (${o.address || 'No address'})`).join('\n');
-        return `📋 **Here are your top 5 outlets:**\n\n${list}\n\n${outlets.length > 5 ? `*...and ${outlets.length - 5} more.*` : ""}`;
-      }
-      if (message.includes('location')) {
-        if (locations.length === 0) return "No locations found.";
-        const list = locations.slice(0, 5).map(l => `• **${l.name}**`).join('\n');
-        return `📋 **Active Locations:**\n\n${list}\n\n${locations.length > 5 ? `*...and ${locations.length - 5} more.*` : ""}`;
-      }
-    }
-
-    // 3. Search Logic
-    if (message.includes('find') || message.includes('search') || message.includes('where is')) {
-      const query = message.replace('find', '').replace('search', '').replace('where is', '').trim();
-      if (query.length > 2) {
-        const foundOutlet = outlets.find(o => o.name.toLowerCase().includes(query));
-        if (foundOutlet) {
-          return `🔍 **Search Result Found!**\n\nI found the outlet **"${foundOutlet.name}"**.\n📍 Address: ${foundOutlet.address || 'Not specified'}\n👤 Owner: ${foundOutlet.ownerName || 'N/A'}`;
-        }
-        const foundLocation = locations.find(l => l.name.toLowerCase().includes(query));
-        if (foundLocation) {
-          return `🔍 **Search Result Found!**\n\nI found the location **"${foundLocation.name}"** in the system database.`;
-        }
-      }
-    }
-
-    // 4. System Knowledge (General Questions)
-    if (message.includes('what is this') || message.includes('about this project') || message.includes('help')) {
-      return `🏪 **Outlet Management System (OMS) Intelligence**\n\nI am your AI assistant, and I have direct access to your system's database. Currently, I am tracking:\n\n• **${outlets.length}** Outlets\n• **${locations.length}** Locations\n• **${divisions.length}** Divisions\n\n**You can ask me things like:**\n• "How many outlets do I have?"\n• "List my locations"\n• "Search for [Outlet Name]"\n• "What is the tech stack?"`;
-    }
-
-    if (message.includes('technology') || message.includes('tech stack') || message.includes('built with')) {
-      return `💻 **Technical Architecture**\n\n**Frontend:** React.js, Material UI, Redux Toolkit\n**State Management:** Accurate data synchronization via Thunks\n**Backend:** Spring Boot (via Dev Tunnels)\n**Database:** Dynamic relational mapping\n\nI am optimized to provide real-time accuracy based on your current data session.`;
-    }
-
-    // 5. Default Response
-    return `🤔 **I'm analyzing your request: "${userMessage}"**\n\nI can provide accurate data about your system. Try asking:\n• "Count my outlets"\n• "List divisions"\n• "Find [City Name]"\n\nCurrently, your system is **Operational** with **${outlets.length}** active outlets.`;
   };
 
   const handleLogout = () => {
@@ -1448,128 +1318,6 @@ const ProfileDrawer = ({ open, onClose }) => {
     </Box>
   );
 
-  const renderAiChatView = () => (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff', m: 1, borderRadius: '12px' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', p: 3, borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}>
-        <IconButton 
-          onClick={() => setCurrentView('settings')} 
-          sx={{ 
-            mr: 2, 
-            backgroundColor: '#8b5cf6', 
-            color: 'white', 
-            '&:hover': { backgroundColor: '#7c3aed' },
-            width: 40,
-            height: 40
-          }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', flex: 1 }}>AI Assistant</Typography>
-      </Box>
-      
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-          {aiAssistant.messages.map((msg) => (
-            <Box key={msg.id} sx={{ mb: 2, display: 'flex', justifyContent: msg.type === 'user' ? 'flex-end' : 'flex-start' }}>
-              <Box sx={{
-                maxWidth: '80%',
-                p: 2,
-                borderRadius: '12px',
-                backgroundColor: msg.type === 'user' ? '#4f46e5' : '#f1f5f9',
-                color: msg.type === 'user' ? 'white' : '#1e293b'
-              }}>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-line', lineHeight: 1.5 }}>
-                  {msg.message}
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  display: 'block', 
-                  mt: 1, 
-                  opacity: 0.7,
-                  color: msg.type === 'user' ? 'rgba(255,255,255,0.8)' : '#64748b'
-                }}>
-                  {msg.timestamp}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-          {aiAssistant.isTyping && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
-              <Box sx={{ p: 2, borderRadius: '12px', backgroundColor: '#f1f5f9', color: '#64748b' }}>
-                <Typography variant="body2">AI is thinking...</Typography>
-              </Box>
-            </Box>
-          )}
-        </Box>
-        
-        <Box sx={{ p: 2, borderTop: '1px solid #e2e8f0' }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <TextField
-              value={aiAssistant.inputMessage}
-              onChange={(e) => setAiAssistant(prev => ({ ...prev, inputMessage: e.target.value }))}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAiMessage();
-                }
-              }}
-              placeholder="Ask me to create an outlet or query data..."
-              fullWidth
-              variant="outlined"
-              size="small"
-              multiline
-              maxRows={3}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '20px',
-                  backgroundColor: '#f8fafc'
-                }
-              }}
-            />
-            <IconButton 
-              onClick={handleAiMessage}
-              disabled={!aiAssistant.inputMessage.trim() || aiAssistant.isTyping}
-              sx={{
-                backgroundColor: '#8b5cf6',
-                color: 'white',
-                '&:hover': { backgroundColor: '#7c3aed' },
-                '&:disabled': { backgroundColor: '#e5e7eb' }
-              }}
-            >
-              <ChevronRightIcon />
-            </IconButton>
-          </Box>
-          
-          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {[
-              "Create outlet named 'Apple Store' in 'LA'",
-              "Add location 'London'",
-              "New division 'Retail'",
-              'How many outlets?',
-              'List all locations'
-            ].map((suggestion) => (
-              <Chip
-                key={suggestion}
-                label={suggestion}
-                size="small"
-                onClick={() => {
-                  setAiAssistant(prev => ({ ...prev, inputMessage: suggestion }));
-                  setTimeout(() => handleAiMessage(), 100);
-                }}
-                sx={{
-                  backgroundColor: '#f3e8ff',
-                  color: '#7c3aed',
-                  '&:hover': { backgroundColor: '#e9d5ff' },
-                  cursor: 'pointer',
-                  fontSize: '11px'
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
-
   const renderCurrentView = () => {
     switch (currentView) {
       case 'profile': return renderProfileView();
@@ -1619,76 +1367,6 @@ const ProfileDrawer = ({ open, onClose }) => {
       </Snackbar>
     </Drawer>
   );
-};
-
-const generateAiResponse = (userMessage, outlets = [], locations = [], divisions = []) => {
-  const message = userMessage.toLowerCase().trim();
-  
-  // --- 1. DATA QUERIES (OUTLETS, LOCATIONS, DIVISIONS) ---
-  if (message.includes('how many') || message.includes('count') || message.includes('total') || message.includes('number of')) {
-    if (message.includes('outlet')) {
-      return `🏪 **System Accuracy Report: Outlets**\n\nThere are currently **${outlets.length}** outlets registered. \n\n${outlets.length > 0 ? `The latest addition is **"${outlets[0]?.name}"**.` : "No outlets found."}`;
-    }
-    if (message.includes('location')) {
-      return `📍 **System Accuracy Report: Locations**\n\nThere are **${locations.length}** distinct locations configured in the network.`;
-    }
-    if (message.includes('division')) {
-      return `🗂️ **System Accuracy Report: Divisions**\n\nYour business is organized into **${divisions.length}** operational divisions.`;
-    }
-    return `📊 **System Totals:**\n• Outlets: ${outlets.length}\n• Locations: ${locations.length}\n• Divisions: ${divisions.length}`;
-  }
-
-  // --- 2. LISTING & SUMMARIZING ---
-  if (message.includes('list') || message.includes('show all') || message.includes('what are')) {
-    if (message.includes('outlet')) {
-      if (outlets.length === 0) return "You don't have any outlets yet.";
-      return `📋 **Active Outlets (Top 5):**\n\n${outlets.slice(0, 5).map(o => `• **${o.name}** - ${o.address || 'Global'}`).join('\n')}`;
-    }
-    if (message.includes('location')) {
-      if (locations.length === 0) return "No locations found.";
-      return `📍 **Available Locations:**\n\n${locations.slice(0, 10).map(l => `• ${l.name}`).join('\n')}`;
-    }
-  }
-
-  // --- 3. SEARCH & LOCATE ---
-  if (message.includes('find') || message.includes('search') || message.includes('where is') || message.includes('who owns')) {
-    const query = message.replace(/(find|search|where is|who owns)/g, '').trim();
-    if (query.length > 1) {
-      const outlet = outlets.find(o => o.name.toLowerCase().includes(query) || (o.address && o.address.toLowerCase().includes(query)));
-      if (outlet) {
-        return `🔍 **Result Found (Outlet):**\n\n🏠 **${outlet.name}**\n📍 Address: ${outlet.address || 'N/A'}\n👤 Owner: ${outlet.ownerName || 'Staff'}\n✅ Status: ${outlet.status || 'Active'}`;
-      }
-      const loc = locations.find(l => l.name.toLowerCase().includes(query));
-      if (loc) {
-        return `🔍 **Result Found (Location):**\n\nI found a matching location entry: **"${loc.name}"**. It is currently linked to your distribution network.`;
-      }
-    }
-  }
-
-  // --- 4. TECHNICAL & PROJECT INFO ---
-  if (message.includes('tech') || message.includes('built with') || message.includes('framework') || message.includes('language')) {
-    return `💻 **Technical Stack Profile:**\n\n**Frontend:** React 18, Vite, Redux Toolkit (State Management)\n**Styling:** Material UI (MUI) - modern responsive components.\n**API Layer:** Axios with centralized interceptors.\n**Backend:** Spring Boot (Java) hosted via Microsoft Dev Tunnels.\n**Data Flow:** Real-time synchronization between the Drawer and Dashboard.`;
-  }
-
-  if (message.includes('dev tunnel') || message.includes('connection') || message.includes('api error') || message.includes('timeout')) {
-    return `🔌 **Connectivity Help:**\n\nYou are using **Microsoft Dev Tunnels** to connect to the Spring Boot backend. \n\n**Common Fixes:**\n1. Ensure you clicked **"Continue"** on the tunnel landing page.\n2. Verify the backend port 8080 is active.\n3. Check ` + "`.env`" + ` for the correct ` + "`VITE_API_BASE_URL`" + `.`;
-  }
-
-  // --- 5. SYSTEM NAVIGATION ---
-  if (message.includes('how to') || message.includes('where can i') || message.includes('navigate')) {
-    if (message.includes('password')) return "🔐 To change your password, click the **'Change Password'** option in this drawer under the **'SYSTEM'** section.";
-    if (message.includes('profile')) return "👤 Click **'My Profile'** at the top of this drawer to edit your name, email, and profile picture.";
-    if (message.includes('setting')) return "⚙️ Click **'Settings'** in the 'ACCOUNT' section of this drawer to toggle the AI Assistant.";
-    return "🗺️ **Navigation Guide:**\n• **Main:** Dashboard cards show stats.\n• **Sidebar:** Navigate between Outlets, Locations, and Divisions.\n• **Drawer (Right):** Access your personal settings and this AI helper.";
-  }
-
-  // --- 6. USER ROLES & SECURITY ---
-  if (message.includes('role') || message.includes('admin') || message.includes('security') || message.includes('permissions')) {
-    return `🛡️ **Role-Based Access Control:**\n\n• **Administrator:** Full control over outlets, products, and users.\n• **Manager:** Can update outlet data and view reports.\n• **Staff:** View-only or limited inventory management.\n\nYour session is secured via **JWT (JSON Web Tokens)** stored in cookies.`;
-  }
-
-  // --- 7. FALLBACK / GENERAL KNOWLEDGE ---
-  return `🤔 **I've analyzed your question: "${userMessage}"**\n\nTo give you the most correct answer, try being more specific:\n• *"How many outlets?"* (I'll check the live DB)\n• *"Search for [Store Name]"*\n• *"Create outlet named [Name] at [City]"*\n• *"What is the tech stack?"*\n\nI have direct access to **${outlets.length}** outlets and **${locations.length}** locations in your current environment.`;
 };
 
 export default ProfileDrawer;

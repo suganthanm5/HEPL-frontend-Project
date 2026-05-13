@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.example.outletmanagement.entity.User;
+import com.example.outletmanagement.entity.Order;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -20,18 +23,69 @@ public class ReportController {
     private final OutletStockRepository outletStockRepository;
     private final ProductBatchRepository productBatchRepository;
     private final OrderRepository orderRepository;
+    private final com.example.outletmanagement.repository.UserRepository userRepository;
+    private final com.example.outletmanagement.repository.DivisionRepository divisionRepository;
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping("/stock-summary")
     public ResponseEntity<ApiResponse> getStockSummary() {
         Map<String, Object> report = new HashMap<>();
-        report.put("totalStock", outletStockRepository.findAll().stream().mapToInt(s -> s.getAvailableQty()).sum());
-        report.put("lowStockItems",
-                outletStockRepository.findAll().stream().filter(s -> s.getAvailableQty() < 10).count());
+        Long totalStock = outletStockRepository.sumTotalStock();
+        report.put("totalStock", totalStock != null ? totalStock : 0);
+        report.put("lowStockItems", outletStockRepository.countLowStockItems(10));
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Stock summary fetched")
                 .data(report)
+                .build());
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @GetMapping("/dashboard-summary")
+    public ResponseEntity<ApiResponse> getDashboardSummary() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        Map<String, Object> summary = new HashMap<>();
+        Long outletId = (currentUser.getRole() == User.Role.ADMIN) ? null : 
+                        (currentUser.getOutlet() != null ? currentUser.getOutlet().getId() : -1L);
+
+        // 1. Stats
+        summary.put("totalUsers", userRepository.count());
+        
+        java.math.BigDecimal revenue;
+        if (outletId == null) {
+            revenue = orderRepository.calculateTotalRevenue();
+            summary.put("totalOrders", orderRepository.count());
+            summary.put("pendingOrdersCount", orderRepository.countByStatus(Order.OrderStatus.PENDING));
+            summary.put("lowStockCount", outletStockRepository.countLowStockItems(10));
+        } else {
+            revenue = orderRepository.calculateTotalRevenueByOutlet(outletId);
+            summary.put("totalOrders", orderRepository.countByOutletId(outletId));
+            summary.put("pendingOrdersCount", orderRepository.countByOutletIdAndStatus(outletId, Order.OrderStatus.PENDING));
+            summary.put("lowStockCount", outletStockRepository.countLowStockItemsByOutlet(outletId, 10));
+        }
+        
+        summary.put("totalRevenue", revenue != null ? revenue : java.math.BigDecimal.ZERO);
+
+        // 2. Division Stats (for Pie Chart)
+        java.util.List<com.example.outletmanagement.entity.Division> divisions = divisionRepository.findAll();
+        long totalProducts = divisions.stream().mapToLong(d -> d.getProducts() != null ? d.getProducts().size() : 0).sum();
+        
+        java.util.List<Map<String, Object>> divisionStats = divisions.stream().map(d -> {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("name", d.getName());
+            long count = d.getProducts() != null ? d.getProducts().size() : 0;
+            stat.put("value", totalProducts > 0 ? (count * 100.0 / totalProducts) : 0);
+            return stat;
+        }).toList();
+        summary.put("divisionStats", divisionStats);
+
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Dashboard summary fetched")
+                .data(summary)
                 .build());
     }
 
@@ -42,9 +96,7 @@ public class ReportController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Expiring batches fetched")
-                .data(productBatchRepository.findAll().stream()
-                        .filter(b -> b.getExpiryDate().isBefore(nextMonth))
-                        .toList())
+                .data(productBatchRepository.findByExpiryDateBeforeAndStatus(nextMonth, com.example.outletmanagement.entity.ProductBatch.Status.ACTIVE))
                 .build());
     }
 
@@ -55,17 +107,13 @@ public class ReportController {
     public ResponseEntity<ApiResponse> getTransactions(
             @RequestParam(required = false) com.example.outletmanagement.entity.StockTransaction.TransactionType type,
             @RequestParam(required = false) Long productId,
-            @RequestParam(required = false) Long outletId) {
+            @RequestParam(required = false) Long outletId,
+            org.springframework.data.domain.Pageable pageable) {
         
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Transactions fetched")
-                .data(stockTransactionRepository.findAll().stream()
-                        .filter(t -> (type == null || t.getTransactionType() == type))
-                        .filter(t -> (productId == null || t.getProduct().getId().equals(productId)))
-                        .filter(t -> (outletId == null || (t.getOutlet() != null && t.getOutlet().getId().equals(outletId))))
-                        .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                        .toList())
+                .data(stockTransactionRepository.findFilteredTransactions(outletId, productId, type, pageable))
                 .build());
     }
 }

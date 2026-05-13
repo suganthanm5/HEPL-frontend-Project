@@ -29,4 +29,6 @@ public class UserCreationDto {
 
     @NotBlank(message = "Role is required")
     private String role;
+
+    private Long outletId;
 }

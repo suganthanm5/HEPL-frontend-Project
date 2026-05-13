@@ -1,10 +1,12 @@
 package com.example.outletmanagement.service.impl;
 
+import com.example.outletmanagement.entity.Outlet;
 import com.example.outletmanagement.entity.User;
 import com.example.outletmanagement.entity.User.Role;
 import com.example.outletmanagement.payload.dto.request.RegisterRequest;
 import com.example.outletmanagement.payload.dto.request.UserCreationDto;
 import com.example.outletmanagement.payload.dto.response.UserResponse;
+import com.example.outletmanagement.repository.OutletRepository;
 import com.example.outletmanagement.repository.UserRepository;
 import com.example.outletmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OutletRepository outletRepository;
 
     @Override
     public UserResponse createUser(UserCreationDto request) {
@@ -49,6 +52,12 @@ public class UserServiceImpl implements UserService {
                     .updatedAt(new java.util.Date())
                     .isDeleted(false)
                     .build();
+
+            if (request.getOutletId() != null) {
+                Outlet outlet = outletRepository.findById(request.getOutletId())
+                        .orElseThrow(() -> new RuntimeException("Outlet not found"));
+                user.setOutlet(outlet);
+            }
 
             return mapToResponse(userRepository.save(user));
         } catch (Exception e) {
@@ -83,6 +92,14 @@ public class UserServiceImpl implements UserService {
         
         if (request.getRole() != null) {
             user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+        }
+        
+        if (request.getOutletId() != null) {
+            Outlet outlet = outletRepository.findById(request.getOutletId())
+                    .orElseThrow(() -> new RuntimeException("Outlet not found"));
+            user.setOutlet(outlet);
+        } else {
+            user.setOutlet(null);
         }
         
         user.setUpdatedAt(new java.util.Date());
@@ -178,6 +195,7 @@ public class UserServiceImpl implements UserService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
                 .build();
     }
 }

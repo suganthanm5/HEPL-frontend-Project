@@ -40,20 +40,25 @@ const emptyItem  = { productId: "", batchId: "", quantity: 1, price: 0 };
    Orders Page
 ══════════════════════════════════════════ */
 const Orders = () => {
-  const { role } = useAuth();
-  const [orders,   setOrders]   = useState([]);
-  const [outlets,  setOutlets]  = useState([]);
-  const [products, setProducts] = useState([]);
-  const [batches,  setBatches]  = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState("");
-  const [filters,  setFilters]  = useState({ status: "", outletId: "" });
+  const { user, role } = useAuth();
+  const userOutletId = user?.outletId || "";
+  const isAdmin   = role === "ADMIN";
+  const isManager = role === "MANAGER";
+
+  const [filters,  setFilters]  = useState({ status: "", outletId: isAdmin ? "" : userOutletId });
   const [detail,   setDetail]   = useState(null);
   const [create,   setCreate]   = useState({ open: false, data: emptyOrder });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
-
-  const isAdmin   = role === "ADMIN";
-  const isManager = role === "MANAGER";
+  const [page,     setPage]     = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [orders,   setOrders]   = useState([]);
+  const [loading,  setLoading]  = useState(false);
+  const [search,   setSearch]   = useState("");
+  const [outlets,  setOutlets]  = useState([]);
+  const [products, setProducts] = useState([]);
+  const [batches,  setBatches]  = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
 
   /* ── Extract array from various response shapes ── */
   const extractArr = (val) => {
@@ -65,32 +70,50 @@ const Orders = () => {
     return [];
   };
 
-  /* ── Load — each service fetched independently so one failure
-         doesn't wipe out the others ── */
-  const load = useCallback(async () => {
+  /* ── Load Orders (Dynamic) ── */
+  const loadOrders = useCallback(async () => {
     setLoading(true);
+    try {
+      const activeFilters = {
+        page,
+        size: pageSize,
+        sort: "id,desc"
+      };
+      if (filters.status)   activeFilters.status   = filters.status;
+      if (filters.outletId) activeFilters.outletId = filters.outletId;
+      if (search)           activeFilters.orderNo  = search;
 
-    const activeFilters = {};
-    if (filters.status)   activeFilters.status   = filters.status;
-    if (filters.outletId) activeFilters.outletId = filters.outletId;
-    if (search)           activeFilters.orderNo  = search;
+      const oData = await orderService.getAll(activeFilters);
+      if (oData && oData.content) {
+        setOrders(oData.content);
+        setTotalPages(oData.totalPages);
+        setTotalElements(oData.totalElements);
+      } else {
+        setOrders(extractArr(oData));
+      }
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, search, page, pageSize]);
 
+  /* ── Load Metadata (Initial Only) ── */
+  const loadMetadata = useCallback(async () => {
     const safe = (promise) => promise.catch((err) => {
-      console.error("Fetch error:", err);
+      console.error("Fetch metadata error:", err);
       return [];
     });
 
-    const [oData, otData, pData, bData] = await Promise.all([
-      safe(orderService.getAll(activeFilters)),
+    const [otData, pData, bData] = await Promise.all([
       safe(outletService.getOutlets ? outletService.getOutlets(0, 1000) : Promise.resolve([])),
       safe(productService.getProducts ? productService.getProducts(0, 1000) : Promise.resolve([])),
       safe(batchService.getAll ? batchService.getAll() : Promise.resolve([])),
     ]);
 
     const rawOutlets = extractArr(otData);
-    // Enrich outlets with allProducts from their mappings (same as Outlet.jsx)
     const enrichedOutlets = rawOutlets.map((o) => {
-      if (o.allProducts) return o; // already enriched
+      if (o.allProducts) return o;
       const divisionMap = new Map();
       (o.mappings || []).forEach((m) => {
         const divId = m.divisionId || m.division?.id;
@@ -104,15 +127,21 @@ const Orders = () => {
       return { ...o, allProducts };
     });
 
-    setOrders(extractArr(oData));
     setOutlets(enrichedOutlets);
     setProducts(extractArr(pData));
     setBatches(extractArr(bData));
+  }, []);
 
-    setLoading(false);
-  }, [filters, search]);
+  useEffect(() => { loadMetadata(); }, [loadMetadata]);
+  useEffect(() => { loadOrders(); }, [loadOrders]);
 
-  useEffect(() => { load(); }, [load]);
+  // Ensure filters and new order data reflect the user's outlet
+  useEffect(() => {
+    if (!isAdmin && userOutletId) {
+      setFilters(prev => ({ ...prev, outletId: userOutletId }));
+      setCreate(prev => ({ ...prev, data: { ...prev.data, outletId: userOutletId } }));
+    }
+  }, [userOutletId, isAdmin]);
 
   const toast = (msg, severity = "success") =>
     setSnack({ open: true, msg, severity });
@@ -134,7 +163,7 @@ const Orders = () => {
       await orderService.create(create.data);
       toast("Order created successfully");
       setCreate({ open: false, data: emptyOrder });
-      load();
+      loadOrders();
     } catch (err) {
       toast(err.response?.data?.message || "Creation failed", "error");
     }
@@ -146,7 +175,7 @@ const Orders = () => {
       await orderService.updateStatus(id, status);
       toast(`Order ${status.toLowerCase()}`);
       setDetail(null);
-      load();
+      loadOrders();
     } catch (err) {
       toast(err.response?.data?.message || "Update failed", "error");
     }
@@ -196,7 +225,17 @@ const Orders = () => {
         </Box>
         {(isAdmin || isManager || role === "USER") && (
           <ButtonBase
-            onClick={() => setCreate({ open: true, data: { ...emptyOrder, items: [{ ...emptyItem }] } })}
+            onClick={() => {
+              let initialOutletId = "";
+              if (!isAdmin) {
+                // Find current user's outlet if possible, or just use the first available if filtered
+                // Better: Backend forces it, so we just need to pick one for the UI to feel right
+                // but we should really get the user's outletId from context or localStorage
+                const userOutletId = localStorage.getItem("outletId");
+                initialOutletId = userOutletId || "";
+              }
+              setCreate({ open: true, data: { ...emptyOrder, outletId: initialOutletId, items: [{ ...emptyItem }] } });
+            }}
             disableRipple
             sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}
           >
@@ -251,20 +290,22 @@ const Orders = () => {
               ))}
             </Select>
 
-            {/* Outlet Filter */}
-            <Select
-              size="small" displayEmpty value={filters.outletId}
-              onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}
-              sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
-            >
-              <MenuItem value="">All Outlets</MenuItem>
-              {outlets.map((ot) => (
-                <MenuItem key={ot.id} value={ot.id}>{outletName(ot)}</MenuItem>
-              ))}
-            </Select>
+            {/* Outlet Filter - Only for Admin */}
+            {isAdmin && (
+              <Select
+                size="small" displayEmpty value={filters.outletId}
+                onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}
+                sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+              >
+                <MenuItem value="">All Outlets</MenuItem>
+                {outlets.map((ot) => (
+                  <MenuItem key={ot.id} value={ot.id}>{outletName(ot)}</MenuItem>
+                ))}
+              </Select>
+            )}
 
             <ButtonBase
-              onClick={() => setFilters({ status: "", outletId: "" })}
+              onClick={() => setFilters({ status: "", outletId: isAdmin ? "" : userOutletId })}
               sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}
             >
               Clear
@@ -330,29 +371,18 @@ const Orders = () => {
                         {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        {(isAdmin || isManager) && (
+                        {(isAdmin || isManager) && o.status === "PENDING" && (
                           <Box sx={{ display: "flex", gap: 0.75 }}>
-                            {o.status === "PENDING" && (
-                              <>
-                                <Tooltip title="Approve">
-                                  <ButtonBase className="action-btn edit" disableRipple onClick={() => updateStatus(o.id, "APPROVED")}>
-                                    <ThumbUpRounded sx={{ fontSize: 14 }} />
-                                  </ButtonBase>
-                                </Tooltip>
-                                <Tooltip title="Reject">
-                                  <ButtonBase className="action-btn delete" disableRipple onClick={() => updateStatus(o.id, "REJECTED")}>
-                                    <ThumbDownRounded sx={{ fontSize: 14 }} />
-                                  </ButtonBase>
-                                </Tooltip>
-                              </>
-                            )}
-                            {o.status === "APPROVED" && (
-                              <Tooltip title="Complete">
-                                <ButtonBase className="action-btn edit" disableRipple onClick={() => updateStatus(o.id, "COMPLETED")}>
-                                  <CheckRounded sx={{ fontSize: 14 }} />
-                                </ButtonBase>
-                              </Tooltip>
-                            )}
+                            <Tooltip title="Approve & Complete">
+                              <IconButton size="small" className="action-btn edit" onClick={() => updateStatus(o.id, "APPROVED")}>
+                                <CheckRounded sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Reject">
+                              <IconButton size="small" className="action-btn delete" onClick={() => updateStatus(o.id, "REJECTED")}>
+                                <ThumbDownRounded sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Tooltip>
                           </Box>
                         )}
                       </TableCell>
@@ -363,6 +393,29 @@ const Orders = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 3, gap: 1 }}>
+            <ButtonBase
+              disabled={page === 0}
+              onClick={() => setPage(p => p - 1)}
+              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page === 0 ? 0.5 : 1 }}
+            >
+              Previous
+            </ButtonBase>
+            <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600 }}>
+              Page {page + 1} of {totalPages}
+            </Typography>
+            <ButtonBase
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page >= totalPages - 1 ? 0.5 : 1 }}
+            >
+              Next
+            </ButtonBase>
+          </Box>
+        )}
       </Box>
 
       {/* ── Create Order Dialog ── */}
@@ -380,16 +433,26 @@ const Orders = () => {
         </DialogTitle>
 
         <DialogContent sx={{ pt: 2 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography className="dialog-field-label">Select Outlet *</Typography>
-            <SearchableSelect
-              options={outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))}
-              value={create.data.outletId}
-              onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
-              placeholder="— Select Outlet —"
-              searchPlaceholder="Search outlets..."
-            />
-          </Box>
+          {isAdmin && (
+            <Box sx={{ mb: 3 }}>
+              <Typography className="dialog-field-label">Select Outlet *</Typography>
+              <SearchableSelect
+                options={outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))}
+                value={create.data.outletId}
+                onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
+                placeholder="— Select Outlet —"
+                searchPlaceholder="Search outlets..."
+              />
+            </Box>
+          )}
+          {!isAdmin && (
+            <Box sx={{ mb: 2, p: 2, background: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
+               <Typography sx={{ fontSize: "0.85rem", color: "#64748b" }}>Order for Outlet</Typography>
+               <Typography sx={{ fontWeight: 700, color: "#1e1b4b" }}>
+                 {outlets.find(o => String(o.id) === String(create.data.outletId))?.outletName || "Your Assigned Outlet"}
+               </Typography>
+            </Box>
+          )}
 
           <Typography sx={{ fontWeight: 700, mb: 1, fontSize: "0.9rem", color: "#1e1b4b" }}>Order Items</Typography>
 

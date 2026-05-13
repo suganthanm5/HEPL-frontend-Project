@@ -38,4 +38,16 @@ public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long
     List<ProductBatch> findFilteredBatches(
             @Param("productId") Long productId,
             @Param("status") ProductBatch.Status status);
+
+    @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE b.expiryDate < :date AND b.status = :status")
+    List<ProductBatch> findByExpiryDateBeforeAndStatus(
+            @Param("date") java.time.LocalDate date,
+            @Param("status") ProductBatch.Status status);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE ProductBatch b SET b.status = :newStatus WHERE b.expiryDate < :date AND b.status = :oldStatus")
+    int updateStatusForExpiredBatches(
+            @Param("date") java.time.LocalDate date,
+            @Param("oldStatus") ProductBatch.Status oldStatus,
+            @Param("newStatus") ProductBatch.Status newStatus);
 }

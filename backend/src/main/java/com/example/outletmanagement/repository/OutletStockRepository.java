@@ -8,6 +8,15 @@ import java.util.Optional;
 
 @Repository
 public interface OutletStockRepository extends JpaRepository<OutletStock, Long> {
-    List<OutletStock> findByOutletId(Long outletId);
+    org.springframework.data.domain.Page<OutletStock> findByOutletId(Long outletId, org.springframework.data.domain.Pageable pageable);
     Optional<OutletStock> findByOutletIdAndProductIdAndBatchId(Long outletId, Long productId, Long batchId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM OutletStock s WHERE s.availableQty < :threshold")
+    long countLowStockItems(int threshold);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(s.availableQty) FROM OutletStock s")
+    Long sumTotalStock();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM OutletStock s WHERE s.outlet.id = :outletId AND s.availableQty < :threshold")
+    long countLowStockItemsByOutlet(@org.springframework.data.repository.query.Param("outletId") Long outletId, @org.springframework.data.repository.query.Param("threshold") int threshold);
 }

@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @RestController
@@ -22,10 +24,11 @@ public class OrderController {
     public ResponseEntity<ApiResponse> getAllOrders(
             @RequestParam(required = false) Order.OrderStatus status,
             @RequestParam(required = false) Long outletId,
-            @RequestParam(required = false) String orderNo
+            @RequestParam(required = false) String orderNo,
+            Pageable pageable
     ) {
-        List<OrderResponse> response = orderService.getFilteredOrders(status, outletId, orderNo)
-                .stream().map(OrderResponse::from).toList();
+        Page<OrderResponse> response = orderService.getFilteredOrders(status, outletId, orderNo, pageable)
+                .map(OrderResponse::from);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Orders fetched successfully")
