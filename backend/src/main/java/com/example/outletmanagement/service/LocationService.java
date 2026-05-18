@@ -1,6 +1,7 @@
 package com.example.outletmanagement.service;
 
 import com.example.outletmanagement.payload.dto.request.LocationRequest;
+import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.LocationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,4 +13,5 @@ public interface LocationService {
     LocationResponse updateLocation(Long id, LocationRequest request);
     LocationResponse getLocationById(Long id);
     void deleteLocation(Long id);
+    BulkUploadResult bulkCreateLocations(List<LocationRequest> requests);
 }

@@ -9,9 +9,9 @@ import { Package } from 'lucide-react';
 import './Rgister.css';
 
 const Register = () => {
-  const [userData, setUserData] = useState({ 
-    username: '', 
-    password: '', 
+  const [userData, setUserData] = useState({
+    username: '',
+    password: '',
     email: ''
   });
   const [error, setError] = useState('');
@@ -27,7 +27,7 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       const res = await registerUser(userData);
       const token = res.data?.token || res.data?.data?.token || res.data?.accessToken || res.data?.data?.accessToken;
@@ -55,29 +55,29 @@ const Register = () => {
         <h2 className="auth-title">Sign Up</h2>
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleRegister}>
-          <Input 
-            label="Username" 
-            name="username" 
-            type="text" 
-            value={userData.username} 
-            onChange={handleChange} 
-            required 
+          <Input
+            label="Username"
+            name="username"
+            type="text"
+            value={userData.username}
+            onChange={handleChange}
+            required
           />
-          <Input 
-            label="Email" 
-            name="email" 
-            type="email" 
-            value={userData.email} 
-            onChange={handleChange} 
-            required 
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={userData.email}
+            onChange={handleChange}
+            required
           />
-          <Input 
-            label="Password" 
-            name="password" 
-            type="password" 
-            value={userData.password} 
-            onChange={handleChange} 
-            required 
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            value={userData.password}
+            onChange={handleChange}
+            required
           />
           <Button fullWidth type="submit" disabled={loading} className="mt-4">
             {loading ? 'Registering...' : 'Create Account'}

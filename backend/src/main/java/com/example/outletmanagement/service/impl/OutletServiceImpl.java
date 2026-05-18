@@ -2,6 +2,7 @@ package com.example.outletmanagement.service.impl;
 
 import com.example.outletmanagement.entity.*;
 import com.example.outletmanagement.payload.dto.request.OutletRequest;
+import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.DivisionResponse;
 import com.example.outletmanagement.payload.dto.response.OutletResponse;
 import com.example.outletmanagement.payload.dto.response.ProductResponse;
@@ -68,7 +69,7 @@ public class OutletServiceImpl implements OutletService {
     public Page<OutletResponse> getAllOutlets(String search, Long locationId, String type, Long divisionId,
             Pageable pageable) {
         Page<Outlet> outlets;
-        
+
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
@@ -77,8 +78,9 @@ public class OutletServiceImpl implements OutletService {
             if (currentUser.getOutlet() == null) {
                 return Page.empty(pageable);
             }
-            OutletResponse response = mapToResponse(outletRepository.findByIdWithMappings(currentUser.getOutlet().getId())
-                    .orElse(currentUser.getOutlet()));
+            OutletResponse response = mapToResponse(
+                    outletRepository.findByIdWithMappings(currentUser.getOutlet().getId())
+                            .orElse(currentUser.getOutlet()));
             return new PageImpl<>(Collections.singletonList(response), pageable, 1);
         }
 
@@ -87,7 +89,7 @@ public class OutletServiceImpl implements OutletService {
         } else {
             outlets = outletRepository.findAll(pageable);
         }
-        
+
         List<Long> outletIds = outlets.getContent().stream().map(Outlet::getId).collect(Collectors.toList());
         List<Outlet> outletsWithMappings = outletRepository.findAllByIdWithMappings(outletIds);
         Map<Long, Outlet> outletMap = outletsWithMappings.stream().collect(Collectors.toMap(Outlet::getId, o -> o));
@@ -95,7 +97,7 @@ public class OutletServiceImpl implements OutletService {
         List<OutletResponse> responses = outlets.getContent().stream()
                 .map(outlet -> mapToResponse(outletMap.getOrDefault(outlet.getId(), outlet)))
                 .collect(Collectors.toList());
-        
+
         return new PageImpl<>(responses, pageable, outlets.getTotalElements());
     }
 
@@ -140,6 +142,32 @@ public class OutletServiceImpl implements OutletService {
     }
 
     @Override
+    public BulkUploadResult bulkCreateOutlets(List<OutletRequest> requests) {
+        List<BulkUploadResult.RowResult> results = new ArrayList<>();
+        int success = 0, failure = 0;
+        for (int i = 0; i < requests.size(); i++) {
+            OutletRequest req = requests.get(i);
+            try {
+                createOutlet(req);
+                results.add(BulkUploadResult.RowResult.builder()
+                        .row(i + 1).name(req.getOutletName()).success(true).build());
+                success++;
+            } catch (Exception e) {
+                results.add(BulkUploadResult.RowResult.builder()
+                        .row(i + 1).name(req.getOutletName()).success(false).error(e.getMessage()).build());
+                failure++;
+            }
+        }
+        return BulkUploadResult.builder()
+                .totalReceived(requests.size())
+                .successCount(success)
+                .failureCount(failure)
+                .results(results)
+                .build();
+    }
+
+    @Override
+    @Transactional
     public void deleteOutlet(Long id) {
         outletRepository.deleteById(id);
     }

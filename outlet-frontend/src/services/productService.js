@@ -22,6 +22,16 @@ const updateProduct = (id, data) => API.put(`${ENDPOINTS.products}/${id}`, data)
 
 const deleteProduct = (id) => API.delete(`${ENDPOINTS.products}/${id}`);
 
+const bulkCreateProducts = async (rows) => {
+  const res = await API.post(`${ENDPOINTS.products}/bulk`, rows);
+  const result = res.data?.data;
+  return (result?.results || []).map((r) => ({
+    name: r.name,
+    success: r.success,
+    error: r.error || "",
+  }));
+};
+
 export const productService = {
     getAll: getProducts,
     getProducts,
@@ -29,7 +39,8 @@ export const productService = {
     createProduct,
     addProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    bulkCreateProducts,
 };
 
 export {
@@ -38,5 +49,6 @@ export {
   createProduct,
   addProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  bulkCreateProducts,
 };

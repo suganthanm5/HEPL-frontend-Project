@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Box, Typography, ButtonBase, InputBase,
+  Box, Typography, Button, ButtonBase, InputBase,
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
   CircularProgress, Snackbar, Alert, IconButton, Paper,
+  Grid, Stack, Divider, Tabs, Tab
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, EditRounded,
@@ -18,11 +19,14 @@ import { outletService } from "../../services/outletService";
 import { productService } from "../../services/productService";
 import { batchService } from "../../services/batchService";
 import { useAuth } from "../../context/AuthContext";
+import { getCookie } from "../../utils/cookieUtils";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
+import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import { formatOrderData } from "../../utils/exportUtils";
 import "./Orders.css";
 import "../UserManagement/UserManagement.css";
 
-/* ── Status meta ── */
+
 const STATUS_META = {
   PENDING:   { label: "Pending",   cls: "pending",   Icon: PendingRounded },
   APPROVED:  { label: "Approved",  cls: "approved",  Icon: ThumbUpRounded },
@@ -47,6 +51,7 @@ const Orders = () => {
 
   const [filters,  setFilters]  = useState({ status: "", outletId: isAdmin ? "" : userOutletId });
   const [detail,   setDetail]   = useState(null);
+  const [isFormView, setIsFormView] = useState(false);
   const [create,   setCreate]   = useState({ open: false, data: emptyOrder });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
   const [page,     setPage]     = useState(0);
@@ -163,6 +168,7 @@ const Orders = () => {
       await orderService.create(create.data);
       toast("Order created successfully");
       setCreate({ open: false, data: emptyOrder });
+      setIsFormView(false);
       loadOrders();
     } catch (err) {
       toast(err.response?.data?.message || "Creation failed", "error");
@@ -228,13 +234,11 @@ const Orders = () => {
             onClick={() => {
               let initialOutletId = "";
               if (!isAdmin) {
-                // Find current user's outlet if possible, or just use the first available if filtered
-                // Better: Backend forces it, so we just need to pick one for the UI to feel right
-                // but we should really get the user's outletId from context or localStorage
-                const userOutletId = localStorage.getItem("outletId");
-                initialOutletId = userOutletId || "";
+                const storedOutletId = getCookie("outletId");
+                initialOutletId = storedOutletId || userOutletId || "";
               }
               setCreate({ open: true, data: { ...emptyOrder, outletId: initialOutletId, items: [{ ...emptyItem }] } });
+              setIsFormView(true);
             }}
             disableRipple
             sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}
@@ -244,7 +248,154 @@ const Orders = () => {
         )}
       </Box>
 
-      {/* ── Stat Cards ── */}
+      {isFormView ? (
+        /* ── Full Page Form View ── */
+        <Box className="animate-fade-in">
+          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton onClick={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }} sx={{ color: "#64748b" }}>
+                  <CloseRounded />
+                </IconButton>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>
+                    Create New Order
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
+                    {isAdmin ? "Select an outlet and add items to create a supply order" : "Request inventory for your assigned outlet"}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button variant="outlined" color="inherit" 
+                  onClick={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }}
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
+                  Cancel
+                </Button>
+                <Button variant="contained" startIcon={<ShoppingCartRounded />} 
+                  onClick={handleCreate}
+                  sx={{ 
+                    borderRadius: "50px", 
+                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)", 
+                    color: "#fff", 
+                    textTransform: "none",
+                    px: 4,
+                    boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
+                    "&:hover": { background: "linear-gradient(135deg, #6b21c1, #9333ea)" }
+                  }}>
+                  Submit Order
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ p: { xs: 2, md: 4 } }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={8}>
+                  {isAdmin && (
+                    <Box sx={{ mb: 4, p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff" }}>
+                      <Typography className="dialog-field-label" sx={{ mb: 1.5 }}>Target Outlet *</Typography>
+                      <SearchableSelect
+                        options={outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))}
+                        value={create.data.outletId}
+                        onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
+                        placeholder="— Select Outlet —"
+                        searchPlaceholder="Search outlets..."
+                      />
+                    </Box>
+                  )}
+                  
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>Order Items</Typography>
+                    <Button variant="text" startIcon={<AddRounded />} onClick={addItem} sx={{ color: "#7d2ae8", fontWeight: 700 }}>Add Item</Button>
+                  </Box>
+
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {create.data.items.map((item, idx) => (
+                      <Box key={idx} sx={{ position: "relative", p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff", transition: "all 0.2s", "&:hover": { borderColor: "#7d2ae8", boxShadow: "0 4px 12px rgba(125,42,232,0.05)" } }}>
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid item xs={12} sm={4}>
+                            <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Product *</Typography>
+                            <SearchableSelect
+                              options={(() => {
+                                const selectedOutlet = outlets.find((ot) => String(ot.id) === String(create.data.outletId));
+                                const mapped = selectedOutlet?.allProducts || selectedOutlet?.products || [];
+                                const pool = mapped.length > 0 ? mapped : products;
+                                return pool.map((p) => ({ id: p.id, name: p.name || p.productName || `Product ${p.id}` }));
+                              })()}
+                              value={item.productId}
+                              onChange={(id) => updateItem(idx, "productId", id)}
+                              placeholder="Select product"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={3}>
+                            <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Batch (Optional)</Typography>
+                            <SearchableSelect
+                              options={
+                                batches
+                                  .filter((b) => String(b.product?.id ?? b.productId) === String(item.productId))
+                                  .map((b) => ({ id: b.id, name: `${b.batchNo} (Qty: ${b.quantity})` }))
+                              }
+                              value={item.batchId}
+                              onChange={(id) => updateItem(idx, "batchId", id)}
+                              placeholder="FIFO Allocation"
+                            />
+                          </Grid>
+                          <Grid item xs={6} sm={2}>
+                            <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Qty *</Typography>
+                            <TextField fullWidth size="small" type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} inputProps={{ min: 1 }} sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+                          </Grid>
+                          <Grid item xs={6} sm={2}>
+                            <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Price ₹</Typography>
+                            <TextField fullWidth size="small" type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} inputProps={{ min: 0 }} sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+                          </Grid>
+                          <Grid item xs={12} sm={1} sx={{ display: "flex", justifyContent: "flex-end" }}>
+                            <IconButton onClick={() => removeItem(idx)} color="error" size="small" disabled={create.data.items.length === 1}>
+                              <DeleteRounded />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    ))}
+                  </Box>
+                </Grid>
+                
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "fit-content", position: "sticky", top: 24 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e1b4b", mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
+                      <ShoppingCartRounded sx={{ color: "#7d2ae8" }} /> Order Summary
+                    </Typography>
+                    
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "#64748b" }}>Destination Outlet</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                          {outlets.find(o => String(o.id) === String(create.data.outletId))?.outletName || "Not Selected"}
+                        </Typography>
+                      </Box>
+                      
+                      <Divider />
+                      
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "#64748b" }}>Total Items</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>{create.data.items.length}</Typography>
+                      </Box>
+                      
+                      <Box sx={{ p: 2, bgcolor: "#7d2ae8", borderRadius: 3, color: "#fff" }}>
+                        <Typography variant="caption" sx={{ opacity: 0.9 }}>Total Estimated Value</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 900 }}>
+                          ₹{create.data.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0).toLocaleString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
+        </Box>
+      ) : (
+        <>
+          {/* ── Stat Cards ── */}
       <Box className="stat-cards-row">
         {Object.entries(STATUS_META).map(([key, meta]) => (
           <Box className="stat-card" key={key}>
@@ -277,18 +428,7 @@ const Orders = () => {
             <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
               All Orders
             </Typography>
-
-            {/* Status Filter */}
-            <Select
-              size="small" displayEmpty value={filters.status}
-              onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
-              sx={{ minWidth: 120, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
-            >
-              <MenuItem value="">All Statuses</MenuItem>
-              {Object.entries(STATUS_META).map(([k, v]) => (
-                <MenuItem key={k} value={k}>{v.label}</MenuItem>
-              ))}
-            </Select>
+            <ExportMenu getData={() => formatOrderData(filtered)} filename="orders" title="Orders Report" backendType="orders" />
 
             {/* Outlet Filter - Only for Admin */}
             {isAdmin && (
@@ -308,7 +448,7 @@ const Orders = () => {
               onClick={() => setFilters({ status: "", outletId: isAdmin ? "" : userOutletId })}
               sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}
             >
-              Clear
+              Clear Filters
             </ButtonBase>
           </Box>
 
@@ -321,6 +461,35 @@ const Orders = () => {
             />
           </Box>
         </Box>
+
+        {/* Dynamic Status Tabs */}
+        <Tabs
+          value={filters.status}
+          onChange={(e, newVal) => setFilters((f) => ({ ...f, status: newVal }))}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            px: 3,
+            borderBottom: "1px solid #f1f5f9",
+            "& .MuiTabs-indicator": { backgroundColor: "#7d2ae8", height: "3px", borderRadius: "10px" },
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontSize: "13px",
+              fontWeight: 700,
+              fontFamily: "Poppins, sans-serif",
+              color: "#64748b",
+              pb: 1.5,
+              pt: 1.5,
+              minWidth: 100,
+              "&.Mui-selected": { color: "#7d2ae8" },
+            },
+          }}
+        >
+          <Tab label={`All Orders (${totalElements || filtered.length})`} value="" />
+          {Object.entries(STATUS_META).map(([k, v]) => (
+            <Tab key={k} label={`${v.label} (${counts[k] || 0})`} value={k} />
+          ))}
+        </Tabs>
 
         <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
           <Table size="small">
@@ -417,130 +586,11 @@ const Orders = () => {
           </Box>
         )}
       </Box>
+    </>
+  )}
 
-      {/* ── Create Order Dialog ── */}
-      <Dialog
-        open={create.open}
-        onClose={() => setCreate({ open: false, data: emptyOrder })}
-        maxWidth="md" fullWidth
-        PaperProps={{ sx: { borderRadius: 4 } }}
-      >
-        <DialogTitle className="user-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          Create New Order
-          <IconButton onClick={() => setCreate({ open: false, data: emptyOrder })} size="small" sx={{ color: "#64748b" }}>
-            <CloseRounded />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent sx={{ pt: 2 }}>
-          {isAdmin && (
-            <Box sx={{ mb: 3 }}>
-              <Typography className="dialog-field-label">Select Outlet *</Typography>
-              <SearchableSelect
-                options={outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))}
-                value={create.data.outletId}
-                onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
-                placeholder="— Select Outlet —"
-                searchPlaceholder="Search outlets..."
-              />
-            </Box>
-          )}
-          {!isAdmin && (
-            <Box sx={{ mb: 2, p: 2, background: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
-               <Typography sx={{ fontSize: "0.85rem", color: "#64748b" }}>Order for Outlet</Typography>
-               <Typography sx={{ fontWeight: 700, color: "#1e1b4b" }}>
-                 {outlets.find(o => String(o.id) === String(create.data.outletId))?.outletName || "Your Assigned Outlet"}
-               </Typography>
-            </Box>
-          )}
-
-          <Typography sx={{ fontWeight: 700, mb: 1, fontSize: "0.9rem", color: "#1e1b4b" }}>Order Items</Typography>
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {create.data.items.map((item, idx) => (
-              <Box
-                key={idx}
-                sx={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1.2fr auto", gap: 1.5, alignItems: "center", p: 2, border: "1px solid #e2e8f0", borderRadius: 3 }}
-              >
-                <Box>
-                  <Typography className="dialog-field-label">Product *</Typography>
-                  <SearchableSelect
-                    options={(() => {
-                      const selectedOutlet = outlets.find((ot) => String(ot.id) === String(create.data.outletId));
-                      const mapped = selectedOutlet?.allProducts || selectedOutlet?.products || [];
-                      const pool = mapped.length > 0 ? mapped : products;
-                      return pool.map((p) => ({ id: p.id, name: p.name || p.productName || `Product ${p.id}` }));
-                    })()}
-                    value={item.productId}
-                    onChange={(id) => updateItem(idx, "productId", id)}
-                    placeholder="Select product"
-                    searchPlaceholder="Search products..."
-                  />
-                </Box>
-                <Box>
-                  <Typography className="dialog-field-label">Batch (Optional)</Typography>
-                  <SearchableSelect
-                    options={
-                      batches
-                        .filter((b) => String(b.product?.id ?? b.productId) === String(item.productId))
-                        .map((b) => ({ id: b.id, name: `${b.batchNo} (Qty: ${b.quantity})` }))
-                    }
-                    value={item.batchId}
-                    onChange={(id) => updateItem(idx, "batchId", id)}
-                    placeholder="FIFO Allocation"
-                    searchPlaceholder="Search..."
-                  />
-                </Box>
-                <Box>
-                  <Typography className="dialog-field-label">Qty *</Typography>
-                  <TextField
-                    fullWidth size="small" type="number"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(idx, "quantity", e.target.value)}
-                    inputProps={{ min: 1 }}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                  />
-                </Box>
-                <Box>
-                  <Typography className="dialog-field-label">Price ₹</Typography>
-                  <TextField
-                    fullWidth size="small" type="number"
-                    value={item.price}
-                    onChange={(e) => updateItem(idx, "price", e.target.value)}
-                    inputProps={{ min: 0 }}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                  />
-                </Box>
-                <IconButton onClick={() => removeItem(idx)} color="error" sx={{ mt: 2 }}>
-                  <DeleteRounded />
-                </IconButton>
-              </Box>
-            ))}
-          </Box>
-
-          <ButtonBase
-            onClick={addItem}
-            sx={{ mt: 2, color: "#7d2ae8", fontWeight: 600, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}
-          >
-            + Add Another Item
-          </ButtonBase>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <ButtonBase
-            onClick={() => setCreate({ open: false, data: emptyOrder })}
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontWeight: 600 }}
-          >
-            Cancel
-          </ButtonBase>
-          <ButtonBase
-            onClick={handleCreate}
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600, boxShadow: "0 4px 12px rgba(125,42,232,0.35)" }}
-          >
-            Create Order
-          </ButtonBase>
-        </DialogActions>
-      </Dialog>
+  {/* ── Create Order Dialog (REPLACED) ── */}
+      {/* ── Create Order Dialog (REPLACED) ── */}
 
       {/* ── Order Detail Dialog ── */}
       <Dialog

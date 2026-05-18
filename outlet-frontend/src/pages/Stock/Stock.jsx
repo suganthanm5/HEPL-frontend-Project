@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Box, Typography, ButtonBase, InputBase,
+  Box, Typography, Button, ButtonBase, InputBase,
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
   CircularProgress, Snackbar, Alert, IconButton, Paper,
+  Grid, Stack,
 } from "@mui/material";
 import {
   SearchRounded, SwapHorizRounded, WarehouseRounded,
@@ -15,6 +16,8 @@ import {
 import { stockService } from "../../services/stockService";
 import { useAuth } from "../../context/AuthContext";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
+import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import { formatStockData } from "../../utils/exportUtils";
 import "./Stock.css";
 import "../UserManagement/UserManagement.css";
 
@@ -52,6 +55,7 @@ const Stock = () => {
 
   const [filters,  setFilters]  = useState({ productId: "", outletId: userOutletId, type: "" });
   const [tab,      setTab]      = useState("stock");
+  const [isFormView, setIsFormView] = useState(false);
   const [transfer, setTransfer] = useState({ open: false, data: emptyTransfer });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
   
@@ -158,6 +162,7 @@ const Stock = () => {
       });
       toast("Stock transferred successfully");
       setTransfer({ open: false, data: emptyTransfer });
+      setIsFormView(false);
       loadDynamicData();
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Transfer failed";
@@ -177,14 +182,159 @@ const Stock = () => {
           <Typography className="page-subtitle">Monitor and transfer outlet stock</Typography>
         </Box>
         {canTransfer && (
-        <ButtonBase onClick={() => setTransfer({ open: true, data: emptyTransfer })} disableRipple
+        <ButtonBase onClick={() => { setTransfer({ open: true, data: emptyTransfer }); setIsFormView(true); }} disableRipple
           sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}>
           <SwapHorizRounded sx={{ fontSize: 18 }} /> Transfer Stock
         </ButtonBase>
         )}
       </Box>
 
-      {/* Stat Cards */}
+      {isFormView ? (
+        /* ── Full Page Form View ── */
+        <Box className="animate-fade-in">
+          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton onClick={() => { setIsFormView(false); setTransfer({ open: false, data: emptyTransfer }); }} sx={{ color: "#64748b" }}>
+                  <CloseRounded />
+                </IconButton>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>
+                    Transfer Stock
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
+                    Move inventory between different outlet locations
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button variant="outlined" color="inherit" 
+                  onClick={() => { setIsFormView(false); setTransfer({ open: false, data: emptyTransfer }); }}
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
+                  Cancel
+                </Button>
+                <Button variant="contained" startIcon={<SwapHorizRounded />} 
+                  onClick={handleTransfer}
+                  sx={{ 
+                    borderRadius: "50px", 
+                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)", 
+                    color: "#fff", 
+                    textTransform: "none",
+                    px: 4,
+                    boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
+                    "&:hover": { background: "linear-gradient(135deg, #6b21c1, #9333ea)" }
+                  }}>
+                  Initiate Transfer
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ p: { xs: 2, md: 4 } }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={7}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>From Outlet *</Typography>
+                        <SearchableSelect
+                          options={outlets.map(o => ({ id: o.id, name: o.outletName }))}
+                          value={transfer.data.fromOutletId}
+                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, fromOutletId: id, batchId: "", productId: "" } }))}
+                          placeholder="— Source —"
+                        />
+                      </Box>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>To Outlet *</Typography>
+                        <SearchableSelect
+                          options={outlets.filter(o => String(o.id) !== String(transfer.data.fromOutletId)).map(o => ({ id: o.id, name: o.outletName }))}
+                          value={transfer.data.outletId}
+                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, outletId: id } }))}
+                          placeholder="— Destination —"
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Product *</Typography>
+                        <SearchableSelect
+                          options={[...new Map(
+                            stock
+                              .filter(s => String(s.outletId) === String(transfer.data.fromOutletId))
+                              .map(s => [s.productId, { id: s.productId, name: s.productName }])
+                          ).values()]}
+                          value={transfer.data.productId}
+                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, productId: id, batchId: "" } }))}
+                          placeholder="— Select Product —"
+                        />
+                      </Box>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Batch *</Typography>
+                        <SearchableSelect
+                          options={stock
+                            .filter(s => String(s.productId) === String(transfer.data.productId)
+                              && String(s.outletId) === String(transfer.data.fromOutletId))
+                            .map(s => ({ id: s.batchId, name: `${s.batchNo} (Avail: ${s.availableQty})` }))}
+                          value={transfer.data.batchId}
+                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, batchId: id } }))}
+                          placeholder="— Select Batch —"
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box>
+                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Quantity to Transfer *</Typography>
+                      <TextField fullWidth size="small" type="number" placeholder="Enter Quantity"
+                        value={transfer.data.quantity}
+                        onChange={(e) => setTransfer((t) => ({ ...t, data: { ...t.data, quantity: e.target.value } }))}
+                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "100%", display: "flex", flexDirection: "column", gap: 2.5 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center", gap: 1 }}>
+                      <WarehouseRounded sx={{ color: "#7d2ae8" }} /> Transfer Summary
+                    </Typography>
+                    
+                    <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
+                      <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 0.5 }}>Moving From</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        {outlets.find(o => String(o.id) === String(transfer.data.fromOutletId))?.outletName || "Not selected"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", justifyContent: "center", my: -1 }}>
+                      <SwapHorizRounded sx={{ color: "#94a3b8", transform: "rotate(90deg)" }} />
+                    </Box>
+
+                    <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
+                      <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 0.5 }}>Moving To</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        {outlets.find(o => String(o.id) === String(transfer.data.outletId))?.outletName || "Not selected"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ mt: "auto", p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
+                      <Typography variant="caption" sx={{ color: "#64748b" }}>Selected Product</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {products.find(p => String(p.id) === String(transfer.data.productId))?.name || "None"}
+                      </Typography>
+                      {transfer.data.quantity && (
+                        <Typography variant="h6" sx={{ color: "#7d2ae8", fontWeight: 800, mt: 1 }}>
+                          {transfer.data.quantity} Units
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
+        </Box>
+      ) : (
+        <>
+          {/* Stat Cards */}
       <Box className="stat-cards-row">
         {[
           { label: "Stock Entries",  value: stock.length,  bg: "#f5f0ff", color: "#7d2ae8", Icon: WarehouseRounded },
@@ -219,6 +369,12 @@ const Stock = () => {
             <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
               {tab === "stock" ? "Current Stock" : "Transaction History"}
             </Typography>
+            <ExportMenu
+              getData={() => tab === "stock" ? formatStockData(filteredStock) : txns.map(t => ({ Type: t.transactionType, Product: t.productName || t.productId, Batch: t.batchNo || t.batchId, Outlet: t.outletName || t.outletId, Qty: t.quantity, By: t.createdBy, Date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—' }))}
+              filename={tab === "stock" ? "stock" : "transactions"}
+              title={tab === "stock" ? "Stock Report" : "Transaction History"}
+              backendType={tab === "stock" ? "stock" : undefined}
+            />
 
             {tab === "history" && (
               <>
@@ -373,82 +529,11 @@ const Stock = () => {
           </Box>
         )}
       </Box>
+    </>
+  )}
 
-      {/* Transfer Dialog */}
-      <Dialog open={transfer.open} onClose={() => setTransfer({ open: false, data: emptyTransfer })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}>
-        <DialogTitle className="transfer-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          Transfer Stock Between Outlets
-          <IconButton onClick={() => setTransfer({ open: false, data: emptyTransfer })} size="small" sx={{ color: "#fff" }}>
-            <CloseRounded />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3, pb: 1 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box>
-              <Typography className="dialog-field-label">From Outlet *</Typography>
-              <SearchableSelect
-                options={outlets.map(o => ({ id: o.id, name: o.outletName }))}
-                value={transfer.data.fromOutletId}
-                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, fromOutletId: id, batchId: "", productId: "" } }))}
-                placeholder="— Select Source Outlet —"
-                searchPlaceholder="Search outlets..."
-              />
-            </Box>
-            <Box>
-              <Typography className="dialog-field-label">To Outlet *</Typography>
-              <SearchableSelect
-                options={outlets.filter(o => String(o.id) !== String(transfer.data.fromOutletId)).map(o => ({ id: o.id, name: o.outletName }))}
-                value={transfer.data.outletId}
-                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, outletId: id } }))}
-                placeholder="— Select Destination Outlet —"
-                searchPlaceholder="Search outlets..."
-              />
-            </Box>
-            <Box>
-              <Typography className="dialog-field-label">Product *</Typography>
-              <SearchableSelect
-                options={[...new Map(
-                  stock
-                    .filter(s => String(s.outletId) === String(transfer.data.fromOutletId))
-                    .map(s => [s.productId, { id: s.productId, name: s.productName }])
-                ).values()]}
-                value={transfer.data.productId}
-                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, productId: id, batchId: "" } }))}
-                placeholder="— Select Product —"
-                searchPlaceholder="Search products..."
-              />
-            </Box>
-            <Box>
-              <Typography className="dialog-field-label">Batch *</Typography>
-              <SearchableSelect
-                options={stock
-                  .filter(s => String(s.productId) === String(transfer.data.productId)
-                    && String(s.outletId) === String(transfer.data.fromOutletId))
-                  .map(s => ({ id: s.batchId, name: `${s.batchNo} (Avail: ${s.availableQty})` }))}
-                value={transfer.data.batchId}
-                onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, batchId: id } }))}
-                placeholder="— Select Batch —"
-                searchPlaceholder="Search batches..."
-              />
-            </Box>
-            <Box>
-              <Typography className="dialog-field-label">Quantity *</Typography>
-              <TextField fullWidth size="small" type="number" placeholder="Enter Quantity"
-                value={transfer.data.quantity}
-                onChange={(e) => setTransfer((t) => ({ ...t, data: { ...t.data, quantity: e.target.value } }))}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <ButtonBase onClick={() => setTransfer({ open: false, data: emptyTransfer })} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>Cancel</ButtonBase>
-          <ButtonBase onClick={handleTransfer} disableRipple
-            sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600, boxShadow: "0 4px 12px rgba(125,42,232,0.35)" }}>
-            <CheckRounded sx={{ fontSize: 16 }} /> Transfer
-          </ButtonBase>
-        </DialogActions>
-      </Dialog>
+  {/* Transfer Dialog (REPLACED) */}
+      {/* Transfer Dialog (REPLACED) */}
 
       <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "Poppins, sans-serif" }}>{snack.msg}</Alert>

@@ -20,4 +20,5 @@ public class ProductResponse {
     private BigDecimal purchasePrice;
     private Long divisionId;
     private String divisionName;
+    private String image;
 }

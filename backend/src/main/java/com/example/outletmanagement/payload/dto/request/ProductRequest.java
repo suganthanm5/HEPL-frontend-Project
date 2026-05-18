@@ -24,4 +24,6 @@ public class ProductRequest {
     private BigDecimal purchasePrice;
 
     private Long divisionId;
+
+    private String image;
 }

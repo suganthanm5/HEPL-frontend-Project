@@ -48,12 +48,12 @@ public class ReportController {
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
         Map<String, Object> summary = new HashMap<>();
-        Long outletId = (currentUser.getRole() == User.Role.ADMIN) ? null : 
-                        (currentUser.getOutlet() != null ? currentUser.getOutlet().getId() : -1L);
+        Long outletId = (currentUser.getRole() == User.Role.ADMIN) ? null
+                : (currentUser.getOutlet() != null ? currentUser.getOutlet().getId() : -1L);
 
         // 1. Stats
         summary.put("totalUsers", userRepository.count());
-        
+
         java.math.BigDecimal revenue;
         if (outletId == null) {
             revenue = orderRepository.calculateTotalRevenue();
@@ -63,16 +63,18 @@ public class ReportController {
         } else {
             revenue = orderRepository.calculateTotalRevenueByOutlet(outletId);
             summary.put("totalOrders", orderRepository.countByOutletId(outletId));
-            summary.put("pendingOrdersCount", orderRepository.countByOutletIdAndStatus(outletId, Order.OrderStatus.PENDING));
+            summary.put("pendingOrdersCount",
+                    orderRepository.countByOutletIdAndStatus(outletId, Order.OrderStatus.PENDING));
             summary.put("lowStockCount", outletStockRepository.countLowStockItemsByOutlet(outletId, 10));
         }
-        
+
         summary.put("totalRevenue", revenue != null ? revenue : java.math.BigDecimal.ZERO);
 
         // 2. Division Stats (for Pie Chart)
         java.util.List<com.example.outletmanagement.entity.Division> divisions = divisionRepository.findAll();
-        long totalProducts = divisions.stream().mapToLong(d -> d.getProducts() != null ? d.getProducts().size() : 0).sum();
-        
+        long totalProducts = divisions.stream().mapToLong(d -> d.getProducts() != null ? d.getProducts().size() : 0)
+                .sum();
+
         java.util.List<Map<String, Object>> divisionStats = divisions.stream().map(d -> {
             Map<String, Object> stat = new HashMap<>();
             stat.put("name", d.getName());
@@ -96,7 +98,8 @@ public class ReportController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Expiring batches fetched")
-                .data(productBatchRepository.findByExpiryDateBeforeAndStatus(nextMonth, com.example.outletmanagement.entity.ProductBatch.Status.ACTIVE))
+                .data(productBatchRepository.findByExpiryDateBeforeAndStatus(nextMonth,
+                        com.example.outletmanagement.entity.ProductBatch.Status.ACTIVE))
                 .build());
     }
 
@@ -109,7 +112,7 @@ public class ReportController {
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) Long outletId,
             org.springframework.data.domain.Pageable pageable) {
-        
+
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Transactions fetched")

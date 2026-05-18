@@ -20,4 +20,14 @@ const deleteLocation = async (id) => {
   await API.delete(`${ENDPOINTS.locations}/${id}`);
 };
 
-export { getLocations, createLocation, updateLocation, deleteLocation };
+const bulkCreateLocations = async (names) => {
+  const res = await API.post(`${ENDPOINTS.locations}/bulk`, names.map((name) => ({ name })));
+  const result = res.data?.data;
+  return (result?.results || []).map((r) => ({
+    name: r.name,
+    success: r.success,
+    error: r.error || "",
+  }));
+};
+
+export { getLocations, createLocation, updateLocation, deleteLocation, bulkCreateLocations };

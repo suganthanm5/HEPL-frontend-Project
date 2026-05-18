@@ -78,8 +78,11 @@ public class ProductBatchController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteBatch(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deleteBatch(@PathVariable Long id) {
         productBatchService.deleteBatch(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Batch deleted successfully")
+                .build());
     }
 }

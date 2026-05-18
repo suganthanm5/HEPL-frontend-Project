@@ -1,48 +1,21 @@
 import { useEffect, useState, useMemo } from "react";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
-import { getOutlets, createOutlet, updateOutlet, deleteOutlet } from "../../services/outletService";
+import { getOutlets, createOutlet, updateOutlet, deleteOutlet, bulkCreateOutlets } from "../../services/outletService";
 import { getLocations } from "../../services/locationService";
 import { getDivisions, getDivisionById } from "../../services/divisionService";
+import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import { formatOutletData } from "../../utils/exportUtils";
 
-// Material UI imports
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  InputAdornment,
-  MenuItem,
-  Paper,
-  Select,
-  Skeleton,
-  Snackbar,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  Grid,
-  Chip,
-  Avatar,
-  Tooltip,
-  FormControl,
-  InputLabel,
-  ToggleButton,
-  ToggleButtonGroup,
-  Pagination,
-  Stack,
-  Divider,
+  Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  IconButton, InputAdornment, MenuItem, Paper, Select, Skeleton,
+  Snackbar, Alert, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, TextField, Typography, Grid, Chip, Avatar,
+  Tooltip, FormControl, InputLabel, ToggleButton, ToggleButtonGroup,
+  Pagination, Stack, Divider,
 } from "@mui/material";
 import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
 
-// Material UI Icons
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -54,6 +27,13 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PersonIcon from "@mui/icons-material/Person";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveIcon from "@mui/icons-material/Save";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import CategoryIcon from "@mui/icons-material/Category";
+import MapIcon from "@mui/icons-material/Map";
+import BulkUploadModal from "../../components/BulkUploadModal";
 
 /* ── MUI Theme ── */
 const theme = createTheme({
@@ -148,7 +128,7 @@ const StatCard = ({ label, value, color, bg, icon }) => (
   </Paper>
 );
 
-/* ── Modal Header ── */
+/* ── Delete Modal Header ── */
 const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
   <DialogTitle sx={{ p: 0 }}>
     <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px 24px 16px", borderBottom: "1px solid #f1f5f9" }}>
@@ -174,18 +154,19 @@ export default function Outlet() {
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [view, setView] = useState("table");
-  const [addModal, setAddModal] = useState(false);
-  const [editModal, setEditModal] = useState(null);
-  const [deleteModal, setDeleteModal] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [isFormView, setIsFormView] = useState(false);
   const [selectedDivisions, setSelectedDivisions] = useState([]);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [toast, setToast] = useState(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [locationFilter, setLocationFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [divisionFilter, setDivisionFilter] = useState("");
   const [productFilter, setProductFilter] = useState("");
+  const [editModal, setEditModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
 
   const showToast = (message, type = "error") => setToast({ message, type });
 
@@ -394,7 +375,7 @@ export default function Outlet() {
 
   const openAddModal = async () => {
     setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]);
-    setAddModal(true); await refreshLocations();
+    setIsFormView(true); setEditModal(null); await refreshLocations();
   };
 
   const openEditModal = async (o) => {
@@ -414,6 +395,7 @@ export default function Outlet() {
     updateAvailableProducts(selectedDivs);
     setForm({ outletName: o.outletName ?? "", address: o.address ?? "", locationId: locId, locationName: o.locationName ?? "", mappings, outletType: o.outletType ?? "", ownerName: o.ownerName ?? "" });
     setEditModal(o);
+    setIsFormView(true);
   };
 
   const handleAdd = async () => {
@@ -422,7 +404,7 @@ export default function Outlet() {
     try {
       await createOutlet(buildPayload());
       await fetchAll(true);
-      setAddModal(false); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]);
+      setIsFormView(false); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]);
       showToast("Outlet added successfully!", "success");
     } catch (e) {
       showToast("Failed to add outlet: " + (e.response?.data?.message || e.message), "error");
@@ -435,7 +417,7 @@ export default function Outlet() {
     try {
       await updateOutlet(editModal.id, buildPayload(editModal.id));
       await fetchAll(true);
-      setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]);
+      setEditModal(null); setIsFormView(false); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]);
       showToast("Outlet updated successfully!", "success");
     } catch (e) {
       showToast("Failed to update outlet: " + (e.response?.data?.message || e.message), "error");
@@ -496,94 +478,92 @@ export default function Outlet() {
 
   /* ── Form Fields ── */
   const renderFormFields = () => (
-    <Stack spacing={2} sx={{ pt: 1, overflow: "visible" }}>
-      <Grid container spacing={2} sx={{ overflow: "visible" }}>
-        <Grid xs={6}>
+    <Stack spacing={3}>
+      {/* Row 1 */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
           <TextField fullWidth size="small" label="Outlet Name" required
-            name="outletName" value={form.outletName} onChange={handleOutletNameChange} placeholder="e.g. Main Branch" />
+            name="outletName" value={form.outletName} onChange={handleOutletNameChange}
+            placeholder="e.g. Main Branch" />
         </Grid>
-        <Grid xs={6}>
+        <Grid item xs={12} md={6}>
           <TextField fullWidth size="small" label="Owner Name" required
-            name="ownerName" value={form.ownerName} onChange={handleOwnerNameChange} placeholder="e.g. John Doe" />
+            name="ownerName" value={form.ownerName} onChange={handleOwnerNameChange}
+            placeholder="e.g. John Doe" />
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ overflow: "visible" }}>
-        <Grid xs={6}>
-          <Box>
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>
-              Location <span style={{ color: "#ef4444" }}>*</span>
+      {/* Row 2 */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>
+            Location <span style={{ color: "#ef4444" }}>*</span>
+          </Typography>
+          <SearchableSelect
+            options={locations}
+            value={form.locationId}
+            onChange={(id, name) => setForm((f) => ({ ...f, locationId: id, locationName: name }))}
+            placeholder="— Select location —"
+            searchPlaceholder="Search locations..."
+          />
+          {locations.length === 0 && (
+            <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>
+              ⚠️ No locations loaded.
             </Typography>
-            <SearchableSelect
-              options={locations}
-              value={form.locationId}
-              onChange={(id, name) => setForm((f) => ({ ...f, locationId: id, locationName: name }))}
-              placeholder="— Select location —"
-              searchPlaceholder="Search locations..."
-              required
-            />
-            {locations.length === 0 && (
-              <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>
-                ⚠️ No locations loaded. Please check the Location page.
-              </Typography>
-            )}
-          </Box>
+          )}
         </Grid>
-        <Grid xs={6}>
-          <Box>
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>
-              Outlet Type <span style={{ color: "#ef4444" }}>*</span>
-            </Typography>
-            <SearchableSelect
-              options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
-              value={form.outletType}
-              onChange={(id) => setForm((f) => ({ ...f, outletType: id }))}
-              placeholder="— Select type —"
-              searchPlaceholder="Search types..."
-              required
-            />
-          </Box>
+        <Grid item xs={12} md={6}>
+          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>
+            Outlet Type <span style={{ color: "#ef4444" }}>*</span>
+          </Typography>
+          <SearchableSelect
+            options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
+            value={form.outletType}
+            onChange={(id) => setForm((f) => ({ ...f, outletType: id }))}
+            placeholder="— Select type —"
+            searchPlaceholder="Search types..."
+          />
         </Grid>
       </Grid>
 
-      <TextField fullWidth size="small" label="Address" required multiline rows={2}
-        name="address" value={form.address} onChange={handleAddressChange} placeholder="e.g. 123 Main St, City" />
+      {/* Row 3 */}
+      <TextField fullWidth size="small" label="Address" required multiline rows={3}
+        name="address" value={form.address} onChange={handleAddressChange}
+        placeholder="e.g. 123 Main St, City" />
 
-      {/* Divisions & Products */}
+      {/* Row 4 — Divisions & Products */}
       <Box>
-        <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, display: "block", mb: 1 }}>
+        <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 700, mb: 1 }}>
           Divisions & Products <span style={{ color: "#ef4444" }}>*</span>
-          <span style={{ fontWeight: 400, marginLeft: 6, color: "#94a3b8" }}>(select division then its products)</span>
+          <Typography component="span" variant="caption" sx={{ color: "#94a3b8", fontWeight: 400, ml: 1 }}>
+            (select a division, then pick its products)
+          </Typography>
         </Typography>
 
-        <Grid container spacing={2} sx={{ mb: 1.5, overflow: "visible" }}>
-          <Grid xs={6}>
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>Select Division</Typography>
+        <Grid container spacing={3} sx={{ mb: 2 }}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
             <SearchableSelect
               options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
               value=""
               onChange={handleDivisionSelect}
-              placeholder="— Add division —"
+              placeholder="— Select division —"
               searchPlaceholder="Search divisions..."
             />
           </Grid>
-          <Grid xs={6}>
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>Select Product</Typography>
+          <Grid item xs={12} md={6}>
+            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
             <SearchableSelect
-              options={availableProducts.filter((p) => {
-                const curr = form.mappings[p.divisionId] || [];
-                return !curr.includes(p.id);
-              })}
+              options={availableProducts.filter((p) => !(form.mappings[p.divisionId] || []).includes(p.id))}
               value=""
               onChange={handleProductSelect}
-              placeholder="— Add product —"
+              placeholder="— Select product —"
               searchPlaceholder="Search products..."
               disabled={selectedDivisions.length === 0}
             />
           </Grid>
         </Grid>
 
-        {/* Selected mappings */}
         {selectedDivisions.length > 0 && (
           <Stack spacing={1.5}>
             {selectedDivisions.map((division) => {
@@ -591,10 +571,13 @@ export default function Outlet() {
                 .map((pid) => availableProducts.find((p) => p.id === pid))
                 .filter(Boolean);
               return (
-                <Paper key={division.id} elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: 2, overflow: "hidden" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                <Paper key={division.id} elevation={0}
+                  sx={{ border: "1px solid #e2e8f0", borderRadius: 2, overflow: "hidden" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                    px: 2, py: 1, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
                     <Typography variant="caption" sx={{ fontWeight: 700, color: "#1e293b" }}>{division.name}</Typography>
-                    <IconButton size="small" onClick={() => removeDivision(division.id)} sx={{ color: "#ef4444", p: 0.3 }}>
+                    <IconButton size="small" onClick={() => removeDivision(division.id)}
+                      sx={{ color: "#ef4444", p: 0.3 }}>
                       <CloseIcon sx={{ fontSize: 14 }} />
                     </IconButton>
                   </Box>
@@ -604,13 +587,9 @@ export default function Outlet() {
                     ) : (
                       <Stack direction="row" flexWrap="wrap" gap={0.75}>
                         {selectedProducts.map((product) => (
-                          <Chip
-                            key={product.id}
-                            label={product.name}
-                            size="small"
+                          <Chip key={product.id} label={product.name} size="small"
                             onDelete={() => removeProduct(division.id, product.id)}
-                            sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 600, fontSize: "0.72rem" }}
-                          />
+                            sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 600, fontSize: "0.72rem" }} />
                         ))}
                       </Stack>
                     )}
@@ -624,6 +603,221 @@ export default function Outlet() {
     </Stack>
   );
 
+  /* ── Full-page form panel ── */
+  const isFormOpen = isFormView;
+  const isEdit = !!editModal;
+
+  const renderFormPage = () => (
+    <Box className="animate-fade-in" sx={{ mt: 2 }}>
+      {/* ── Top bar ── */}
+      <Box sx={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        px: 4, py: 2.5,
+        bgcolor: "#fff",
+        borderBottom: "1px solid #e2e8f0",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        flexShrink: 0,
+      }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
+            onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}
+            sx={{ bgcolor: "#f1f5f9", "&:hover": { bgcolor: "#e2e8f0" }, borderRadius: 2 }}>
+            <ArrowBackIcon sx={{ fontSize: 20, color: "#475569" }} />
+          </IconButton>
+          <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: "flex", alignItems: "center", justifyContent: "center",
+            background: isEdit ? "linear-gradient(135deg,#8b5cf6,#6366f1)" : "linear-gradient(135deg,#6366f1,#06b6d4)",
+            boxShadow: isEdit ? "0 4px 14px rgba(139,92,246,0.35)" : "0 4px 14px rgba(99,102,241,0.35)" }}>
+            {isEdit ? <EditIcon sx={{ fontSize: 20, color: "#fff" }} /> : <StorefrontIcon sx={{ fontSize: 20, color: "#fff" }} />}
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>
+              {isEdit ? `Edit Outlet — ${editModal.outletName}` : "Add New Outlet"}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#64748b" }}>
+              {isEdit ? "Update the outlet details below" : "Fill in the details to register a new outlet"}
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <Button variant="outlined" color="inherit"
+            sx={{ color: "#64748b", borderColor: "#e2e8f0", fontWeight: 600, borderRadius: 2 }}
+            onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={saving ? null : (isEdit ? <SaveIcon /> : <AddIcon />)}
+            disabled={saving}
+            onClick={isEdit ? handleUpdate : handleAdd}
+            sx={{
+              bgcolor: isEdit ? "#8b5cf6" : "#6366f1",
+              "&:hover": { bgcolor: isEdit ? "#7c3aed" : "#4f46e5" },
+              color: "#fff", fontWeight: 600, borderRadius: 2, boxShadow: "none",
+              minWidth: 140,
+            }}>
+            {saving ? "Saving…" : (isEdit ? "Save Changes" : "Add Outlet")}
+          </Button>
+        </Box>
+      </Box>
+
+      {/* ── Scrollable content ── */}
+      <Box sx={{ flex: 1, overflowY: "auto", px: { xs: 3, md: 6 }, py: 4 }}>
+        <Box sx={{ maxWidth: 900, mx: "auto" }}>
+          {/* Section: Basic Info */}
+          <Box className="form-section-1" sx={{ mb: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
+              <Box sx={{ width: 34, height: 34, borderRadius: 2, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex",
+                alignItems: "center", justifyContent: "center", boxShadow: "0 3px 10px rgba(99,102,241,0.3)" }}>
+                <HomeWorkIcon sx={{ fontSize: 18, color: "#fff" }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e293b", lineHeight: 1.1 }}>Basic Information</Typography>
+                <Typography variant="caption" sx={{ color: "#94a3b8" }}>Outlet identity and contact details</Typography>
+              </Box>
+            </Box>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid #e2e8f0", bgcolor: "#fff",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField fullWidth size="small" label="Outlet Name" required
+                    name="outletName" value={form.outletName} onChange={handleOutletNameChange}
+                    placeholder="e.g. Main Branch"
+                    InputProps={{ startAdornment: <InputAdornment position="start"><StorefrontIcon sx={{ fontSize: 16, color: "#6366f1" }} /></InputAdornment> }} />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField fullWidth size="small" label="Owner Name" required
+                    name="ownerName" value={form.ownerName} onChange={handleOwnerNameChange}
+                    placeholder="e.g. John Doe"
+                    InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 16, color: "#8b5cf6" }} /></InputAdornment> }} />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <MapIcon sx={{ fontSize: 14, color: "#10b981" }} /> Location <span style={{ color: "#ef4444" }}>*</span>
+                  </Typography>
+                  <SearchableSelect
+                    options={locations}
+                    value={form.locationId}
+                    onChange={(id, name) => setForm((f) => ({ ...f, locationId: id, locationName: name }))}
+                    placeholder="— Select location —"
+                    searchPlaceholder="Search locations..."
+                  />
+                  {locations.length === 0 && (
+                    <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>⚠️ No locations loaded.</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <CategoryIcon sx={{ fontSize: 14, color: "#f59e0b" }} /> Outlet Type <span style={{ color: "#ef4444" }}>*</span>
+                  </Typography>
+                  <SearchableSelect
+                    options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
+                    value={form.outletType}
+                    onChange={(id) => setForm((f) => ({ ...f, outletType: id }))}
+                    placeholder="— Select type —"
+                    searchPlaceholder="Search types..."
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField fullWidth size="small" label="Address" required multiline rows={3}
+                    name="address" value={form.address} onChange={handleAddressChange}
+                    placeholder="e.g. 123 Main St, City"
+                    InputProps={{ startAdornment: <InputAdornment position="start" sx={{ mt: "-44px", alignSelf: "flex-start", pt: "10px" }}><LocationOnIcon sx={{ fontSize: 16, color: "#ef4444" }} /></InputAdornment> }} />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Box>
+
+          {/* Section: Divisions & Products */}
+          <Box className="form-section-2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
+              <Box sx={{ width: 34, height: 34, borderRadius: 2, background: "linear-gradient(135deg,#10b981,#06b6d4)", display: "flex",
+                alignItems: "center", justifyContent: "center", boxShadow: "0 3px 10px rgba(16,185,129,0.3)" }}>
+                <GridViewIcon sx={{ fontSize: 18, color: "#fff" }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e293b", lineHeight: 1.1 }}>
+                  Divisions & Products <span style={{ color: "#ef4444" }}>*</span>
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#94a3b8" }}>Select a division, then pick its products</Typography>
+              </Box>
+            </Box>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid #e2e8f0", bgcolor: "#fff" }}>
+              <Grid container spacing={3} sx={{ mb: 2 }}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
+                  <SearchableSelect
+                    options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
+                    value=""
+                    onChange={handleDivisionSelect}
+                    placeholder="— Select division —"
+                    searchPlaceholder="Search divisions..."
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
+                  <SearchableSelect
+                    options={availableProducts.filter((p) => !(form.mappings[p.divisionId] || []).includes(p.id))}
+                    value=""
+                    onChange={handleProductSelect}
+                    placeholder="— Select product —"
+                    searchPlaceholder="Search products..."
+                    disabled={selectedDivisions.length === 0}
+                  />
+                </Grid>
+              </Grid>
+
+              {selectedDivisions.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: "center", border: "2px dashed #e2e8f0", borderRadius: 2 }}>
+                  <GridViewIcon sx={{ fontSize: 36, color: "#cbd5e1", mb: 1 }} />
+                  <Typography variant="body2" sx={{ color: "#94a3b8" }}>No divisions added yet. Select a division above to get started.</Typography>
+                </Box>
+              ) : (
+                <Stack spacing={1.5}>
+                  {selectedDivisions.map((division) => {
+                    const selectedProducts = (form.mappings[division.id] || [])
+                      .map((pid) => availableProducts.find((p) => p.id === pid))
+                      .filter(Boolean);
+                    return (
+                      <Paper key={division.id} elevation={0}
+                        sx={{ border: "1px solid #e2e8f0", borderRadius: 2, overflow: "hidden" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                          px: 2, py: 1.25, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#6366f1" }} />
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>{division.name}</Typography>
+                            <Chip label={`${selectedProducts.length} product${selectedProducts.length !== 1 ? "s" : ""}`}
+                              size="small" sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 700, height: 20, fontSize: "0.7rem" }} />
+                          </Box>
+                          <IconButton size="small" onClick={() => removeDivision(division.id)}
+                            sx={{ color: "#ef4444", "&:hover": { bgcolor: "#fef2f2" } }}>
+                            <CloseIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Box>
+                        <Box sx={{ p: 2 }}>
+                          {selectedProducts.length === 0 ? (
+                            <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products selected for this division</Typography>
+                          ) : (
+                            <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                              {selectedProducts.map((product) => (
+                                <Chip key={product.id} label={product.name} size="small"
+                                  onDelete={() => removeProduct(division.id, product.id)}
+                                  sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 600, fontSize: "0.75rem" }} />
+                              ))}
+                            </Stack>
+                          )}
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Paper>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -631,12 +825,27 @@ export default function Outlet() {
         {/* ── Hero ── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>Outlet Management</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} color="primary"
-            sx={{ boxShadow: "none", "&:hover": { boxShadow: "none" } }}
-            onClick={openAddModal}>
-            Add Outlet
-          </Button>
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Button variant="outlined" startIcon={<UploadFileIcon />}
+              sx={{ borderColor: "#6366f1", color: "#6366f1", fontWeight: 600, textTransform: "none", borderRadius: 2,
+                "&:hover": { bgcolor: "#eef2ff", borderColor: "#6366f1" } }}
+              onClick={() => setBulkOpen(true)}>
+              Bulk Upload
+            </Button>
+            <ExportMenu getData={() => formatOutletData(filtered)} filename="outlets" title="Outlets Report" backendType="outlets" />
+            <Button variant="contained" startIcon={<AddIcon />} color="primary"
+              sx={{ boxShadow: "none", "&:hover": { boxShadow: "none" } }}
+              onClick={openAddModal}>
+              Add Outlet
+            </Button>
+          </Box>
         </Box>
+
+        {isFormView && (
+          <Box sx={{ mb: 4 }}>
+            {renderFormPage()}
+          </Box>
+        )}
 
         {/* ── Stats ── */}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
@@ -961,37 +1170,6 @@ export default function Outlet() {
           </Box>
         )}
 
-        {/* ── Add Modal ── */}
-        <Dialog open={addModal} onClose={() => { setAddModal(false); setForm(EMPTY_FORM); }} maxWidth="sm" fullWidth PaperProps={{ sx: { overflow: "visible !important" } }}>
-          <ModalIconHeader icon={<AddIcon />} title="Add Outlet" subtitle="Register a new outlet" accent="#6366f1"
-            onClose={() => { setAddModal(false); setForm(EMPTY_FORM); }} />
-          <DialogContent sx={{ pt: 2, pb: 12, overflow: "visible !important", minHeight: "550px" }}>{renderFormFields()}</DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
-              onClick={() => { setAddModal(false); setForm(EMPTY_FORM); }}>Cancel</Button>
-            <Button variant="contained" startIcon={<AddIcon />} disabled={saving} color="primary"
-              sx={{ boxShadow: "none" }} onClick={handleAdd}>
-              {saving ? "Adding…" : "Add Outlet"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* ── Edit Modal ── */}
-        <Dialog open={!!editModal} onClose={() => { setEditModal(null); setForm(EMPTY_FORM); }} maxWidth="sm" fullWidth PaperProps={{ sx: { overflow: "visible !important" } }}>
-          <ModalIconHeader icon={<EditIcon />} title="Edit Outlet" subtitle={editModal ? `Editing: ${editModal.outletName}` : ""} accent="#8b5cf6"
-            onClose={() => { setEditModal(null); setForm(EMPTY_FORM); }} />
-          <DialogContent sx={{ pt: 2, pb: 12, overflow: "visible !important", minHeight: "550px" }}>{renderFormFields()}</DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
-              onClick={() => { setEditModal(null); setForm(EMPTY_FORM); }}>Cancel</Button>
-            <Button variant="contained" startIcon={<EditIcon />} disabled={saving}
-              sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, color: "#fff", boxShadow: "none" }}
-              onClick={handleUpdate}>
-              {saving ? "Saving…" : "Save Changes"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
         {/* ── Delete Modal ── */}
         <Dialog open={!!deleteModal} onClose={() => setDeleteModal(null)} maxWidth="xs" fullWidth>
           <ModalIconHeader icon={<WarningAmberIcon />} title="Delete Outlet" subtitle="This action cannot be undone" accent="#ef4444"
@@ -1023,6 +1201,40 @@ export default function Outlet() {
             {toast?.message}
           </Alert>
         </Snackbar>
+
+        {/* ── Bulk Upload Modal ── */}
+        <BulkUploadModal
+          open={bulkOpen}
+          onClose={() => setBulkOpen(false)}
+          title="Bulk Upload Outlets"
+          accent="#6366f1"
+          templateHeaders={["outletName", "ownerName", "address", "locationId", "outletType"]}
+          templateRows={[
+            ["Main Branch", "John Doe", "123 Main St", "1", "Retail"],
+            ["North Hub", "Jane Smith", "45 North Ave", "2", "Wholesale"],
+          ]}
+          parseRow={(row) => {
+            const outletName   = (row["outletname"]   || row["outletName"]   || "").trim();
+            const ownerName    = (row["ownername"]    || row["ownerName"]    || "").trim();
+            const address      = (row["address"]      || "").trim();
+            const locationId   = (row["locationid"]   || row["locationId"]   || "").trim();
+            const outletType   = (row["outlettype"]   || row["outletType"]   || "").trim();
+            if (!outletName)  return { valid: false, error: "outletName is required" };
+            if (/\d/.test(outletName)) return { valid: false, error: "outletName cannot contain numbers" };
+            if (!ownerName)   return { valid: false, error: "ownerName is required" };
+            if (/\d/.test(ownerName))  return { valid: false, error: "ownerName cannot contain numbers" };
+            if (!address)     return { valid: false, error: "address is required" };
+            if (!locationId)  return { valid: false, error: "locationId is required" };
+            if (!outletType)  return { valid: false, error: "outletType is required" };
+            if (!OUTLET_TYPES.includes(outletType)) return { valid: false, error: `outletType must be one of: ${OUTLET_TYPES.join(", ")}` };
+            return {
+              valid: true,
+              data: { outletName, ownerName, address, locationId: Number(locationId), outletType, mappings: [] },
+            };
+          }}
+          onUpload={(rows) => bulkCreateOutlets(rows)}
+          onDone={() => fetchAll(true)}
+        />
 
       </Box>
     </ThemeProvider>

@@ -37,8 +37,13 @@ public class Product extends BaseAuditEntity {
     private BigDecimal sellingPrice;
     private BigDecimal purchasePrice;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String image;
+
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "division_id")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Division division;
 }

@@ -42,19 +42,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String username;
+        String authHeader = request.getHeader("Authorization");
+        String jwt = null;
+        String username = null;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\":401,\"message\":\"Unauthorized - Token required\",\"data\":null}");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        } else if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName())) {
+                    jwt = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (jwt == null) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
         try {
             username = jwtService.extractUsername(jwt);
         } catch (Exception e) {

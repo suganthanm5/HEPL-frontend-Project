@@ -37,7 +37,7 @@ public class OrderServiceImpl implements OrderService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
-        
+
         if (currentUser.getRole() == User.Role.USER) {
             return orderRepository.findFilteredOrders(status, outletId, orderNo, currentUser.getId(), pageable);
         } else if (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() != null) {
@@ -78,7 +78,8 @@ public class OrderServiceImpl implements OrderService {
             if (!mappingRepository.existsByOutletIdAndProductId(request.getOutletId(), itemRequest.getProductId())) {
                 Product product = productRepository.findById(itemRequest.getProductId())
                         .orElseThrow(() -> new ResourceNotFoundException("Product", "id", itemRequest.getProductId()));
-                throw new RuntimeException("Product '" + product.getName() + "' is not mapped to outlet '" + outlet.getOutletName() + "'");
+                throw new RuntimeException(
+                        "Product '" + product.getName() + "' is not mapped to outlet '" + outlet.getOutletName() + "'");
             }
         }
 
@@ -99,7 +100,8 @@ public class OrderServiceImpl implements OrderService {
             // If batch is specified, fetch it and use its selling price
             if (itemRequest.getBatchId() != null) {
                 batch = productBatchRepository.findById(itemRequest.getBatchId())
-                        .orElseThrow(() -> new ResourceNotFoundException("ProductBatch", "id", itemRequest.getBatchId()));
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("ProductBatch", "id", itemRequest.getBatchId()));
                 price = batch.getSellingPrice() != null ? batch.getSellingPrice() : price;
             }
 

@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import {
-  getDivisions, createDivision, updateDivision, deleteDivision,
+  getDivisions, createDivision, updateDivision, deleteDivision, bulkCreateDivisions,
 } from "../../services/divisionService";
 import {
   getProductsByDivision, createProduct, deleteProduct,
 } from "../../services/productService";
+import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import { formatDivisionData } from "../../utils/exportUtils";
 
 import { styled } from "@mui/material/styles";
 import Table from "@mui/material/Table";
@@ -27,6 +29,7 @@ import {
   Box,
   Typography,
   Grid,
+  Stack,
   Card,
   CardContent,
   Avatar,
@@ -54,6 +57,8 @@ import WarningIcon from "@mui/icons-material/Warning";
 import FolderIcon from "@mui/icons-material/Folder";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import BulkUploadModal from "../../components/BulkUploadModal";
 
 /* ── MUI Styled Table (same black header as original) ── */
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -145,9 +150,7 @@ const Division = () => {
   const [page, setPage]                   = useState(1);
   const [totalPages, setTotalPages]       = useState(1);
   const [totalElements, setTotalElements] = useState(0);
-  const [view, setView]                   = useState("table");
-
-  const [addModal, setAddModal]       = useState(false);
+  const [isFormView, setIsFormView]       = useState(false);
   const [editModal, setEditModal]     = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
   const [viewModal, setViewModal]     = useState(null);
@@ -156,9 +159,11 @@ const Division = () => {
   const [editName, setEditName] = useState("");
   const [saving, setSaving]     = useState(false);
   const [toast, setToast]       = useState(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const [productCountFilter, setProductCountFilter] = useState("");
   const [dateFilter, setDateFilter]                 = useState("");
+  const [view, setView]                             = useState("table");
 
   const [productModal, setProductModal] = useState(null);
   const [products, setProducts]         = useState([]);
@@ -228,7 +233,8 @@ const Division = () => {
   }, [search]);
 
   const fetchDivisions = async (signal) => {
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
     try {
       const res = await getDivisions(page - 1, pageSize, searchTerm, signal);
       console.log('[DEBUG] getDivisions response:', res);
@@ -305,7 +311,7 @@ const Division = () => {
         );
       }
       if (failedDivisions.length > 0) showToast(`Failed to add: ${failedDivisions.join(", ")}`, "error");
-      setAddName(""); setAddModal(false);
+      setAddName(""); setIsFormView(false);
       if (page === 1) fetchDivisions(); else setPage(1);
     } catch (e) {
       showToast("Failed to add divisions: " + (e.response?.data?.message || e.message), "error");
@@ -317,7 +323,7 @@ const Division = () => {
     setSaving(true);
     try {
       await updateDivision(editModal.id, { name: editName.trim() });
-      setEditModal(null); fetchDivisions();
+      setEditModal(null); setIsFormView(false); fetchDivisions();
     } catch (e) {
       alert("Failed to update: " + (e.response?.data?.message || e.message));
     } finally { setSaving(false); }
@@ -393,7 +399,7 @@ const Division = () => {
     }
   };
 
-  const openEdit = d => { setEditModal(d); setEditName(d.name); };
+  const openEdit = d => { setEditModal(d); setEditName(d.name); setIsFormView(true); };
 
   const safePage = Math.min(page, totalPages || 1);
   const start    = totalElements === 0 ? 0 : (safePage - 1) * pageSize + 1;
@@ -411,26 +417,114 @@ const Division = () => {
             Manage and organize your business division units
           </Typography>
         </Box>
-        <Button 
-          variant="contained" 
-          onClick={() => { setAddName(""); setAddModal(true); }}
-          startIcon={<AddIcon />}
-          sx={{ 
-            borderRadius: 2.5, 
-            textTransform: "none", 
-            bgcolor: "#6366f1", 
-            "&:hover": { bgcolor: "#4f46e5" },
-            boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)",
-            px: 3,
-            py: 1.25,
-            fontWeight: 600
-          }}
-        >
-          Add Division
-        </Button>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setBulkOpen(true)}
+            startIcon={<UploadFileIcon />}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: "none",
+              borderColor: "#6366f1",
+              color: "#6366f1",
+              "&:hover": { bgcolor: "#f5f3ff", borderColor: "#6366f1" },
+              px: 2.5,
+              py: 1.25,
+              fontWeight: 600
+            }}
+          >
+            Bulk Upload
+          </Button>
+          <ExportMenu getData={() => formatDivisionData(filteredDivisions)} filename="divisions" title="Divisions Report" backendType="divisions" />
+          <Button
+            variant="contained"
+            onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
+            startIcon={<AddIcon />}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: "none",
+              bgcolor: "#6366f1",
+              "&:hover": { bgcolor: "#4f46e5" },
+              boxShadow: "0 4px 12px rgba(99, 102, 241, 0.25)",
+              px: 3,
+              py: 1.25,
+              fontWeight: 600
+            }}
+          >
+            Add Division
+          </Button>
+        </Box>
       </Box>
 
-      {/* ── Stat Cards ── */}
+      {isFormView ? (
+        /* ── Full Page Form View ── */
+        <Box className="animate-fade-in">
+          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton onClick={() => { setIsFormView(false); setEditModal(null); setAddName(""); }} sx={{ color: "#64748b" }}>
+                  <CloseIcon />
+                </IconButton>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b" }}>
+                    {editModal ? "Edit Division" : "Add New Division"}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b" }}>
+                    {editModal ? `Updating details for ${editModal.name}` : "Fill in the details to create a new division"}
+                  </Typography>
+                </Box>
+              </Box>
+              <Stack direction="row" spacing={1.5}>
+                <Button variant="outlined" color="inherit" onClick={() => { setIsFormView(false); setEditModal(null); setAddName(""); }}
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0" }}>
+                  Cancel
+                </Button>
+                <Button variant="contained" startIcon={editModal ? <EditIcon /> : <AddIcon />} 
+                  disabled={saving || (editModal ? !editName.trim() : !addName.trim())}
+                  sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, color: "#fff", boxShadow: "none" }}
+                  onClick={editModal ? handleUpdate : handleAdd}>
+                  {saving ? "Saving…" : editModal ? "Save Changes" : "Create Division"}
+                </Button>
+              </Stack>
+            </Box>
+
+            <Box sx={{ p: { xs: 2, md: 4 } }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ width: 4, height: 16, bgcolor: "#6366f1", borderRadius: 1 }} />
+                      Division Details
+                    </Typography>
+                    <TextField 
+                      fullWidth 
+                      label="Division Name" 
+                      value={editModal ? editName : addName} 
+                      onChange={(e) => handleInputChange(e.target.value, editModal ? setEditName : setAddName)} 
+                      required 
+                      placeholder={editModal ? "" : "e.g. Dairy, Electronics (comma separated for multiple)"} 
+                      helperText={!editModal && "You can add multiple divisions by separating them with commas"}
+                      variant="outlined" 
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 1 }}>Quick Tips</Typography>
+                    <ul style={{ paddingLeft: 20, margin: 0, color: "#64748b", fontSize: "0.85rem" }}>
+                      <li>Division names should be unique.</li>
+                      <li>Only letters and spaces are allowed.</li>
+                      <li>Use commas to bulk-add multiple divisions at once.</li>
+                    </ul>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
+        </Box>
+      ) : (
+        <>
+          {/* ── Stat Cards ── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
           { label: "Total Divisions", value: loading ? "—" : totalElements, icon: <FolderIcon />, color: "#6366f1", bg: "#f5f3ff" },
@@ -624,7 +718,7 @@ const Division = () => {
                         </Typography>
                         {!searchTerm && (
                           <Button 
-                            onClick={() => { setAddName(""); setAddModal(true); }}
+                            onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
                             variant="contained"
                             startIcon={<AddIcon />}
                             sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#6366f1" }}
@@ -701,7 +795,7 @@ const Division = () => {
                 </Typography>
                 {!searchTerm && (
                   <Button 
-                    onClick={() => { setAddName(""); setAddModal(true); }}
+                    onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
                     variant="contained"
                     startIcon={<AddIcon />}
                     sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#6366f1" }}
@@ -834,6 +928,8 @@ const Division = () => {
           </Box>
         </Box>
       )}
+    </>
+  )}
 
       {/* ── View Modal ── */}
       {viewModal && (
@@ -957,72 +1053,6 @@ const Division = () => {
         </Modal>
       )}
 
-      {/* ── Add Modal ── */}
-      {addModal && (
-        <Modal title="Add Divisions" subtitle="Create one or multiple division units" icon={<AddIcon />} onClose={() => { setAddModal(false); setAddName(""); }} accent="#6366f1">
-          <Box sx={{ py: 1 }}>
-            <TextField 
-              fullWidth label="Division Names" required autoFocus
-              placeholder="e.g. North Region, South Region (separate with commas)"
-              value={addName}
-              onChange={e => handleInputChange(e.target.value, setAddName)}
-              onKeyDown={e => e.key === "Enter" && handleAdd()}
-              helperText="💡 Tip: You can add multiple divisions at once by separating them with commas"
-            />
-          </Box>
-          <DialogActions sx={{ px: 0, pt: 3 }}>
-            <Button 
-              onClick={() => { setAddModal(false); setAddName(""); }} 
-              variant="outlined"
-              sx={{ borderRadius: 2, textTransform: "none", color: "#64748b", borderColor: "#e2e8f0" }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAdd} 
-              disabled={saving || !addName.trim()} 
-              variant="contained"
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
-              sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" }, boxShadow: "none" }}
-            >
-              {saving ? "Adding…" : "Add Divisions"}
-            </Button>
-          </DialogActions>
-        </Modal>
-      )}
-
-      {/* ── Edit Modal ── */}
-      {editModal && (
-        <Modal title="Edit Division" subtitle={`Editing: ${editModal.name}`} icon={<EditIcon />} onClose={() => setEditModal(null)} accent="#8b5cf6">
-          <Box sx={{ py: 1 }}>
-            <TextField 
-              fullWidth label="Division Name" required autoFocus
-              placeholder="Division name" value={editName}
-              onChange={e => handleInputChange(e.target.value, setEditName)}
-              onKeyDown={e => e.key === "Enter" && handleUpdate()}
-            />
-          </Box>
-          <DialogActions sx={{ px: 0, pt: 3 }}>
-            <Button 
-              onClick={() => setEditModal(null)} 
-              variant="outlined"
-              sx={{ borderRadius: 2, textTransform: "none", color: "#64748b", borderColor: "#e2e8f0" }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleUpdate} 
-              disabled={saving || !editName.trim()} 
-              variant="contained"
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <EditIcon />}
-              sx={{ borderRadius: 2, textTransform: "none", bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" }, boxShadow: "none" }}
-            >
-              {saving ? "Saving…" : "Save Changes"}
-            </Button>
-          </DialogActions>
-        </Modal>
-      )}
-
       {deleteModal && (
         <Modal title="Delete Division" subtitle="This action cannot be undone" icon={<WarningIcon />} onClose={() => setDeleteModal(null)} accent="#ef4444">
           <Box sx={{ py: 1 }}>
@@ -1051,6 +1081,24 @@ const Division = () => {
           </DialogActions>
         </Modal>
       )}
+
+      {/* ── Bulk Upload Modal ── */}
+      <BulkUploadModal
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        title="Bulk Upload Divisions"
+        accent="#6366f1"
+        templateHeaders={["name"]}
+        templateRows={[["North Region"],["South Region"],["East Region"]]}
+        parseRow={(row) => {
+          const name = (row["name"] || "").trim();
+          if (!name) return { valid: false, error: "Name is required" };
+          if (/[^a-zA-Z\s,]/.test(name)) return { valid: false, error: "Only letters and spaces allowed" };
+          return { valid: true, data: { name } };
+        }}
+        onUpload={(rows) => bulkCreateDivisions(rows.map((r) => r.name))}
+        onDone={() => { if (page === 1) fetchDivisions(); else setPage(1); }}
+      />
 
       {/* ── MUI Toast Implementation ── */}
       <Snackbar

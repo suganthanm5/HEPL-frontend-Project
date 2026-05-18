@@ -10,4 +10,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LocationRepository extends JpaRepository<Location, Long>, JpaSpecificationExecutor<Location> {
     Page<Location> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM locations WHERE LOWER(name) = LOWER(:name)", nativeQuery = true)
+    java.util.Optional<Location> findByNameIncludingDeleted(@org.springframework.data.repository.query.Param("name") String name);
 }

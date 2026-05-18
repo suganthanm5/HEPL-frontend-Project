@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Box, Typography, ButtonBase, InputBase,
+  Box, Typography, Button, ButtonBase, InputBase,
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
   CircularProgress, Snackbar, Alert, IconButton, Paper,
+  Grid, Stack,
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, EditRounded,
@@ -15,6 +16,8 @@ import {
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { batchService } from "../../services/batchService";
 import { productService } from "../../services/productService";
+import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import { formatBatchData } from "../../utils/exportUtils";
 import "./Batch.css";
 import "../UserManagement/UserManagement.css"; /* shared page styles */
 
@@ -42,6 +45,7 @@ const Batch = () => {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
+  const [isFormView, setIsFormView] = useState(false);
   const [filters,  setFilters]  = useState({ productId: "", status: "" });
   const [dialog,   setDialog]   = useState({ open: false, mode: "add", data: emptyForm });
   const [delDialog, setDelDialog] = useState({ open: false, id: null });
@@ -125,6 +129,7 @@ const Batch = () => {
         toast("Batch updated successfully");
       }
       setDialog({ open: false, mode: "add", data: emptyForm });
+      setIsFormView(false);
       // Reset filters and reload immediately to show newly created/updated batch
       setFilters({ productId: "", status: "" });
       setSearch("");
@@ -173,17 +178,148 @@ const Batch = () => {
 
   return (
     <Box className="batch-page">
-      {/* Header */}
-      <Box className="page-header">
-        <Box className="page-header-left">
-          <Typography className="page-title">Batch Management</Typography>
-          <Typography className="page-subtitle">Track product batches and expiry</Typography>
+      {isFormView ? (
+        /* ── Full Page Form View ── */
+        <Box className="animate-fade-in">
+          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }} sx={{ color: "#64748b" }}>
+                  <CloseRounded />
+                </IconButton>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>
+                    {dialog.mode === "add" ? "Create Batch" : "Edit Batch"}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
+                    {dialog.mode === "add" ? "Define a new product batch with expiry details" : `Updating batch ${dialog.data.batchNo}`}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button variant="outlined" color="inherit" 
+                  onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }}
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
+                  Cancel
+                </Button>
+                <Button variant="contained" startIcon={<CheckRounded />} 
+                  onClick={handleSave}
+                  sx={{ 
+                    borderRadius: "50px", 
+                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)", 
+                    color: "#fff", 
+                    textTransform: "none",
+                    px: 4,
+                    boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
+                    "&:hover": { background: "linear-gradient(135deg, #6b21c1, #9333ea)" }
+                  }}>
+                  {dialog.mode === "add" ? "Add Batch" : "Save Changes"}
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ p: { xs: 2, md: 4 } }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={8}>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+                    <Box sx={{ gridColumn: "1 / -1" }}>
+                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Product *</Typography>
+                      <SearchableSelect
+                        options={products.map((p) => ({ id: p.id, name: p.name }))}
+                        value={dialog.data.productId}
+                        onChange={(id) => {
+                          const selected = products.find((p) => String(p.id) === String(id));
+                          setDialog((d) => ({
+                            ...d,
+                            data: {
+                              ...d.data,
+                              productId: id,
+                              purchasePrice: selected?.purchasePrice ?? d.data.purchasePrice,
+                              sellingPrice:  selected?.sellingPrice  ?? d.data.sellingPrice,
+                            },
+                          }));
+                        }}
+                        placeholder="— Select Product —"
+                        searchPlaceholder="Search products..."
+                      />
+                    </Box>
+                    {[
+                      { key: "batchNo",       label: "Batch No",       type: "text" },
+                      { key: "quantity",      label: "Quantity",        type: "number" },
+                      { key: "manufactureDate", label: "Manufacture Date", type: "date" },
+                      { key: "expiryDate",    label: "Expiry Date",    type: "date" },
+                      { key: "purchasePrice", label: "Purchase Price ₹", type: "number" },
+                      { key: "sellingPrice",  label: "Selling Price ₹",  type: "number" },
+                    ].map(({ key, label, type }) => (
+                      <Box key={key}>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>{label} *</Typography>
+                        <TextField fullWidth size="small" type={type} required
+                          InputLabelProps={type === "date" ? { shrink: true } : {}}
+                          value={dialog.data[key]}
+                          onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, [key]: e.target.value } }))}
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                      </Box>
+                    ))}
+                    <Box>
+                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Status *</Typography>
+                      <FormControl fullWidth size="small" required>
+                        <Select value={dialog.data.status}
+                          onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, status: e.target.value } }))}
+                          sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
+                          <MenuItem value="ACTIVE" sx={{ fontFamily: "Poppins, sans-serif" }}>Active</MenuItem>
+                          <MenuItem value="INACTIVE" sx={{ fontFamily: "Poppins, sans-serif" }}>Inactive</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "100%" }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e1b4b", mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                      <InventoryRounded sx={{ color: "#7d2ae8" }} /> Batch Overview
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "#64748b" }}>Batch Identifier</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 700 }}>{dialog.data.batchNo || "—"}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "#64748b" }}>Calculated Expiry</Typography>
+                        <Typography variant="body1" sx={{ 
+                          fontWeight: 700, 
+                          color: expiryClass(dialog.data.expiryDate) === "expired" ? "#ef4444" : 
+                                 expiryClass(dialog.data.expiryDate) === "warning" ? "#ca8a04" : "#1e1b4b"
+                        }}>
+                          {dialog.data.expiryDate || "—"}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "#64748b" }}>Stock Value</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 700 }}>
+                          ₹{(Number(dialog.data.quantity) * Number(dialog.data.purchasePrice)).toLocaleString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
         </Box>
-        <ButtonBase onClick={() => setDialog({ open: true, mode: "add", data: emptyForm })} disableRipple
-          sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)", transition: "all 0.25s ease" }}>
-          <AddRounded sx={{ fontSize: 18 }} /> Add Batch
-        </ButtonBase>
-      </Box>
+      ) : (
+        <>
+          {/* Header */}
+          <Box className="page-header">
+            <Box className="page-header-left">
+              <Typography className="page-title">Batch Management</Typography>
+              <Typography className="page-subtitle">Track product batches and expiry</Typography>
+            </Box>
+            <ButtonBase onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }} disableRipple
+              sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)", transition: "all 0.25s ease" }}>
+              <AddRounded sx={{ fontSize: 18 }} /> Add Batch
+            </ButtonBase>
+          </Box>
+
 
       {/* Stat Cards */}
       <Box className="stat-cards-row">
@@ -210,6 +346,7 @@ const Batch = () => {
         <Box className="table-toolbar">
           <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
             <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>All Batches</Typography>
+            <ExportMenu getData={() => formatBatchData(filtered)} filename="batches" title="Batch Report" backendType="batches" />
             
             {/* Product Filter */}
             <Select 
@@ -285,7 +422,7 @@ const Batch = () => {
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 0.75 }}>
-                          <Tooltip title="Edit"><ButtonBase className="action-btn edit" onClick={() => setDialog({ open: true, mode: "edit", data: { ...b } })} disableRipple><EditRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
+                          <Tooltip title="Edit"><ButtonBase className="action-btn edit" onClick={() => { setDialog({ open: true, mode: "edit", data: { ...b } }); setIsFormView(true); }} disableRipple><EditRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
                           <Tooltip title="Delete"><ButtonBase className="action-btn delete" onClick={() => setDelDialog({ open: true, id: b.id })} disableRipple><DeleteRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
                         </Box>
                       </TableCell>
@@ -297,77 +434,11 @@ const Batch = () => {
           </Table>
         </TableContainer>
       </Box>
+    </>
+  )}
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={dialog.open} onClose={() => setDialog({ open: false, mode: "add", data: emptyForm })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle className="user-dialog-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {dialog.mode === "add" ? "Add Batch" : "Edit Batch"}
-          <IconButton onClick={() => setDialog({ open: false, mode: "add", data: emptyForm })} size="small" sx={{ color: "#64748b" }}>
-            <CloseRounded />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3, pb: 1 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-            {[
-              { key: "batchNo",       label: "Batch No",       type: "text" },
-              { key: "quantity",      label: "Quantity",        type: "number" },
-              { key: "manufactureDate", label: "Manufacture Date", type: "date" },
-              { key: "expiryDate",    label: "Expiry Date",    type: "date" },
-              { key: "purchasePrice", label: "Purchase Price ₹", type: "number" },
-              { key: "sellingPrice",  label: "Selling Price ₹",  type: "number" },
-            ].map(({ key, label, type }) => (
-              <Box key={key}>
-                <Typography className="dialog-field-label">{label} *</Typography>
-                <TextField fullWidth size="small" type={type} required
-                  InputLabelProps={type === "date" ? { shrink: true } : {}}
-                  value={dialog.data[key]}
-                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, [key]: e.target.value } }))}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-              </Box>
-            ))}
-            <Box>
-              <Typography className="dialog-field-label">Product *</Typography>
-              <SearchableSelect
-                options={products.map((p) => ({ id: p.id, name: p.name }))}
-                value={dialog.data.productId}
-                onChange={(id) => {
-                  const selected = products.find((p) => String(p.id) === String(id));
-                  setDialog((d) => ({
-                    ...d,
-                    data: {
-                      ...d.data,
-                      productId: id,
-                      purchasePrice: selected?.purchasePrice ?? d.data.purchasePrice,
-                      sellingPrice:  selected?.sellingPrice  ?? d.data.sellingPrice,
-                    },
-                  }));
-                }}
-                placeholder="— Select Product —"
-                searchPlaceholder="Search products..."
-              />
-            </Box>
-            <Box>
-              <Typography className="dialog-field-label">Status *</Typography>
-              <FormControl fullWidth size="small" required>
-                <Select value={dialog.data.status}
-                  onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, status: e.target.value } }))}
-                  sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}>
-                  <MenuItem value="ACTIVE" sx={{ fontFamily: "Poppins, sans-serif" }}>Active</MenuItem>
-                  <MenuItem value="INACTIVE" sx={{ fontFamily: "Poppins, sans-serif" }}>Inactive</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <ButtonBase onClick={() => setDialog({ open: false, mode: "add", data: emptyForm })} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>Cancel</ButtonBase>
-          <ButtonBase onClick={handleSave} disableRipple
-            sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600, boxShadow: "0 4px 12px rgba(125,42,232,0.35)" }}>
-            <CheckRounded sx={{ fontSize: 16 }} />{dialog.mode === "add" ? "Create" : "Save"}
-          </ButtonBase>
-        </DialogActions>
-      </Dialog>
+  {/* Add/Edit Dialog (REPLACED) */}
+      {/* Add/Edit Dialog (REPLACED) */}
 
       {/* Delete Dialog */}
       <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>

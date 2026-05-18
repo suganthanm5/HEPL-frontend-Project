@@ -48,6 +48,7 @@ public class User implements UserDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "outlet_id")
     @JsonIgnore
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Outlet outlet;
 
     @Builder.Default

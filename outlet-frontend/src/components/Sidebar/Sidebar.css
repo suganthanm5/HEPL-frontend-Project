@@ -268,6 +268,64 @@
 .nav-section-label {
   font-size: 0.65rem;
   font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+
+.role-switcher-wrap {
+  padding: 0 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: -10px;
+}
+
+.role-switcher-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 8px !important;
+  letter-spacing: 1px;
+}
+
+.role-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.role-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.role-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.role-chip.active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #818cf8;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.dark-theme .role-chip {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .role-chip.active {
+  background: #4f46e5;
+}
+
+.nav-section-label {
   letter-spacing: 1.2px;
   color: var(--color-text-placeholder);
   padding: 14px 10px 6px;

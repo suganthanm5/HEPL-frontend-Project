@@ -20,12 +20,23 @@ const deleteOutlet = async (id) => {
   await API.delete(`${ENDPOINTS.outlets}/${id}`);
 };
 
+const bulkCreateOutlets = async (rows) => {
+  const res = await API.post(`${ENDPOINTS.outlets}/bulk`, rows);
+  const result = res.data?.data;
+  return (result?.results || []).map((r) => ({
+    name: r.name,
+    success: r.success,
+    error: r.error || "",
+  }));
+};
+
 export const outletService = {
     getAll: getOutlets,
     getOutlets,
     createOutlet,
     updateOutlet,
-    deleteOutlet
+    deleteOutlet,
+    bulkCreateOutlets,
 };
 
-export { getOutlets, createOutlet, updateOutlet, deleteOutlet };
+export { getOutlets, createOutlet, updateOutlet, deleteOutlet, bulkCreateOutlets };

@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
 import bgImage from "../../assets/outlet-bg.jpg";
 import icon from "../../assets/login-icon.png";
-import { loginUser } from "../../services/authService"; 
+import { loginUser } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
@@ -25,13 +25,13 @@ const Login = () => {
             setError("Enter username and password");
             return;
         }
-        
+
         setError("");
         setIsLoading(true);
 
         try {
             const res = await loginUser({ username, password });
-            
+
             // Backend uses ApiResponse { data: { token, role, ... } }
             const payload = res.data?.data || res.data;
             const token = payload?.token;
@@ -45,9 +45,9 @@ const Login = () => {
                     role: payload.role || 'USER',
                     outletId: payload.outletId || null
                 };
-                
+
                 login(userData, token);
-                
+
                 console.log('✅ Login successful, user data:', userData);
                 navigate("/dashboard", { replace: true });
             } else {
@@ -55,7 +55,7 @@ const Login = () => {
             }
         } catch (error) {
             console.error("❌ Login error:", error.response?.data || error.message);
-            
+
             if (error.response?.data) {
                 setError(error.response.data.message || 'Invalid username or password');
             } else {
@@ -119,8 +119,8 @@ const Login = () => {
                             <span className="forgot">Forgot Password?</span>
                         </div>
 
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="login-btn"
                             disabled={isLoading}
                         >

@@ -2,6 +2,8 @@ package com.example.outletmanagement.service.impl;
 
 import com.example.outletmanagement.entity.Division;
 import com.example.outletmanagement.payload.dto.request.DivisionRequest;
+import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
+import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.DivisionResponse;
 import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.DivisionRepository;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,9 +27,18 @@ public class DivisionServiceImpl implements DivisionService {
 
     @Override
     public DivisionResponse createDivision(DivisionRequest request) {
-        if (divisionRepository.findAll().stream().anyMatch(d -> d.getName().equalsIgnoreCase(request.getName()))) {
-            throw new RuntimeException("Division with name '" + request.getName() + "' already exists");
+        java.util.Optional<Division> existingOpt = divisionRepository.findByNameIncludingDeleted(request.getName());
+        if (existingOpt.isPresent()) {
+            Division existing = existingOpt.get();
+            if (existing.getIsDeleted() != null && existing.getIsDeleted()) {
+                existing.setIsDeleted(false);
+                Division restored = divisionRepository.save(existing);
+                return mapToResponse(restored);
+            } else {
+                throw new RuntimeException("Division with name '" + request.getName() + "' already exists");
+            }
         }
+        
         Division division = Division.builder()
                 .name(request.getName())
                 .build();
@@ -62,9 +74,17 @@ public class DivisionServiceImpl implements DivisionService {
     public DivisionResponse updateDivision(Long id, DivisionRequest request) {
         Division division = divisionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + id));
-        
-        if (divisionRepository.findAll().stream().anyMatch(d -> !d.getId().equals(id) && d.getName().equalsIgnoreCase(request.getName()))) {
-            throw new RuntimeException("Division with name '" + request.getName() + "' already exists");
+
+        java.util.Optional<Division> existingOpt = divisionRepository.findByNameIncludingDeleted(request.getName());
+        if (existingOpt.isPresent()) {
+            Division existing = existingOpt.get();
+            if (!existing.getId().equals(id)) {
+                if (existing.getIsDeleted() != null && existing.getIsDeleted()) {
+                    throw new RuntimeException("A deleted division with this name already exists. Please restore it by adding it as a new division.");
+                } else {
+                    throw new RuntimeException("Division with name '" + request.getName() + "' already exists");
+                }
+            }
         }
 
         division.setName(request.getName());
@@ -81,11 +101,37 @@ public class DivisionServiceImpl implements DivisionService {
     }
 
     @Override
+    @Transactional
     public void deleteDivision(Long id) {
         if (!divisionRepository.existsById(id)) {
             throw new RuntimeException("Division not found with id: " + id);
         }
         divisionRepository.deleteById(id);
+    }
+
+    @Override
+    public BulkUploadResult bulkCreateDivisions(List<DivisionRequest> requests) {
+        List<BulkUploadResult.RowResult> results = new ArrayList<>();
+        int success = 0, failure = 0;
+        for (int i = 0; i < requests.size(); i++) {
+            DivisionRequest req = requests.get(i);
+            try {
+                createDivision(req);
+                results.add(BulkUploadResult.RowResult.builder()
+                        .row(i + 1).name(req.getName()).success(true).build());
+                success++;
+            } catch (Exception e) {
+                results.add(BulkUploadResult.RowResult.builder()
+                        .row(i + 1).name(req.getName()).success(false).error(e.getMessage()).build());
+                failure++;
+            }
+        }
+        return BulkUploadResult.builder()
+                .totalReceived(requests.size())
+                .successCount(success)
+                .failureCount(failure)
+                .results(results)
+                .build();
     }
 
     private DivisionResponse mapToResponse(Division division) {
@@ -96,8 +142,8 @@ public class DivisionServiceImpl implements DivisionService {
                 .updatedAt(division.getUpdatedAt())
                 .createdBy(division.getCreatedBy())
                 .updatedBy(division.getUpdatedBy())
-                .products(division.getProducts() == null || division.getProducts().isEmpty() ? List.of() : 
-                        division.getProducts().stream()
+                .products(division.getProducts() == null || division.getProducts().isEmpty() ? List.of()
+                        : division.getProducts().stream()
                                 .filter(p -> p != null)
                                 .map(p -> ProductResponse.builder()
                                         .id(p.getId())

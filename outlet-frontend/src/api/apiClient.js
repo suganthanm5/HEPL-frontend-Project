@@ -1,33 +1,13 @@
 import axios from 'axios';
-
-export const ENDPOINTS = {
-  login: '/api/v1/auth/login',
-  register: '/api/v1/auth/register',
-  validate: '/api/v1/auth/validate',
-  divisions: '/api/divisions',
-  locations: '/api/locations',
-  outlets: '/api/outlets',
-  products: '/api/products',
-  profile: '/api/users/profile',
-  changePassword: '/api/users/change-password',
-  uploadPicture: '/api/users/upload-picture'
-};
+import { getCookie, deleteCookie } from '../utils/cookieUtils';
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  },
-  timeout: 60000,
-  withCredentials: false,
-  validateStatus: function (status) {
-    return status < 500;
-  }
+  baseURL: import.meta.env.VITE_API_BASE_URL || window.location.origin,
+  timeout: 10000,
 });
 
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = getCookie('token');
   const url = config.url || '';
   if (token && !url.includes('/login') && !url.includes('/register')) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -41,15 +21,29 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && window.location.pathname !== '/') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('username');
-      localStorage.removeItem('email');
-      localStorage.removeItem('role');
+      deleteCookie('token');
+      deleteCookie('user');
+      deleteCookie('username');
+      deleteCookie('email');
+      deleteCookie('role');
+      deleteCookie('outletId');
       window.location.href = '/';
     }
     return Promise.reject(error);
   }
 );
+
+export const ENDPOINTS = {
+  login: '/api/v1/auth/login',
+  register: '/api/v1/auth/register',
+  validate: '/api/v1/auth/validate',
+  profile: '/api/users/profile',
+  changePassword: '/api/users/change-password',
+  uploadPicture: '/api/users/upload-picture',
+  products: '/api/products',
+  divisions: '/api/divisions',
+  outlets: '/api/outlets',
+  locations: '/api/locations',
+};
 
 export default API;

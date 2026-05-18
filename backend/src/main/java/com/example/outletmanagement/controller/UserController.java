@@ -83,9 +83,12 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("User deleted successfully")
+                .build());
     }
 
     @GetMapping("/profile")

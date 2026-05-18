@@ -50,6 +50,7 @@ import { createOutlet } from '../../services/outletService';
 import { createLocation } from '../../services/locationService';
 import { createDivision } from '../../services/divisionService';
 import userService from '../../api/userService';
+import { setCookie, deleteCookie } from '../../utils/cookieUtils';
 
 const ProfileDrawer = ({ open, onClose }) => {
   // Get real data from Redux for the AI bot to be "accurate"
@@ -69,7 +70,7 @@ const ProfileDrawer = ({ open, onClose }) => {
     initials: '',
     isOnline: true,
     profilePicture: null,
-    // Additional database fields
+   
     username: '',
     phone: '',
     address: '',
@@ -129,8 +130,8 @@ const ProfileDrawer = ({ open, onClose }) => {
         department: userProfile.department
       });
       
-      // Update localStorage with fresh data
-      localStorage.setItem('user', JSON.stringify(userProfile));
+      // Update cookies with fresh data
+      setCookie('user', JSON.stringify(userProfile));
     } catch (error) {
       console.error('Failed to fetch user profile from database:', error);
       setToast({ 
@@ -146,7 +147,7 @@ const ProfileDrawer = ({ open, onClose }) => {
   // Utility function to update user data everywhere
   const updateUserData = (newUserData) => {
     setUser(newUserData);
-    localStorage.setItem('user', JSON.stringify(newUserData));
+    setCookie('user', JSON.stringify(newUserData));
     // Dispatch custom event for other components to listen
     window.dispatchEvent(new CustomEvent('userDataUpdated', { detail: newUserData }));
   };
@@ -351,6 +352,12 @@ const ProfileDrawer = ({ open, onClose }) => {
   };
 
   const handleLogout = () => {
+    deleteCookie("token");
+    deleteCookie("user");
+    deleteCookie("username");
+    deleteCookie("email");
+    deleteCookie("role");
+    deleteCookie("outletId");
     localStorage.clear();
     window.location.href = '/';
   };

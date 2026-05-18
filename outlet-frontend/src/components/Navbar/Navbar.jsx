@@ -28,16 +28,19 @@ import {
   PlaceRounded,
   AccountTreeRounded,
   KeyboardArrowDownRounded,
+  WarningAmberRounded,
 } from "@mui/icons-material";
 import ModernProfileDrawer from "../ProfileDrawer/ModernProfileDrawer";
+import { getCookie, deleteCookie } from "../../utils/cookieUtils";
+import { reportService } from "../../services/reportService";
+import { getLocations } from "../../services/locationService";
+import { getProducts } from "../../services/productService";
+import { outletService } from "../../services/outletService";
+import { orderService } from "../../services/orderService";
+import { useMemo } from "react";
 import "./Navbar.css";
 
-/* ── Static data ─────────────────────────────────── */
-const notifications = [
-  { id: 1, Icon: StoreRounded, text: "New outlet registered", time: "2m ago", color: "#7d2ae8" },
-  { id: 2, Icon: PlaceRounded, text: "Location data updated", time: "15m ago", color: "#a855f7" },
-  { id: 3, Icon: AccountTreeRounded, text: "Division report generated", time: "1h ago", color: "#7c3aed" },
-];
+// Dynamic notifications list fetched from dashboard summary metrics
 
 /* ── Component ───────────────────────────────────── */
 const Navbar = ({ title = "Dashboard" }) => {
@@ -46,9 +49,9 @@ const Navbar = ({ title = "Dashboard" }) => {
 
   /* User state */
   const [user, setUser] = useState(() => ({
-    name: localStorage.getItem("username") || "Admin",
-    email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
-    role: localStorage.getItem("role") || "Administrator",
+    name: getCookie("username") || "Admin",
+    email: getCookie("email") || "admin@company.com",
+    role: getCookie("role") || "Administrator",
     profilePicture: localStorage.getItem("profilePicture") || null,
   }));
 
@@ -58,6 +61,162 @@ const Navbar = ({ title = "Dashboard" }) => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  /* Dynamic Summary Alerts & Notifications from Live Database Tables */
+  const [summary, setSummary] = useState(null);
+  const [ordersList, setOrdersList] = useState([]);
+  const [outletsList, setOutletsList] = useState([]);
+  const [locationsListRaw, setLocationsListRaw] = useState([]);
+  const [productsList, setProductsList] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchNavbarData = async () => {
+      try {
+        const [summ, ords, outs, locs, prods] = await Promise.all([
+          reportService.getDashboardSummary().catch(() => null),
+          orderService.getAll({ size: 10 }).catch(() => null),
+          outletService.getAll(0, 10, "").catch(() => null),
+          getLocations(0, 10, "").catch(() => null),
+          getProducts(0, 10).catch(() => null)
+        ]);
+
+        if (!active) return;
+        if (summ) setSummary(summ);
+        
+        if (ords) {
+          const oList = ords.content ?? ords.data?.content ?? ords.data ?? ords;
+          if (Array.isArray(oList)) setOrdersList(oList);
+        }
+        
+        if (outs) {
+          const ouList = outs.content ?? outs.data?.content ?? outs.data ?? outs;
+          if (Array.isArray(ouList)) setOutletsList(ouList);
+        }
+        
+        if (locs) {
+          const lList = locs.content ?? locs.data?.content ?? locs.data ?? locs;
+          if (Array.isArray(lList)) setLocationsListRaw(lList);
+        }
+        
+        if (prods) {
+          const pList = prods.content ?? prods.data?.content ?? prods.data ?? prods;
+          if (Array.isArray(pList)) setProductsList(pList);
+        }
+      } catch (err) {
+        console.error("Navbar: Failed to fetch notifications details", err);
+      }
+    };
+
+    fetchNavbarData();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const notificationsList = useMemo(() => {
+    const list = [];
+
+    // 1. Live Critically Low Stock warning from summary (Urgent)
+    if (summary?.lowStockCount > 0) {
+      list.push({
+        id: "alert-low-stock",
+        Icon: WarningAmberRounded,
+        text: `${summary.lowStockCount} items running critically low on stock`,
+        time: "Action Required",
+        color: "#f59e0b",
+        onClick: () => navigate("/stock")
+      });
+    }
+
+    // 2. Live Pending orders count warning from summary (Urgent)
+    if (summary?.pendingOrdersCount > 0) {
+      list.push({
+        id: "alert-pending-orders",
+        Icon: StoreRounded,
+        text: `${summary.pendingOrdersCount} orders are pending your approval`,
+        time: "Action Required",
+        color: "#ef4444",
+        onClick: () => navigate("/orders")
+      });
+    }
+
+    // 3. Real-time individual Orders Activity (Pending, Rejected, Completed)
+    ordersList.slice(0, 5).forEach((order) => {
+      const orderNo = order.orderNo || `ORD-${order.id}`;
+      const status = (order.status || "").toUpperCase();
+      let text = `Order ${orderNo} status updated`;
+      let timeLabel = "Status changed";
+      let color = "#7d2ae8";
+      
+      if (status === "PENDING") {
+        text = `Order ${orderNo} is pending approval`;
+        timeLabel = "Order pending";
+        color = "#ef4444";
+      } else if (status === "REJECTED" || status === "CANCELLED") {
+        text = `Order ${orderNo} has been rejected`;
+        timeLabel = "Order rejected";
+        color = "#ea580c";
+      } else if (status === "COMPLETED" || status === "DELIVERED") {
+        text = `Order ${orderNo} is completed`;
+        timeLabel = "Order completed";
+        color = "#10b981";
+      }
+
+      list.push({
+        id: `order-${order.id}-${status}`,
+        Icon: StoreRounded,
+        text,
+        time: timeLabel,
+        color,
+        onClick: () => navigate("/orders")
+      });
+    });
+
+    // 4. Real-time Outlets Activity (Newly added Outlets)
+    outletsList.slice(0, 3).forEach((outlet) => {
+      list.push({
+        id: `outlet-${outlet.id}`,
+        Icon: StoreRounded,
+        text: `New outlet "${outlet.outletName}" registered`,
+        time: `Code: ${outlet.outletCode || "Active"}`,
+        color: "#7c3aed",
+        onClick: () => navigate("/outlet")
+      });
+    });
+
+    // 5. Real-time Locations Activity (Newly added Locations)
+    locationsListRaw.slice(0, 3).forEach((location) => {
+      list.push({
+        id: `location-${location.id}`,
+        Icon: PlaceRounded,
+        text: `New location "${location.name}" added to grid`,
+        time: `${location.city || "Operational"} node`,
+        color: "#0ea5e9",
+        onClick: () => navigate("/location")
+      });
+    });
+
+    // 6. Real-time Products Activity (Newly added Products)
+    productsList.slice(0, 3).forEach((product) => {
+      list.push({
+        id: `product-${product.id}`,
+        Icon: AccountTreeRounded,
+        text: `New product "${product.name}" added`,
+        time: `Code: ${product.productCode || "Active"}`,
+        color: "#db2777",
+        onClick: () => navigate("/product")
+      });
+    });
+
+    // Deduplicate notifications by id
+    const seenIds = new Set();
+    return list.filter(item => {
+      if (seenIds.has(item.id)) return false;
+      seenIds.add(item.id);
+      return true;
+    }).slice(0, 8); // Display at most 8 notifications to keep user experience premium
+  }, [summary, ordersList, outletsList, locationsListRaw, productsList, navigate]);
 
   /* Search */
   const [search, setSearch] = useState("");
@@ -71,9 +230,9 @@ const Navbar = ({ title = "Dashboard" }) => {
   useEffect(() => {
     const handleStorageChange = () => {
       setUser({
-        name: localStorage.getItem("username") || "Admin",
-        email: localStorage.getItem("email") || localStorage.getItem("userEmail") || "admin@company.com",
-        role: localStorage.getItem("role") || "Administrator",
+        name: getCookie("username") || "Admin",
+        email: getCookie("email") || "admin@company.com",
+        role: getCookie("role") || "Administrator",
         profilePicture: localStorage.getItem("profilePicture") || null,
       });
     };
@@ -105,11 +264,12 @@ const Navbar = ({ title = "Dashboard" }) => {
 
   /* Helpers */
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
+    deleteCookie("token");
+    deleteCookie("username");
+    deleteCookie("email");
+    deleteCookie("role");
+    deleteCookie("user");
+    deleteCookie("outletId");
     navigate("/");
   };
 
@@ -179,7 +339,9 @@ const Navbar = ({ title = "Dashboard" }) => {
                 disableRipple
               >
                 <NotificationsRounded sx={{ fontSize: 20 }} />
-                <Box className="notif-badge">{notifications.length}</Box>
+                {notificationsList.length > 0 && (
+                  <Box className="notif-badge">{notificationsList.length}</Box>
+                )}
               </ButtonBase>
             </Tooltip>
 
@@ -188,15 +350,18 @@ const Navbar = ({ title = "Dashboard" }) => {
               <Box className="notif-dropdown">
                 <Box className="notif-header">
                   <Typography className="notif-header-title">Notifications</Typography>
-                  <Typography className="notif-count">{notifications.length} new</Typography>
+                  <Typography className="notif-count">{notificationsList.length} new</Typography>
                 </Box>
 
                 <List className="notif-list" disablePadding>
-                  {notifications.map(({ id, Icon, text, time: t, color }) => (
+                  {notificationsList.map(({ id, Icon, text, time: t, color, onClick }) => (
                     <ListItem
                       key={id}
                       className="notif-item"
-                      onClick={() => setNotifOpen(false)}
+                      onClick={() => {
+                        if (onClick) onClick();
+                        setNotifOpen(false);
+                      }}
                       disablePadding
                     >
                       <Box
@@ -214,7 +379,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                   ))}
                 </List>
 
-                <Box className="notif-footer" onClick={() => setNotifOpen(false)}>
+                <Box className="notif-footer" onClick={() => { navigate("/notifications"); setNotifOpen(false); }}>
                   View all notifications
                 </Box>
               </Box>

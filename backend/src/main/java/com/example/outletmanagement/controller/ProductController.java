@@ -2,6 +2,7 @@ package com.example.outletmanagement.controller;
 
 import com.example.outletmanagement.payload.ApiResponse;
 import com.example.outletmanagement.payload.dto.request.ProductRequest;
+import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.service.ProductService;
 import jakarta.validation.Valid;
@@ -12,8 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -29,6 +30,17 @@ public class ProductController {
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Product created successfully")
                 .data(response)
+                .build());
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse> bulkCreateProducts(@RequestBody List<ProductRequest> requests) {
+        BulkUploadResult result = productService.bulkCreateProducts(requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
+                .httpStatus(HttpStatus.CREATED.value())
+                .message(result.getSuccessCount() + " product(s) created, " + result.getFailureCount() + " failed")
+                .data(result)
                 .build());
     }
 
@@ -76,8 +88,11 @@ public class ProductController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Product deleted successfully")
+                .build());
     }
 }

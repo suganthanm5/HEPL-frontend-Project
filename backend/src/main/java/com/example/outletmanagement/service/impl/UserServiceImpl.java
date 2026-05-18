@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -117,6 +118,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
         String username = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication().getName();
@@ -194,7 +196,7 @@ public class UserServiceImpl implements UserService {
                 .name(user.getName())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .role(user.getRole() != null ? user.getRole().name() : "USER")
                 .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
                 .build();
     }

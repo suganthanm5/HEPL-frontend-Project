@@ -97,4 +97,14 @@ const getDivisionById = async (id, signal) => {
   }
 };
 
-export { getDivisions, createDivision, updateDivision, deleteDivision, getDivisionById, mapDivisionResponse };
+const bulkCreateDivisions = async (names) => {
+  const res = await API.post(`${ENDPOINTS.divisions}/bulk`, names.map((name) => ({ name })));
+  const result = res.data?.data;
+  return (result?.results || []).map((r) => ({
+    name: r.name,
+    success: r.success,
+    error: r.error || "",
+  }));
+};
+
+export { getDivisions, createDivision, updateDivision, deleteDivision, getDivisionById, mapDivisionResponse, bulkCreateDivisions };

@@ -84,8 +84,11 @@ public class OrderController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Order deleted successfully")
+                .build());
     }
 }

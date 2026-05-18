@@ -30,11 +30,13 @@ public class Order extends BaseAuditEntity {
     private String orderNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "outlet_id", nullable = false)
+    @JoinColumn(name = "outlet_id", nullable = true)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Outlet outlet;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id", nullable = false)
+    @JoinColumn(name = "created_by_user_id", nullable = true)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private User user;
 
     @Enumerated(EnumType.STRING)

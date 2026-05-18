@@ -19,4 +19,6 @@ public interface OutletStockRepository extends JpaRepository<OutletStock, Long> 
 
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(s) FROM OutletStock s WHERE s.outlet.id = :outletId AND s.availableQty < :threshold")
     long countLowStockItemsByOutlet(@org.springframework.data.repository.query.Param("outletId") Long outletId, @org.springframework.data.repository.query.Param("threshold") int threshold);
+
+    java.util.List<OutletStock> findByProductId(Long productId);
 }

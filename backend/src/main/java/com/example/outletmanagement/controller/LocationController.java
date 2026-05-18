@@ -2,6 +2,7 @@ package com.example.outletmanagement.controller;
 
 import com.example.outletmanagement.payload.ApiResponse;
 import com.example.outletmanagement.payload.dto.request.LocationRequest;
+import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.LocationResponse;
 import com.example.outletmanagement.service.LocationService;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/locations")
@@ -27,6 +29,17 @@ public class LocationController {
                 .httpStatus(HttpStatus.CREATED.value())
                 .message("Location created successfully")
                 .data(response)
+                .build());
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse> bulkCreateLocations(@RequestBody List<LocationRequest> requests) {
+        BulkUploadResult result = locationService.bulkCreateLocations(requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
+                .httpStatus(HttpStatus.CREATED.value())
+                .message(result.getSuccessCount() + " location(s) created, " + result.getFailureCount() + " failed")
+                .data(result)
                 .build());
     }
 
@@ -69,8 +82,11 @@ public class LocationController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLocation(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deleteLocation(@PathVariable Long id) {
         locationService.deleteLocation(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Location deleted successfully")
+                .build());
     }
 }

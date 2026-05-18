@@ -23,4 +23,7 @@ public interface DivisionRepository extends JpaRepository<Division, Long>, JpaSp
 
     @Query("SELECT DISTINCT d FROM Division d LEFT JOIN FETCH d.products WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     java.util.List<Division> findByNameContainingIgnoreCaseWithProducts(@Param("name") String name);
+
+    @Query(value = "SELECT * FROM divisions WHERE LOWER(name) = LOWER(:name)", nativeQuery = true)
+    Optional<Division> findByNameIncludingDeleted(@Param("name") String name);
 }

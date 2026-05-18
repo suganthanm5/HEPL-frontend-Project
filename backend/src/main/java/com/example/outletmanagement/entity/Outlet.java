@@ -40,6 +40,7 @@ public class Outlet extends BaseAuditEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Location location;
 
     @OneToMany(mappedBy = "outlet", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

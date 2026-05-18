@@ -2,8 +2,9 @@ import API, { ENDPOINTS } from '../api/apiClient';
 
 export const loginUser = async (data) => {
   try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
     // Try direct fetch with different CORS modes
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/login`, {
+    const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -13,13 +14,13 @@ export const loginUser = async (data) => {
       mode: 'cors',
       credentials: 'omit'
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    
+
     const responseData = await response.json();
-    
+
     return {
       data: responseData,
       status: response.status,
@@ -31,5 +32,5 @@ export const loginUser = async (data) => {
     return API.post(ENDPOINTS.login, data);
   }
 };
-export const registerUser  = (data) => API.post(ENDPOINTS.register, data);
-export const validateToken = ()     => API.get(ENDPOINTS.validate);
+export const registerUser = (data) => API.post(ENDPOINTS.register, data);
+export const validateToken = () => API.get(ENDPOINTS.validate);

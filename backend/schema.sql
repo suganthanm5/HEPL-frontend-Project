@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by VARCHAR(255),
     updated_by VARCHAR(255),
+    image LONGTEXT,
     FOREIGN KEY (division_id) REFERENCES divisions(id)
 );
 

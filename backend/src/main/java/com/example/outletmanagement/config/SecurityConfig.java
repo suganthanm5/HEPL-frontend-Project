@@ -29,7 +29,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
-    
+
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
@@ -40,6 +40,18 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/assets/**",
+                                "/*.js",
+                                "/*.css",
+                                "/*.png",
+                                "/*.svg",
+                                "/*.ico",
+                                "/favicon.png",
+                                "/logo.png",
+                                "/logo.svg",
+                                "/tn-map.png",
                                 "/api/v1/auth/**",
                                 "/v2/api-docs",
                                 "/v3/api-docs",
@@ -50,10 +62,9 @@ public class SecurityConfig {
                                 "/configuration/security",
                                 "/swagger-ui/**",
                                 "/webjars/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/swagger-ui.html")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -62,15 +73,16 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
                             response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"status\":401,\"message\":\"Unauthorized - " + authException.getMessage() + "\",\"data\":null}");
+                            response.getWriter().write("{\"status\":401,\"message\":\"Unauthorized - "
+                                    + authException.getMessage() + "\",\"data\":null}");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json");
                             response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write("{\"status\":403,\"message\":\"Forbidden - " + accessDeniedException.getMessage() + "\",\"data\":null}");
-                        })
-                );
+                            response.getWriter().write("{\"status\":403,\"message\":\"Forbidden - "
+                                    + accessDeniedException.getMessage() + "\",\"data\":null}");
+                        }));
 
         return http.build();
     }

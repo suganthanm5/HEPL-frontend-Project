@@ -26,5 +26,10 @@ export const userService = {
 
   deleteUser: async (id) => {
     await apiClient.delete(`/api/users/${id}`);
+  },
+
+  assignRoles: async (id, roles) => {
+    const response = await apiClient.post(`/api/users/${id}/roles`, roles);
+    return response.data?.data || response.data;
   }
 };

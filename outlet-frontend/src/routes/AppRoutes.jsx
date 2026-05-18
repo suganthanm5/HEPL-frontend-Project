@@ -1,23 +1,24 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { CircularProgress, Box } from "@mui/material";
+import { useAuth } from "../context/AuthContext";
 
-/* Existing pages */
-import Login from "../pages/Login/Login";
-import Register from "../pages/Register/Register";
-import Dashboard from "../pages/Dashboard/Dashboard";
-import Outlet from "../pages/Outlet/Outlet";
-import Location from "../pages/Location/Location";
-import Division from "../pages/Division/Division";
-import Product from "../pages/Product/Product";
-
-/* New pages */
+/* ── Pages ───────────────────────────────────────── */
+import Login          from "../pages/Login/Login";
+import Register       from "../pages/Register/Register";
+import Dashboard      from "../pages/Dashboard/Dashboard";
+import Outlet         from "../pages/Outlet/Outlet";
+import Location       from "../pages/Location/Location";
+import Division       from "../pages/Division/Division";
+import Product        from "../pages/Product/Product";
 import UserManagement from "../pages/UserManagement/UserManagement";
-import Batch from "../pages/Batch/Batch";
-import Stock from "../pages/Stock/Stock";
-import Orders from "../pages/Orders/Orders";
-import Unauthorized from "../pages/Unauthorized/Unauthorized";
+import Batch          from "../pages/Batch/Batch";
+import Stock          from "../pages/Stock/Stock";
+import Orders         from "../pages/Orders/Orders";
+import Unauthorized   from "../pages/Unauthorized/Unauthorized";
+import NotificationPage from "../pages/NotificationPage/NotificationPage";
 
-/* Layout & guards */
-import MainLayout from "../components/MainLayout";
+/* ── Layout & guards ─────────────────────────────── */
+import MainLayout    from "../components/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 /* ── Shorthand helpers ───────────────────────────── */
@@ -35,32 +36,54 @@ const RoleRoute = ({ children, title, roles }) => (
     <MainLayout title={title}>{children}</MainLayout>
   </ProtectedRoute>
 );
-/* ── Routes ──────────────────────────────────────── */
-const AppRoutes = () => (
-  <Routes>
-    {/* Public */}
-    <Route path="/" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/unauthorized" element={<Unauthorized />} />
 
-    {/* All authenticated users */}
-    <Route path="/dashboard" element={<Private title="Dashboard"><Dashboard /></Private>} />
-    <Route path="/stock" element={<Private title="Stock Management"><Stock /></Private>} />
-    <Route path="/orders" element={<Private title="Orders"><Orders /></Private>} />
 
-    {/* Admin + Manager */}
-    <Route path="/outlet" element={<RoleRoute title="Outlet Management" roles={["ADMIN", "MANAGER"]}><Outlet /></RoleRoute>} />
-    <Route path="/product" element={<RoleRoute title="Product Management" roles={["ADMIN", "MANAGER"]}><Product /></RoleRoute>} />
-    <Route path="/batch" element={<RoleRoute title="Batch Management" roles={["ADMIN", "MANAGER"]}><Batch /></RoleRoute>} />
+const AppRoutes = () => {
+  const { isLoading } = useAuth();
 
-    {/* Admin only */}
-    <Route path="/division" element={<RoleRoute title="Division Management" roles={["ADMIN"]}><Division /></RoleRoute>} />
-    <Route path="/location" element={<RoleRoute title="Location Management" roles={["ADMIN"]}><Location /></RoleRoute>} />
-    <Route path="/users" element={<RoleRoute title="User Management" roles={["ADMIN"]}><UserManagement /></RoleRoute>} />
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display:         "flex",
+          justifyContent:  "center",
+          alignItems:      "center",
+          height:          "100vh",
+          backgroundColor: "#f8fafc",
+        }}
+      >
+        <CircularProgress sx={{ color: "#4f46e5" }} />
+      </Box>
+    );
+  }
 
-    {/* Catch-all */}
-    <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
-);
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/"             element={<Login />} />
+      <Route path="/register"     element={<Register />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
+      {/* All authenticated users */}
+      <Route path="/dashboard" element={<Private title="Dashboard"><Dashboard /></Private>} />
+      <Route path="/stock"     element={<Private title="Stock Management"><Stock /></Private>} />
+      <Route path="/orders"    element={<Private title="Orders"><Orders /></Private>} />
+      <Route path="/notifications" element={<Private title="Notification Centre"><NotificationPage /></Private>} />
+
+      {/* Admin + Manager */}
+      <Route path="/outlet"  element={<RoleRoute title="Outlet Management"  roles={["ADMIN","MANAGER"]}><Outlet /></RoleRoute>} />
+      <Route path="/product" element={<RoleRoute title="Product Management" roles={["ADMIN","MANAGER"]}><Product /></RoleRoute>} />
+      <Route path="/batch"   element={<RoleRoute title="Batch Management"   roles={["ADMIN","MANAGER"]}><Batch /></RoleRoute>} />
+
+      {/* Admin only */}
+      <Route path="/division" element={<RoleRoute title="Division Management" roles={["ADMIN"]}><Division /></RoleRoute>} />
+      <Route path="/location" element={<RoleRoute title="Location Management" roles={["ADMIN"]}><Location /></RoleRoute>} />
+      <Route path="/users"    element={<RoleRoute title="User Management"     roles={["ADMIN"]}><UserManagement /></RoleRoute>} />
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
 
 export default AppRoutes;

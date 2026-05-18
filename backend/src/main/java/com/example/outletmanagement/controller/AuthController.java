@@ -20,7 +20,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
-        
+
         if (response.getToken() == null) {
             return ResponseEntity.badRequest().body(ApiResponse.builder()
                     .httpStatus(HttpStatus.BAD_REQUEST.value())
@@ -74,4 +74,3 @@ public class AuthController {
                 .build());
     }
 }
-

@@ -26,6 +26,7 @@ import {
   ShoppingCartRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../../context/AuthContext";
+import { getCookie } from "../../utils/cookieUtils";
 import "./Sidebar.css";
 
 /* All nav items with role visibility */
@@ -43,7 +44,7 @@ const ALL_NAV = [
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
   const navigate = useNavigate();
-  const { role, logout, isLoading } = useAuth();
+  const { role, roles, switchRole, logout, isLoading } = useAuth();
   const searchInputRef = useRef(null);
 
   // ── Theme ─────────────────────────────────────────────────
@@ -100,8 +101,8 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   const handleToggle = () => setCollapsed((prev) => !prev);
 
-  // Get role from context or localStorage as fallback
-  const currentRole = role || localStorage.getItem("role") || "USER";
+  // Get role from context or cookies as fallback
+  const currentRole = role || getCookie("role") || "USER";
   
   const filteredNav = ALL_NAV
     .filter((item) => {
@@ -138,6 +139,24 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           <ChevronLeftRounded className="toggle-icon" sx={{ fontSize: "1.75rem" }} />
         </ButtonBase>
       </Box>
+
+      {/* Role Switcher */}
+      {roles && roles.length > 1 && !collapsed && (
+        <Box className="role-switcher-wrap">
+          <Typography className="role-switcher-label">Active Role</Typography>
+          <Box className="role-chips">
+            {roles.map((r) => (
+              <ButtonBase
+                key={r}
+                className={`role-chip ${role === r ? "active" : ""}`}
+                onClick={() => switchRole(r)}
+              >
+                {r.toLowerCase()}
+              </ButtonBase>
+            ))}
+          </Box>
+        </Box>
+      )}
 
       {/* ── Content ────────────────────────────────────── */}
       <Box className="sidebar-content">

@@ -11,4 +11,6 @@ public interface OutletDivisionProductRepository extends JpaRepository<OutletDiv
 
     @Query("SELECT COUNT(m) > 0 FROM OutletDivisionProduct m WHERE m.outlet.id = :outletId AND m.product.id = :productId")
     boolean existsByOutletIdAndProductId(@Param("outletId") Long outletId, @Param("productId") Long productId);
+
+    java.util.List<OutletDivisionProduct> findByProductId(Long productId);
 }
