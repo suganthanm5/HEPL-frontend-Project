@@ -1,8 +1,10 @@
 package com.example.outletmanagement.service.impl;
 
 import com.example.outletmanagement.entity.*;
+import com.example.outletmanagement.entity.RequestBatch;
 import com.example.outletmanagement.exception.ResourceNotFoundException;
 import com.example.outletmanagement.repository.*;
+import com.example.outletmanagement.repository.RequestBatchRepository;
 import com.example.outletmanagement.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,7 @@ public class OrderServiceImpl implements OrderService {
     private final OutletRepository outletRepository;
     private final OutletDivisionProductRepository mappingRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RequestBatchRepository requestBatchRepository;
 
     @Override
     public Page<Order> getAllOrders(Pageable pageable) {
@@ -88,6 +91,8 @@ public class OrderServiceImpl implements OrderService {
                 .outlet(outlet)
                 .user(currentUser)
                 .status(Order.OrderStatus.PENDING)
+                .requestDate(java.time.LocalDateTime.now())
+                .remarks(request.getRemarks())
                 .build();
 
         List<OrderItem> items = request.getItems().stream().map(itemRequest -> {
@@ -111,6 +116,7 @@ public class OrderServiceImpl implements OrderService {
                     .batch(batch)
                     .quantity(itemRequest.getQuantity())
                     .price(price)
+                    .remarks(itemRequest.getRemarks())
                     .build();
         }).toList();
 
@@ -130,8 +136,27 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
         if (status == Order.OrderStatus.APPROVED && order.getStatus() == Order.OrderStatus.PENDING) {
+            // Generate outlet-specific batch number
+            Integer maxBatch = orderRepository.findMaxBatchNumberByOutletId(order.getOutlet().getId());
+            Integer nextBatch = (maxBatch == null || maxBatch == 0) ? 1 : maxBatch + 1;
+            order.setBatchNumber(nextBatch);
+
+            // Deduct stock (FIFO)
             allocateStockFIFO(order, currentUser);
-            status = Order.OrderStatus.COMPLETED; // Auto-transition to COMPLETED
+
+            // Save approval info
+            order.setApprovedBy(currentUser.getName());
+            order.setApprovedDate(java.time.LocalDateTime.now());
+
+            // Create request batch record
+            RequestBatch requestBatch = RequestBatch.builder()
+                    .request(order)
+                    .outlet(order.getOutlet())
+                    .batchNumber(nextBatch)
+                    .approvedBy(currentUser.getName())
+                    .approvedAt(java.time.LocalDateTime.now())
+                    .build();
+            requestBatchRepository.save(requestBatch);
         }
 
         order.setStatus(status);
@@ -159,11 +184,11 @@ public class OrderServiceImpl implements OrderService {
 
                 int allocationFromThisBatch = Math.min(batch.getQuantity(), remainingToAllocate);
 
-                // Update Batch Stock
+                
                 batch.setQuantity(batch.getQuantity() - allocationFromThisBatch);
                 productBatchRepository.save(batch);
 
-                // Update Outlet Stock
+                
                 OutletStock outletStock = outletStockRepository
                         .findByOutletIdAndProductIdAndBatchId(order.getOutlet().getId(), item.getProduct().getId(),
                                 batch.getId())

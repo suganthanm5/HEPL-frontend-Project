@@ -1,9 +1,6 @@
 import API, { ENDPOINTS } from '../api/apiClient';
 
-/**
- * Maps backend DivisionResponse to frontend Division object
- * Backend Response: { id, name, products, createdAt, updatedAt, createdBy, updatedBy }
- */
+
 const mapDivisionResponse = (division) => {
   if (!division) return null;
   return {
@@ -17,10 +14,7 @@ const mapDivisionResponse = (division) => {
   };
 };
 
-/**
- * Fetch divisions with pagination and search
- * Backend Response: ApiResponse { httpStatus, message, data: Page { content, totalPages, totalElements } }
- */
+
 const getDivisions = async (page = 0, size = 10, keyword = "", signal) => {
   try {
     const res = await API.get(ENDPOINTS.divisions, { 
@@ -54,38 +48,26 @@ const getDivisions = async (page = 0, size = 10, keyword = "", signal) => {
   }
 };
 
-/**
- * Create a new division
- * Backend Response: ApiResponse { httpStatus, message, data: DivisionResponse }
- */
+
 const createDivision = async (data) => {
   const res = await API.post(ENDPOINTS.divisions, data);
   const divisionData = res.data?.data || res.data;
   return mapDivisionResponse(divisionData);
 };
 
-/**
- * Update an existing division
- * Backend Response: ApiResponse { httpStatus, message, data: DivisionResponse }
- */
+
 const updateDivision = async (id, data) => {
   const res = await API.put(`${ENDPOINTS.divisions}/${id}`, data);
   const divisionData = res.data?.data || res.data;
   return mapDivisionResponse(divisionData);
 };
 
-/**
- * Delete a division (soft delete)
- * Backend Response: ApiResponse { httpStatus, message }
- */
+
 const deleteDivision = async (id) => {
   await API.delete(`${ENDPOINTS.divisions}/${id}`);
 };
 
-/**
- * Get division by ID with all products
- * Backend Response: ApiResponse { httpStatus, message, data: DivisionResponse }
- */
+
 const getDivisionById = async (id, signal) => {
   try {
     const res = await API.get(`${ENDPOINTS.divisions}/${id}`, { signal });

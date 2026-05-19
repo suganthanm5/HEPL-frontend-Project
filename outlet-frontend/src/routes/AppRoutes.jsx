@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { CircularProgress, Box } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 
-/* ── Pages ───────────────────────────────────────── */
 import Login          from "../pages/Login/Login";
 import Register       from "../pages/Register/Register";
 import Dashboard      from "../pages/Dashboard/Dashboard";
@@ -17,20 +16,17 @@ import Orders         from "../pages/Orders/Orders";
 import Unauthorized   from "../pages/Unauthorized/Unauthorized";
 import NotificationPage from "../pages/NotificationPage/NotificationPage";
 
-/* ── Layout & guards ─────────────────────────────── */
 import MainLayout    from "../components/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
-/* ── Shorthand helpers ───────────────────────────── */
 
-/** Any authenticated user */
+
 const Private = ({ children, title }) => (
   <ProtectedRoute>
     <MainLayout title={title}>{children}</MainLayout>
   </ProtectedRoute>
 );
 
-/** Restricted to specific roles */
 const RoleRoute = ({ children, title, roles }) => (
   <ProtectedRoute roles={roles}>
     <MainLayout title={title}>{children}</MainLayout>

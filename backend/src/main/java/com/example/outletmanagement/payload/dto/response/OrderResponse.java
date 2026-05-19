@@ -16,6 +16,11 @@ public class OrderResponse {
     private String createdBy;
     private OutletInfo outlet;
     private List<ItemInfo> items;
+    private Integer batchNumber;
+    private String remarks;
+    private String approvedBy;
+    private LocalDateTime requestDate;
+    private LocalDateTime approvedDate;
 
     @Data
     @Builder
@@ -33,6 +38,7 @@ public class OrderResponse {
         private String productCode;
         private Integer quantity;
         private java.math.BigDecimal price;
+        private String remarks;
     }
 
     public static OrderResponse from(Order o) {
@@ -42,6 +48,11 @@ public class OrderResponse {
                 .status(o.getStatus() != null ? o.getStatus().name() : null)
                 .createdAt(o.getCreatedAt())
                 .createdBy(o.getUser() != null ? o.getUser().getName() : o.getCreatedBy())
+                .batchNumber(o.getBatchNumber())
+                .remarks(o.getRemarks())
+                .approvedBy(o.getApprovedBy())
+                .requestDate(o.getRequestDate())
+                .approvedDate(o.getApprovedDate())
                 .outlet(o.getOutlet() != null ? OutletInfo.builder()
                         .id(o.getOutlet().getId())
                         .outletName(o.getOutlet().getOutletName())
@@ -54,6 +65,7 @@ public class OrderResponse {
                                 .productCode(item.getProduct() != null ? item.getProduct().getProductCode() : null)
                                 .quantity(item.getQuantity())
                                 .price(item.getPrice())
+                                .remarks(item.getRemarks())
                                 .build()
                 ).toList() : List.of())
                 .build();

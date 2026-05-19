@@ -42,10 +42,25 @@ public class Order extends BaseAuditEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    @Column(name = "batch_number")
+    private Integer batchNumber;
+
+    @Column(name = "approved_by")
+    private String approvedBy;
+
+    @Column(name = "request_date")
+    private java.time.LocalDateTime requestDate;
+
+    @Column(name = "approved_date")
+    private java.time.LocalDateTime approvedDate;
+
+    @Column(name = "remarks")
+    private String remarks;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
 
     public enum OrderStatus {
-        PENDING, APPROVED, REJECTED, COMPLETED, CANCELLED
+        PENDING, APPROVED, REJECTED, FULFILLED, COMPLETED
     }
 }

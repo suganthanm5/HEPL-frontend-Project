@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box, Typography, Button, ButtonBase, InputBase,
   Table, TableBody, TableCell, TableContainer,
@@ -43,6 +44,7 @@ const stockOutletName = (s) => s.outletName ?? s.outlet?.outletName ?? s.outletI
    Stock Management Page
 ══════════════════════════════════════════ */
 const Stock = () => {
+  const navigate = useNavigate();
   const [stock,    setStock]    = useState([]);
   const [txns,     setTxns]     = useState([]);
   const [outlets,  setOutlets]  = useState([]);
@@ -52,6 +54,7 @@ const Stock = () => {
   const { user, role } = useAuth();
   const userOutletId = user?.outletId || "";
   const isAdmin = role === "ADMIN";
+  const isOutletUser = role === "USER";
 
   const [filters,  setFilters]  = useState({ productId: "", outletId: userOutletId, type: "" });
   const [tab,      setTab]      = useState("stock");
@@ -178,8 +181,12 @@ const Stock = () => {
       {/* Header */}
       <Box className="page-header">
         <Box className="page-header-left">
-          <Typography className="page-title">Stock Management</Typography>
-          <Typography className="page-subtitle">Monitor and transfer outlet stock</Typography>
+          <Typography className="page-title">
+            {isOutletUser ? "Available Stock" : "Stock Management"}
+          </Typography>
+          <Typography className="page-subtitle">
+            {isOutletUser ? "View available inventory and request stock additions" : "Monitor and transfer outlet stock"}
+          </Typography>
         </Box>
         {canTransfer && (
         <ButtonBase onClick={() => { setTransfer({ open: true, data: emptyTransfer }); setIsFormView(true); }} disableRipple
@@ -335,6 +342,7 @@ const Stock = () => {
       ) : (
         <>
           {/* Stat Cards */}
+      {!isOutletUser && (
       <Box className="stat-cards-row">
         {[
           { label: "Stock Entries",  value: stock.length,  bg: "#f5f0ff", color: "#7d2ae8", Icon: WarehouseRounded },
@@ -351,8 +359,10 @@ const Stock = () => {
           </Box>
         ))}
       </Box>
+      )}
 
       {/* Tab Row */}
+      {!isOutletUser && (
       <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
         {["stock", "history"].map((t) => (
           <ButtonBase key={t} onClick={() => setTab(t)} disableRipple
@@ -361,6 +371,7 @@ const Stock = () => {
           </ButtonBase>
         ))}
       </Box>
+      )}
 
       {/* Table */}
       <Box className="table-card">
@@ -424,16 +435,21 @@ const Stock = () => {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ background: "#fafafa" }}>
-                  {["Outlet", "Product", "Batch", "Available", "Reserved", "Level"].map((h) => (
-                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
-                  ))}
+                  {isOutletUser 
+                    ? ["Product Name", "Available Stock", "Action"].map((h) => (
+                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                      ))
+                    : ["Outlet", "Product", "Batch", "Available", "Reserved", "Level"].map((h) => (
+                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                      ))
+                  }
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
                 ) : filteredStock.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No stock found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No stock found</TableCell></TableRow>
                 ) : (
                   filteredStock.map((s) => {
                     const lvl = stockLevel(s.availableQty);
@@ -447,19 +463,49 @@ const Stock = () => {
                           background: isLow ? "#fff1f2" : "inherit"
                         }}
                       >
-                        <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.outletName || s.outletId}</TableCell>
-                        <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
-                        <TableCell sx={{ color: "#7d2ae8", fontWeight: 600, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo || s.batchId}</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
-                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.reservedQty || 0}</TableCell>
-                        <TableCell>
-                          <Box className="stock-level">
-                            <Box className="stock-level-bar">
-                              <Box className={`stock-level-fill ${lvl.cls}`} sx={{ width: `${Math.min((s.availableQty / 200) * 100, 100)}%`, backgroundColor: lvl.color }} />
-                            </Box>
-                            <Typography className={`stock-level-text ${lvl.cls}`} sx={{ color: lvl.color }}>{lvl.label}</Typography>
-                          </Box>
-                        </TableCell>
+                        {isOutletUser ? (
+                          <>
+                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                onClick={() => navigate("/orders", { state: { prefillProduct: { id: s.productId, name: s.productName || s.productId } } })}
+                                sx={{
+                                  background: "linear-gradient(135deg,#7d2ae8,#a855f7)",
+                                  textTransform: "none",
+                                  fontWeight: 600,
+                                  fontFamily: "Poppins",
+                                  fontSize: "0.75rem",
+                                  borderRadius: "20px",
+                                  boxShadow: "0 2px 8px rgba(125,42,232,0.25)",
+                                  "&:hover": {
+                                    background: "linear-gradient(135deg,#6b21a8,#9333ea)"
+                                  }
+                                }}
+                              >
+                                Request Product
+                              </Button>
+                            </TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.outletName || s.outletId}</TableCell>
+                            <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
+                            <TableCell sx={{ color: "#7d2ae8", fontWeight: 600, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo || s.batchId}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
+                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.reservedQty || 0}</TableCell>
+                            <TableCell>
+                              <Box className="stock-level">
+                                <Box className="stock-level-bar">
+                                  <Box className={`stock-level-fill ${lvl.cls}`} sx={{ width: `${Math.min((s.availableQty / 200) * 100, 100)}%`, backgroundColor: lvl.color }} />
+                                </Box>
+                                <Typography className={`stock-level-text ${lvl.cls}`} sx={{ color: lvl.color }}>{lvl.label}</Typography>
+                              </Box>
+                            </TableCell>
+                          </>
+                        )}
                       </TableRow>
                     );
                   })

@@ -41,4 +41,7 @@ public class OrderItem extends BaseAuditEntity {
 
     @Column(nullable = false)
     private BigDecimal price;
+
+    @Column(name = "remarks")
+    private String remarks;
 }

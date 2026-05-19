@@ -6,7 +6,7 @@ const userService = {
   getProfile: async () => {
     try {
       const response = await API.get(ENDPOINTS.profile);
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       console.error('Failed to load user profile from database:', error);
       throw new Error(`Failed to load profile: ${error.response?.data?.message || error.message}`);
@@ -21,7 +21,7 @@ const userService = {
       return {
         success: true,
         message: 'Profile updated successfully in database',
-        user: response.data.user || response.data
+        user: response.data?.data || response.data
       };
     } catch (error) {
       console.error('Failed to update profile in database:', error);
@@ -32,7 +32,7 @@ const userService = {
   // Change password in database
   changePassword: async (passwordData) => {
     const response = await API.put(ENDPOINTS.changePassword, passwordData);
-    return response.data;
+    return response.data?.data || response.data;
   },
 
   // Upload profile picture to database
@@ -47,7 +47,7 @@ const userService = {
         }
       });
       
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       console.error('Failed to upload profile picture to database:', error);
       throw new Error(`Failed to upload picture: ${error.response?.data?.message || error.message}`);

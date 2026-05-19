@@ -17,10 +17,12 @@ export const orderService = {
   create: async (data) => {
     const formatted = {
       outletId: data.outletId,
+      remarks: data.remarks || "",
       items: data.items.map(it => ({
         productId: it.productId,
         ...(it.batchId ? { batchId: Number(it.batchId) } : {}),
-        quantity: Number(it.quantity)
+        quantity: Number(it.quantity),
+        remarks: it.remarks || ""
       }))
     };
     const res = await apiClient.post('/api/orders', formatted);

@@ -28,17 +28,17 @@ import "../UserManagement/UserManagement.css";
 
 
 const STATUS_META = {
-  PENDING:   { label: "Pending",   cls: "pending",   Icon: PendingRounded },
-  APPROVED:  { label: "Approved",  cls: "approved",  Icon: ThumbUpRounded },
+  PENDING: { label: "Pending", cls: "pending", Icon: PendingRounded },
+  APPROVED: { label: "Approved", cls: "approved", Icon: ThumbUpRounded },
   COMPLETED: { label: "Completed", cls: "completed", Icon: LocalShippingRounded },
-  REJECTED:  { label: "Rejected",  cls: "rejected",  Icon: ThumbDownRounded },
+  REJECTED: { label: "Rejected", cls: "rejected", Icon: ThumbDownRounded },
   CANCELLED: { label: "Cancelled", cls: "cancelled", Icon: CloseRounded },
 };
 
 const TIMELINE = ["PENDING", "APPROVED", "COMPLETED"];
 
 const emptyOrder = { outletId: "", items: [] };
-const emptyItem  = { productId: "", batchId: "", quantity: 1, price: 0 };
+const emptyItem = { productId: "", batchId: "", quantity: 1, price: 0 };
 
 /* ══════════════════════════════════════════
    Orders Page
@@ -46,23 +46,23 @@ const emptyItem  = { productId: "", batchId: "", quantity: 1, price: 0 };
 const Orders = () => {
   const { user, role } = useAuth();
   const userOutletId = user?.outletId || "";
-  const isAdmin   = role === "ADMIN";
+  const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
 
-  const [filters,  setFilters]  = useState({ status: "", outletId: isAdmin ? "" : userOutletId });
-  const [detail,   setDetail]   = useState(null);
+  const [filters, setFilters] = useState({ status: "", outletId: isAdmin ? "" : userOutletId });
+  const [detail, setDetail] = useState(null);
   const [isFormView, setIsFormView] = useState(false);
-  const [create,   setCreate]   = useState({ open: false, data: emptyOrder });
-  const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
-  const [page,     setPage]     = useState(0);
+  const [create, setCreate] = useState({ open: false, data: emptyOrder });
+  const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
+  const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
-  const [orders,   setOrders]   = useState([]);
-  const [loading,  setLoading]  = useState(false);
-  const [search,   setSearch]   = useState("");
-  const [outlets,  setOutlets]  = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [outlets, setOutlets] = useState([]);
   const [products, setProducts] = useState([]);
-  const [batches,  setBatches]  = useState([]);
+  const [batches, setBatches] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
 
   /* ── Extract array from various response shapes ── */
@@ -84,9 +84,9 @@ const Orders = () => {
         size: pageSize,
         sort: "id,desc"
       };
-      if (filters.status)   activeFilters.status   = filters.status;
+      if (filters.status) activeFilters.status = filters.status;
       if (filters.outletId) activeFilters.outletId = filters.outletId;
-      if (search)           activeFilters.orderNo  = search;
+      if (search) activeFilters.orderNo = search;
 
       const oData = await orderService.getAll(activeFilters);
       if (oData && oData.content) {
@@ -267,17 +267,17 @@ const Orders = () => {
                 </Box>
               </Box>
               <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Button variant="outlined" color="inherit" 
+                <Button variant="outlined" color="inherit"
                   onClick={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }}
                   sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
                   Cancel
                 </Button>
-                <Button variant="contained" startIcon={<ShoppingCartRounded />} 
+                <Button variant="contained" startIcon={<ShoppingCartRounded />}
                   onClick={handleCreate}
-                  sx={{ 
-                    borderRadius: "50px", 
-                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)", 
-                    color: "#fff", 
+                  sx={{
+                    borderRadius: "50px",
+                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
+                    color: "#fff",
                     textTransform: "none",
                     px: 4,
                     boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
@@ -303,7 +303,7 @@ const Orders = () => {
                       />
                     </Box>
                   )}
-                  
+
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
                     <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>Order Items</Typography>
                     <Button variant="text" startIcon={<AddRounded />} onClick={addItem} sx={{ color: "#7d2ae8", fontWeight: 700 }}>Add Item</Button>
@@ -358,13 +358,13 @@ const Orders = () => {
                     ))}
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12} md={4}>
                   <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "fit-content", position: "sticky", top: 24 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e1b4b", mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
                       <ShoppingCartRounded sx={{ color: "#7d2ae8" }} /> Order Summary
                     </Typography>
-                    
+
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                       <Box>
                         <Typography variant="caption" sx={{ color: "#64748b" }}>Destination Outlet</Typography>
@@ -372,14 +372,14 @@ const Orders = () => {
                           {outlets.find(o => String(o.id) === String(create.data.outletId))?.outletName || "Not Selected"}
                         </Typography>
                       </Box>
-                      
+
                       <Divider />
-                      
+
                       <Box>
                         <Typography variant="caption" sx={{ color: "#64748b" }}>Total Items</Typography>
                         <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>{create.data.items.length}</Typography>
                       </Box>
-                      
+
                       <Box sx={{ p: 2, bgcolor: "#7d2ae8", borderRadius: 3, color: "#fff" }}>
                         <Typography variant="caption" sx={{ opacity: 0.9 }}>Total Estimated Value</Typography>
                         <Typography variant="h4" sx={{ fontWeight: 900 }}>
@@ -396,200 +396,200 @@ const Orders = () => {
       ) : (
         <>
           {/* ── Stat Cards ── */}
-      <Box className="stat-cards-row">
-        {Object.entries(STATUS_META).map(([key, meta]) => (
-          <Box className="stat-card" key={key}>
-            <Box className="stat-card-icon" sx={{
-              background:
-                key === "PENDING"   ? "#fef9c3" :
-                key === "APPROVED"  ? "#dcfce7" :
-                key === "REJECTED"  ? "#fee2e2" : "#e0f2fe",
-            }}>
-              <meta.Icon sx={{
-                color:
-                  key === "PENDING"   ? "#ca8a04" :
-                  key === "APPROVED"  ? "#16a34a" :
-                  key === "REJECTED"  ? "#ef4444" : "#0284c7",
-                fontSize: 22,
-              }} />
-            </Box>
-            <Box>
-              <Typography className="stat-card-value">{counts[key] || 0}</Typography>
-              <Typography className="stat-card-label">{meta.label}</Typography>
-            </Box>
+          <Box className="stat-cards-row">
+            {Object.entries(STATUS_META).map(([key, meta]) => (
+              <Box className="stat-card" key={key}>
+                <Box className="stat-card-icon" sx={{
+                  background:
+                    key === "PENDING" ? "#fef9c3" :
+                      key === "APPROVED" ? "#dcfce7" :
+                        key === "REJECTED" ? "#fee2e2" : "#e0f2fe",
+                }}>
+                  <meta.Icon sx={{
+                    color:
+                      key === "PENDING" ? "#ca8a04" :
+                        key === "APPROVED" ? "#16a34a" :
+                          key === "REJECTED" ? "#ef4444" : "#0284c7",
+                    fontSize: 22,
+                  }} />
+                </Box>
+                <Box>
+                  <Typography className="stat-card-value">{counts[key] || 0}</Typography>
+                  <Typography className="stat-card-label">{meta.label}</Typography>
+                </Box>
+              </Box>
+            ))}
           </Box>
-        ))}
-      </Box>
 
-      {/* ── Table ── */}
-      <Box className="table-card">
-        <Box className="table-toolbar">
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
-            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
-              All Orders
-            </Typography>
-            <ExportMenu getData={() => formatOrderData(filtered)} filename="orders" title="Orders Report" backendType="orders" />
+          {/* ── Table ── */}
+          <Box className="table-card">
+            <Box className="table-toolbar">
+              <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
+                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
+                  All Orders
+                </Typography>
+                <ExportMenu getData={() => formatOrderData(filtered)} filename="orders" title="Orders Report" backendType="orders" />
 
-            {/* Outlet Filter - Only for Admin */}
-            {isAdmin && (
-              <Select
-                size="small" displayEmpty value={filters.outletId}
-                onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}
-                sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
-              >
-                <MenuItem value="">All Outlets</MenuItem>
-                {outlets.map((ot) => (
-                  <MenuItem key={ot.id} value={ot.id}>{outletName(ot)}</MenuItem>
-                ))}
-              </Select>
-            )}
+                {/* Outlet Filter - Only for Admin */}
+                {isAdmin && (
+                  <Select
+                    size="small" displayEmpty value={filters.outletId}
+                    onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}
+                    sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                  >
+                    <MenuItem value="">All Outlets</MenuItem>
+                    {outlets.map((ot) => (
+                      <MenuItem key={ot.id} value={ot.id}>{outletName(ot)}</MenuItem>
+                    ))}
+                  </Select>
+                )}
 
-            <ButtonBase
-              onClick={() => setFilters({ status: "", outletId: isAdmin ? "" : userOutletId })}
-              sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}
+                <ButtonBase
+                  onClick={() => setFilters({ status: "", outletId: isAdmin ? "" : userOutletId })}
+                  sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}
+                >
+                  Clear Filters
+                </ButtonBase>
+              </Box>
+
+              <Box className="table-search">
+                <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
+                <InputBase
+                  placeholder="Search order no…" value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}
+                />
+              </Box>
+            </Box>
+
+            {/* Dynamic Status Tabs */}
+            <Tabs
+              value={filters.status}
+              onChange={(e, newVal) => setFilters((f) => ({ ...f, status: newVal }))}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                px: 3,
+                borderBottom: "1px solid #f1f5f9",
+                "& .MuiTabs-indicator": { backgroundColor: "#7d2ae8", height: "3px", borderRadius: "10px" },
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  fontFamily: "Poppins, sans-serif",
+                  color: "#64748b",
+                  pb: 1.5,
+                  pt: 1.5,
+                  minWidth: 100,
+                  "&.Mui-selected": { color: "#7d2ae8" },
+                },
+              }}
             >
-              Clear Filters
-            </ButtonBase>
-          </Box>
+              <Tab label={`All Orders (${totalElements || filtered.length})`} value="" />
+              {Object.entries(STATUS_META).map(([k, v]) => (
+                <Tab key={k} label={`${v.label} (${counts[k] || 0})`} value={k} />
+              ))}
+            </Tabs>
 
-          <Box className="table-search">
-            <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
-            <InputBase
-              placeholder="Search order no…" value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}
-            />
-          </Box>
-        </Box>
-
-        {/* Dynamic Status Tabs */}
-        <Tabs
-          value={filters.status}
-          onChange={(e, newVal) => setFilters((f) => ({ ...f, status: newVal }))}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            px: 3,
-            borderBottom: "1px solid #f1f5f9",
-            "& .MuiTabs-indicator": { backgroundColor: "#7d2ae8", height: "3px", borderRadius: "10px" },
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontSize: "13px",
-              fontWeight: 700,
-              fontFamily: "Poppins, sans-serif",
-              color: "#64748b",
-              pb: 1.5,
-              pt: 1.5,
-              minWidth: 100,
-              "&.Mui-selected": { color: "#7d2ae8" },
-            },
-          }}
-        >
-          <Tab label={`All Orders (${totalElements || filtered.length})`} value="" />
-          {Object.entries(STATUS_META).map(([k, v]) => (
-            <Tab key={k} label={`${v.label} (${counts[k] || 0})`} value={k} />
-          ))}
-        </Tabs>
-
-        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ background: "#fafafa" }}>
-                {["Order No", "Outlet", "Items", "Status", "Date", "Actions"].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>
-                    {h}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                    <CircularProgress sx={{ color: "#7d2ae8" }} size={32} />
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>
-                    No orders found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((o) => {
-                  const meta = STATUS_META[o.status] || STATUS_META.PENDING;
-                  return (
-                    <TableRow
-                      key={o.id} hover
-                      sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 }, cursor: "pointer" }}
-                      onClick={() => setDetail(o)}
-                    >
-                      <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>
-                        {o.orderNo || `ORD-${o.id}`}
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ background: "#fafafa" }}>
+                    {["Order No", "Outlet", "Items", "Status", "Date", "Actions"].map((h) => (
+                      <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>
+                        {h}
                       </TableCell>
-                      <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
-                        {o.outlet?.outletName || "—"}
-                      </TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
-                        {o.items?.length || 0}
-                      </TableCell>
-                      <TableCell>
-                        <Typography className={`order-status ${meta.cls}`}>{meta.label}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}>
-                        {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {(isAdmin || isManager) && o.status === "PENDING" && (
-                          <Box sx={{ display: "flex", gap: 0.75 }}>
-                            <Tooltip title="Approve & Complete">
-                              <IconButton size="small" className="action-btn edit" onClick={() => updateStatus(o.id, "APPROVED")}>
-                                <CheckRounded sx={{ fontSize: 14 }} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Reject">
-                              <IconButton size="small" className="action-btn delete" onClick={() => updateStatus(o.id, "REJECTED")}>
-                                <ThumbDownRounded sx={{ fontSize: 14 }} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        )}
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                        <CircularProgress sx={{ color: "#7d2ae8" }} size={32} />
                       </TableCell>
                     </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  ) : filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((o) => {
+                      const meta = STATUS_META[o.status] || STATUS_META.PENDING;
+                      return (
+                        <TableRow
+                          key={o.id} hover
+                          sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 }, cursor: "pointer" }}
+                          onClick={() => setDetail(o)}
+                        >
+                          <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>
+                            {o.orderNo || `ORD-${o.id}`}
+                          </TableCell>
+                          <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
+                            {o.outlet?.outletName || "—"}
+                          </TableCell>
+                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
+                            {o.items?.length || 0}
+                          </TableCell>
+                          <TableCell>
+                            <Typography className={`order-status ${meta.cls}`}>{meta.label}</Typography>
+                          </TableCell>
+                          <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}>
+                            {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            {(isAdmin || isManager) && o.status === "PENDING" && (
+                              <Box sx={{ display: "flex", gap: 0.75 }}>
+                                <Tooltip title="Approve & Complete">
+                                  <IconButton size="small" className="action-btn edit" onClick={() => updateStatus(o.id, "APPROVED")}>
+                                    <CheckRounded sx={{ fontSize: 14 }} />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Reject">
+                                  <IconButton size="small" className="action-btn delete" onClick={() => updateStatus(o.id, "REJECTED")}>
+                                    <ThumbDownRounded sx={{ fontSize: 14 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 3, gap: 1 }}>
-            <ButtonBase
-              disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page === 0 ? 0.5 : 1 }}
-            >
-              Previous
-            </ButtonBase>
-            <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600 }}>
-              Page {page + 1} of {totalPages}
-            </Typography>
-            <ButtonBase
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(p => p + 1)}
-              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page >= totalPages - 1 ? 0.5 : 1 }}
-            >
-              Next
-            </ButtonBase>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 3, gap: 1 }}>
+                <ButtonBase
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page === 0 ? 0.5 : 1 }}
+                >
+                  Previous
+                </ButtonBase>
+                <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600 }}>
+                  Page {page + 1} of {totalPages}
+                </Typography>
+                <ButtonBase
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page >= totalPages - 1 ? 0.5 : 1 }}
+                >
+                  Next
+                </ButtonBase>
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-    </>
-  )}
+        </>
+      )}
 
-  {/* ── Create Order Dialog (REPLACED) ── */}
+      {/* ── Create Order Dialog (REPLACED) ── */}
       {/* ── Create Order Dialog (REPLACED) ── */}
 
       {/* ── Order Detail Dialog ── */}

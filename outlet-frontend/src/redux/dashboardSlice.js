@@ -4,17 +4,15 @@ import { getLocations } from "../services/locationService";
 import { getDivisions } from "../services/divisionService";
 
 const extractList = (res) => {
-  // Handle Promise.allSettled structure: res.value is the resolved data
+ 
   const data = res?.value?.data || res?.value || res?.data;
   if (!data) return [];
 
-  // If data is already an array
+
   if (Array.isArray(data)) return data;
-  
-  // If data has a nested data property that is an array
+
   if (Array.isArray(data.data)) return data.data;
   
-  // If data is a page object with content
   if (Array.isArray(data.content)) return data.content;
   if (Array.isArray(data.data?.content)) return data.data.content;
 

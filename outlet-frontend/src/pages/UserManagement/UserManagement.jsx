@@ -28,15 +28,12 @@ const ROLE_META = {
 
 const ROLES = ["ADMIN", "MANAGER", "USER"];
 
-/* ── Helpers ───────────────────────────────────── */
+
 const initials = (name = "") =>
   name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
 
 const emptyForm = { name: "", username: "", email: "", password: "", roles: ["USER"], status: "ACTIVE", outletId: "" };
 
-/* ══════════════════════════════════════════════════
-   UserManagement Page
-══════════════════════════════════════════════════ */
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [outlets, setOutlets] = useState([]);
@@ -47,7 +44,7 @@ const UserManagement = () => {
   const [delDialog, setDelDialog] = useState({ open: false, id: null, name: "" });
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
-  /* ── Load users ── */
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -64,28 +61,28 @@ const UserManagement = () => {
     }
   }, []);
 
-  useEffect(() => { 
+  useEffect(() => {
     load();
     outletService.getAll(0, 1000).then(data => setOutlets(data.content || []));
   }, [load]);
 
-  /* ── Filter ── */
+  
   const filtered = users.filter((u) =>
     [u.name, u.username, u.email, u.role]
       .join(" ").toLowerCase().includes(search.toLowerCase())
   );
 
-  /* ── Counts ── */
+
   const counts = ROLES.reduce((acc, r) => {
     acc[r] = users.filter((u) => u.role === r).length;
     return acc;
   }, {});
 
-  /* ── Snack helper ── */
+
   const toast = (msg, severity = "success") =>
     setSnack({ open: true, msg, severity });
 
-  /* ── Save (add / edit) ── */
+  
   const handleSave = async () => {
     const { mode, data } = dialog;
     try {
@@ -102,9 +99,9 @@ const UserManagement = () => {
     } catch (err) {
       console.error("Save Error:", err.response?.data);
       const errorData = err.response?.data?.data;
-      
+
       if (errorData && typeof errorData === 'object') {
-        // Handle validation map (username: "error", email: "error", etc)
+        
         const messages = Object.entries(errorData)
           .map(([field, msg]) => `${field}: ${msg}`)
           .join(" | ");
@@ -116,7 +113,7 @@ const UserManagement = () => {
     }
   };
 
-  /* ── Delete ── */
+
   const handleDelete = async () => {
     try {
       await userService.deleteUser(delDialog.id);
@@ -128,7 +125,7 @@ const UserManagement = () => {
     }
   };
 
-  /* ── JSX ── */
+
   return (
     <Box className="user-mgmt-page">
 
@@ -151,17 +148,17 @@ const UserManagement = () => {
                 </Box>
               </Box>
               <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Button variant="outlined" color="inherit" 
+                <Button variant="outlined" color="inherit"
                   onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }}
                   sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
                   Cancel
                 </Button>
-                <Button variant="contained" startIcon={<CheckRounded />} 
+                <Button variant="contained" startIcon={<CheckRounded />}
                   onClick={handleSave}
-                  sx={{ 
-                    borderRadius: "50px", 
-                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)", 
-                    color: "#fff", 
+                  sx={{
+                    borderRadius: "50px",
+                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
+                    color: "#fff",
                     textTransform: "none",
                     px: 4,
                     boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
@@ -231,14 +228,14 @@ const UserManagement = () => {
                     <Typography variant="body2" sx={{ color: "#64748b", mb: 3 }}>
                       @{dialog.data.username || "username"}
                     </Typography>
-                    <Chip 
-                      label={ROLE_META[dialog.data.role || "USER"].label} 
-                      sx={{ 
-                        bgcolor: ROLE_META[dialog.data.role || "USER"].bg, 
+                    <Chip
+                      label={ROLE_META[dialog.data.role || "USER"].label}
+                      sx={{
+                        bgcolor: ROLE_META[dialog.data.role || "USER"].bg,
                         color: ROLE_META[dialog.data.role || "USER"].color,
                         fontWeight: 700,
                         fontFamily: "Poppins, sans-serif"
-                      }} 
+                      }}
                     />
                   </Box>
                 </Grid>
@@ -274,137 +271,137 @@ const UserManagement = () => {
           </Box>
 
 
-      {/* Stat Cards */}
-      <Box className="stat-cards-row">
-        <Box className="stat-card">
-          <Box className="stat-card-icon" sx={{ background: "#f5f0ff" }}>
-            <PeopleRounded sx={{ color: "#7d2ae8", fontSize: 22 }} />
-          </Box>
-          <Box>
-            <Typography className="stat-card-value">{users.length}</Typography>
-            <Typography className="stat-card-label">Total Users</Typography>
-          </Box>
-        </Box>
-        {ROLES.map((r) => {
-          const meta = ROLE_META[r];
-          return (
-            <Box className="stat-card" key={r}>
-              <Box className="stat-card-icon" sx={{ background: meta.bg }}>
-                <meta.Icon sx={{ color: meta.color, fontSize: 22 }} />
+          {/* Stat Cards */}
+          <Box className="stat-cards-row">
+            <Box className="stat-card">
+              <Box className="stat-card-icon" sx={{ background: "#f5f0ff" }}>
+                <PeopleRounded sx={{ color: "#7d2ae8", fontSize: 22 }} />
               </Box>
               <Box>
-                <Typography className="stat-card-value">{counts[r] || 0}</Typography>
-                <Typography className="stat-card-label">{meta.label}s</Typography>
+                <Typography className="stat-card-value">{users.length}</Typography>
+                <Typography className="stat-card-label">Total Users</Typography>
               </Box>
             </Box>
-          );
-        })}
-      </Box>
-
-      {/* Table */}
-      <Box className="table-card">
-        <Box className="table-toolbar">
-          <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
-            All Users
-          </Typography>
-          <ExportMenu getData={() => formatUserData(filtered)} filename="users" title="User Report" backendType="users" />
-          <Box className="table-search">
-            <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
-            <InputBase
-              placeholder="Search users…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}
-            />
+            {ROLES.map((r) => {
+              const meta = ROLE_META[r];
+              return (
+                <Box className="stat-card" key={r}>
+                  <Box className="stat-card-icon" sx={{ background: meta.bg }}>
+                    <meta.Icon sx={{ color: meta.color, fontSize: 22 }} />
+                  </Box>
+                  <Box>
+                    <Typography className="stat-card-value">{counts[r] || 0}</Typography>
+                    <Typography className="stat-card-label">{meta.label}s</Typography>
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
-        </Box>
 
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ background: "#faf5ff" }}>
-                {["User", "Username", "Email", "Role", "Status", "Actions"].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>
-                    {h}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                    <CircularProgress sx={{ color: "#7d2ae8" }} size={32} />
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>
-                    No users found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((u) => {
-                  const meta = ROLE_META[u.role] || ROLE_META.USER;
-                  return (
-                    <TableRow key={u.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
-                      <TableCell sx={{ py: 1.5 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                          <Avatar sx={{ width: 34, height: 34, background: `linear-gradient(135deg, ${meta.color}, #a855f7)`, fontSize: "0.8rem", fontWeight: 700 }}>
-                            {initials(u.name || u.username)}
-                          </Avatar>
-                          <Typography sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
-                            {u.name || u.username}
-                          </Typography>
-                        </Box>
+          {/* Table */}
+          <Box className="table-card">
+            <Box className="table-toolbar">
+              <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
+                All Users
+              </Typography>
+              <ExportMenu getData={() => formatUserData(filtered)} filename="users" title="User Report" backendType="users" />
+              <Box className="table-search">
+                <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
+                <InputBase
+                  placeholder="Search users…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}
+                />
+              </Box>
+            </Box>
+
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ background: "#faf5ff" }}>
+                    {["User", "Username", "Email", "Role", "Status", "Actions"].map((h) => (
+                      <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", py: 1.5 }}>
+                        {h}
                       </TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{u.username}</TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{u.email}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          <Typography className={`role-chip ${meta.cls}`}>{meta.label}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box className={`status-chip ${u.status?.toLowerCase() === "active" ? "active" : "inactive"}`}>
-                          <Box className="status-dot" sx={{ background: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444" }} />
-                          {u.status || "Active"}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: "flex", gap: 0.75 }}>
-                          <Tooltip title="Edit user">
-                            <ButtonBase
-                              className="action-btn edit"
-                              onClick={() => { setDialog({ open: true, mode: "edit", data: { ...u } }); setIsFormView(true); }}
-                              disableRipple
-                            >
-                              <EditRounded sx={{ fontSize: 16 }} />
-                            </ButtonBase>
-                          </Tooltip>
-                          <Tooltip title="Delete user">
-                            <ButtonBase
-                              className="action-btn delete"
-                              onClick={() => setDelDialog({ open: true, id: u.id, name: u.name || u.username })}
-                              disableRipple
-                            >
-                              <DeleteRounded sx={{ fontSize: 16 }} />
-                            </ButtonBase>
-                          </Tooltip>
-                        </Box>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                        <CircularProgress sx={{ color: "#7d2ae8" }} size={32} />
                       </TableCell>
                     </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-    </>
-  )}
+                  ) : filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>
+                        No users found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((u) => {
+                      const meta = ROLE_META[u.role] || ROLE_META.USER;
+                      return (
+                        <TableRow key={u.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                              <Avatar sx={{ width: 34, height: 34, background: `linear-gradient(135deg, ${meta.color}, #a855f7)`, fontSize: "0.8rem", fontWeight: 700 }}>
+                                {initials(u.name || u.username)}
+                              </Avatar>
+                              <Typography sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
+                                {u.name || u.username}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{u.username}</TableCell>
+                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{u.email}</TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                              <Typography className={`role-chip ${meta.cls}`}>{meta.label}</Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box className={`status-chip ${u.status?.toLowerCase() === "active" ? "active" : "inactive"}`}>
+                              <Box className="status-dot" sx={{ background: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444" }} />
+                              {u.status || "Active"}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: "flex", gap: 0.75 }}>
+                              <Tooltip title="Edit user">
+                                <ButtonBase
+                                  className="action-btn edit"
+                                  onClick={() => { setDialog({ open: true, mode: "edit", data: { ...u } }); setIsFormView(true); }}
+                                  disableRipple
+                                >
+                                  <EditRounded sx={{ fontSize: 16 }} />
+                                </ButtonBase>
+                              </Tooltip>
+                              <Tooltip title="Delete user">
+                                <ButtonBase
+                                  className="action-btn delete"
+                                  onClick={() => setDelDialog({ open: true, id: u.id, name: u.name || u.username })}
+                                  disableRipple
+                                >
+                                  <DeleteRounded sx={{ fontSize: 16 }} />
+                                </ButtonBase>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </>
+      )}
 
-  {/* Add/Edit Dialog (REPLACED) */}
+      {/* Add/Edit Dialog (REPLACED) */}
       {/* Add/Edit Dialog (REPLACED) */}
 
       {/* Delete Confirm Dialog */}

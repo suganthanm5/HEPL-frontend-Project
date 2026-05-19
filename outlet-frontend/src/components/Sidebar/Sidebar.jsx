@@ -103,16 +103,30 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   // Get role from context or cookies as fallback
   const currentRole = role || getCookie("role") || "USER";
+  const userRoleStr = currentRole.toString().toUpperCase().replace('ROLE_', '').trim();
   
   const filteredNav = ALL_NAV
+    .map((item) => {
+      if (userRoleStr === "USER") {
+        if (item.to === "/orders") {
+          return { ...item, label: "My Requests" };
+        }
+        if (item.to === "/stock") {
+          return { ...item, label: "Available Stock" };
+        }
+      } else {
+        if (item.to === "/orders") {
+          return { ...item, label: "Requests" };
+        }
+      }
+      return item;
+    })
     .filter((item) => {
       if (!item.roles || item.roles.length === 0) return true;
       if (!currentRole) return false;
       
-      const userRole = currentRole.toString().toUpperCase().replace('ROLE_', '').trim();
       const allowedRoles = item.roles.map(r => r.toString().toUpperCase().replace('ROLE_', '').trim());
-      
-      return allowedRoles.includes(userRole);
+      return allowedRoles.includes(userRoleStr);
     })
     .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()));
 

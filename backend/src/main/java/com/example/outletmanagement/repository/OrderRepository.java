@@ -8,6 +8,9 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByOutletId(Long outletId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(MAX(o.batchNumber), 0) FROM Order o WHERE o.outlet.id = :outletId")
+    Integer findMaxBatchNumberByOutletId(@org.springframework.data.repository.query.Param("outletId") Long outletId);
     List<Order> findByStatus(Order.OrderStatus status);
 
     @org.springframework.data.jpa.repository.Query("SELECT o FROM Order o WHERE " +
