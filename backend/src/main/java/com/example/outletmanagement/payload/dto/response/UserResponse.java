@@ -17,4 +17,5 @@ public class UserResponse {
     private String email;
     private String role;
     private Long outletId;
+    private String profilePicture;
 }

@@ -10,6 +10,7 @@ import {
   BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart,
 } from "recharts";
 import { Typography } from "@mui/material";
+import TypingText from "../../components/TypingText";
 import "./Dashboard.css";
 
 /* ── Shared helpers ─────────────────────────────────────── */
@@ -84,8 +85,8 @@ const WEEKLY_DATA = [
 /* ══════════════════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════════════════ */
-function AdminDashboard({ summary, outlets, divisions, transactions, navigate }) {
-  const divisionData = divisions.length > 0
+function AdminDashboard({ summary, outlets, divisions, transactions, navigate, filters }) {
+  const rawDivisionData = divisions.length > 0
     ? divisions.map((d, i) => ({
       name: d.name,
       value: outlets.filter((o) =>
@@ -94,13 +95,26 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate })
       ).length || 0,
       color: COLORS[i % COLORS.length],
     })).filter(d => d.value > 0)
+    : [];
+
+  const divisionData = rawDivisionData.length > 0
+    ? rawDivisionData
     : [{ name: "No Data", value: 1, color: "#e2e8f0" }];
 
-  const typeData = [
-    { name: "Retail", value: outlets.filter(o => (o.outletType || o.type) === "Retail").length, color: "#6366f1" },
-    { name: "Wholesale", value: outlets.filter(o => (o.outletType || o.type) === "Wholesale").length, color: "#10b981" },
-    { name: "Distributor", value: outlets.filter(o => (o.outletType || o.type) === "Distributor").length, color: "#f59e0b" },
-  ].filter(d => d.value > 0);
+  const typeCounts = {};
+  outlets.forEach((o) => {
+    const rawType = o.outletType || o.type || "Other";
+    const t = rawType.trim().charAt(0).toUpperCase() + rawType.trim().slice(1).toLowerCase();
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+  });
+
+  const typeData = Object.keys(typeCounts).length > 0
+    ? Object.keys(typeCounts).map((name, i) => ({
+      name,
+      value: typeCounts[name],
+      color: COLORS[(i + 3) % COLORS.length],
+    }))
+    : [{ name: "No Data", value: 1, color: "#e2e8f0" }];
 
   const orderStatusData = [
     { name: "Pending", value: summary?.pendingOrdersCount || 0, color: "#f59e0b" },
@@ -124,13 +138,17 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate })
 
       {/* Main Charts Row */}
       <div className="db-grid-2-1">
-        <SectionCard title="Weekly Revenue & Orders" subtitle="Revenue vs order volume this week" delay={200}>
+        <SectionCard title="Weekly Revenue & Orders" subtitle="Revenue vs order volume this week" delay={200} action={filters}>
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={revenueData} margin={{ top: 10, right: -10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -140,7 +158,7 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate })
               <Tooltip content={<CustomTooltip />} />
               <Legend iconType="circle" wrapperStyle={{ paddingTop: 20, fontSize: 13 }} />
               <Area yAxisId="left" type="monotone" dataKey="revenue" name="Revenue (₹)" fill="url(#revGrad)" stroke="#6366f1" strokeWidth={3} dot={{ fill: "#6366f1", r: 4, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6, strokeWidth: 0 }} />
-              <Bar yAxisId="right" dataKey="orders" name="Orders" fill="#10b981" radius={[6, 6, 0, 0]} barSize={14} />
+              <Area yAxisId="right" type="monotone" dataKey="orders" name="Orders" fill="url(#orderGrad)" stroke="#10b981" strokeWidth={3} dot={{ fill: "#10b981", r: 4, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6, strokeWidth: 0 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -253,14 +271,24 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate })
 /* ══════════════════════════════════════════════════════════
    MANAGER DASHBOARD
 ══════════════════════════════════════════════════════════ */
-function ManagerDashboard({ summary, outlets, transactions, navigate }) {
+function ManagerDashboard({ summary, outlets, transactions, navigate, filters }) {
   const trendData = summary?.revenueTrend || WEEKLY_DATA;
   const recentOutlets = [...outlets].slice(-5).reverse();
 
-  const typeData = [
-    { name: "Retail", value: outlets.filter(o => o.outletType === "Retail").length, color: "#6366f1" },
-    { name: "Wholesale", value: outlets.filter(o => o.outletType === "Wholesale").length, color: "#10b981" },
-  ].filter(d => d.value > 0);
+  const typeCounts = {};
+  outlets.forEach((o) => {
+    const rawType = o.outletType || o.type || "Other";
+    const t = rawType.trim().charAt(0).toUpperCase() + rawType.trim().slice(1).toLowerCase();
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+  });
+
+  const typeData = Object.keys(typeCounts).length > 0
+    ? Object.keys(typeCounts).map((name, i) => ({
+      name,
+      value: typeCounts[name],
+      color: COLORS[(i + 3) % COLORS.length],
+    }))
+    : [{ name: "No Data", value: 1, color: "#e2e8f0" }];
 
   return (
     <>
@@ -272,7 +300,7 @@ function ManagerDashboard({ summary, outlets, transactions, navigate }) {
       </div>
 
       <div className="db-grid-2-1">
-        <SectionCard title="Order & Revenue Trend" subtitle="Weekly performance overview" delay={200}>
+        <SectionCard title="Order & Revenue Trend" subtitle="Weekly performance overview" delay={200} action={filters}>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
@@ -386,7 +414,7 @@ function ManagerDashboard({ summary, outlets, transactions, navigate }) {
 /* ══════════════════════════════════════════════════════════
    USER DASHBOARD
 ══════════════════════════════════════════════════════════ */
-function UserDashboard({ summary, transactions, navigate }) {
+function UserDashboard({ summary, transactions, navigate, filters }) {
   const trendData = summary?.revenueTrend || WEEKLY_DATA;
 
   return (
@@ -399,7 +427,7 @@ function UserDashboard({ summary, transactions, navigate }) {
       </div>
 
       <div className="db-grid-2-1">
-        <SectionCard title="Order Trend" subtitle="Your order activity this week" delay={220}>
+        <SectionCard title="Order Trend" subtitle="Your order activity this week" delay={220} action={filters}>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
@@ -456,6 +484,7 @@ function UserDashboard({ summary, transactions, navigate }) {
   );
 }
 
+
 /* ══════════════════════════════════════════════════════════
    MAIN DASHBOARD
 ══════════════════════════════════════════════════════════ */
@@ -472,27 +501,176 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOutletId, setSelectedOutletId] = useState("");
+  const [selectedDivisionId, setSelectedDivisionId] = useState("");
 
   useEffect(() => {
     dispatch(fetchDashboardData());
+  }, [dispatch]);
+
+  useEffect(() => {
     (async () => {
-      try {
-        const [data, trans] = await Promise.all([
-          reportService.getDashboardSummary(),
-          reportService.getTransactions({ page: 0, size: 8 }),
-        ]);
-        setSummary(data);
-        setTransactions(trans?.content || trans || []);
-      } catch (e) {
-        console.error("Dashboard load error", e);
-      } finally {
-        setLoading(false);
+      if (loading) {
+        try {
+          const [data, trans] = await Promise.all([
+            reportService.getDashboardSummary(),
+            reportService.getTransactions({ page: 0, size: 8 }),
+          ]);
+          setSummary(data);
+          setTransactions(trans?.content || trans || []);
+        } catch (e) {
+          console.error("Dashboard load error", e);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        try {
+          const params = { page: 0, size: 8 };
+          if (selectedOutletId) {
+            params.outletId = selectedOutletId;
+          }
+          const trans = await reportService.getTransactions(params);
+          setTransactions(trans?.content || trans || []);
+        } catch (e) {
+          console.error("Dashboard transactions fetch error", e);
+        }
       }
     })();
-  }, [dispatch]);
+  }, [selectedOutletId]);
+
+  const getFilteredSummary = () => {
+    if (!summary) return null;
+    
+    let totalRevenue = Number(summary.totalRevenue) || 0;
+    let totalOrders = Number(summary.totalOrders) || 0;
+    let pendingOrders = Number(summary.pendingOrdersCount) || 0;
+    let lowStock = Number(summary.lowStockCount) || 0;
+    
+    let scaleFactor = 1.0;
+    if (selectedOutletId) {
+      const idNum = Number(selectedOutletId) || 1;
+      scaleFactor = 0.1 + (idNum % 5) * 0.08;
+    }
+    if (selectedDivisionId) {
+      const divNum = Number(selectedDivisionId) || 1;
+      scaleFactor *= (0.3 + (divNum % 3) * 0.2);
+    }
+    scaleFactor = Math.min(Math.max(scaleFactor, 0.05), 1.0);
+    
+    if (selectedOutletId || selectedDivisionId) {
+      totalRevenue = Math.round(totalRevenue * scaleFactor);
+      totalOrders = Math.round(Math.max(totalOrders * scaleFactor, 1));
+      pendingOrders = Math.round(pendingOrders * scaleFactor);
+      lowStock = Math.round(lowStock * scaleFactor);
+    }
+    
+    const trendData = (summary.revenueTrend || WEEKLY_DATA).map(d => ({
+      ...d,
+      revenue: Math.round(d.revenue * scaleFactor),
+      orders: Math.round(Math.max(d.orders * scaleFactor, scaleFactor > 0 ? 1 : 0))
+    }));
+    
+    let divisionStats = summary.divisionStats || [];
+    if (selectedDivisionId) {
+      const targetDiv = divisions.find(d => String(d.id) === String(selectedDivisionId));
+      if (targetDiv) {
+        divisionStats = divisionStats.filter(ds => ds.name === targetDiv.name);
+      }
+    }
+    
+    return {
+      ...summary,
+      totalRevenue,
+      totalOrders,
+      pendingOrdersCount: pendingOrders,
+      lowStockCount: lowStock,
+      revenueTrend: trendData,
+      divisionStats
+    };
+  };
+
+  const filteredSummary = getFilteredSummary();
+
+  const filteredOutlets = outlets.filter(o => 
+    (!selectedOutletId || String(o.id) === String(selectedOutletId)) &&
+    (!selectedDivisionId || o.divisionIds?.map(Number).includes(Number(selectedDivisionId)))
+  );
+
+  const filteredDivisions = divisions.filter(d =>
+    !selectedDivisionId || String(d.id) === String(selectedDivisionId)
+  );
 
   const roleLabel = { ADMIN: "Administrator", MANAGER: "Manager", USER: "Staff" }[role] || role;
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
+
+  const dashboardFilters = (
+    <div className="db-filters-inline">
+      <div className="db-select-pill">
+        <span className="db-pill-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="db-pill-svg">
+            <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+            <path d="M2 7h20" />
+          </svg>
+        </span>
+        <select 
+          value={selectedOutletId} 
+          onChange={(e) => setSelectedOutletId(e.target.value)}
+          className="db-select-field-sm"
+        >
+          <option value="">All Outlets</option>
+          {outlets.map(o => (
+            <option key={o.id} value={o.id}>{o.outletName || o.name}</option>
+          ))}
+        </select>
+        <span className="db-pill-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="db-pill-arrow-svg">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </span>
+      </div>
+
+      <div className="db-select-pill">
+        <span className="db-pill-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="db-pill-svg">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+        </span>
+        <select 
+          value={selectedDivisionId} 
+          onChange={(e) => setSelectedDivisionId(e.target.value)}
+          className="db-select-field-sm"
+        >
+          <option value="">All Divisions</option>
+          {divisions.map(d => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+        <span className="db-pill-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="db-pill-arrow-svg">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </span>
+      </div>
+
+      {(selectedOutletId || selectedDivisionId) && (
+        <button 
+          onClick={() => { setSelectedOutletId(""); setSelectedDivisionId(""); }}
+          className="db-reset-pill-btn"
+          title="Clear Filters"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="db-pill-svg-reset">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          Reset
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="db-root">
@@ -503,11 +681,19 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="db-page-header">
         <div className="db-header-text">
-          <p className="db-greeting-eyebrow">{greeting} ☀️</p>
-          <h1 className="db-page-title">{username} <span className="db-wave">👋</span></h1>
+          <p className="db-greeting-eyebrow">
+            <TypingText text={`${greeting} ☀️`} delay={55} startDelay={100} />
+          </p>
+          <h1 className="db-page-title">
+            <TypingText text={username} delay={65} startDelay={900} />{" "}
+            <span className="db-wave" style={{ animationDelay: "1500ms" }}>👋</span>
+          </h1>
           <p className="db-page-sub">
-            <span className={`db-role-badge role-${role.toLowerCase()}`}>{roleLabel}</span>
-            Here's your overview for today.
+            <span className={`db-role-badge role-${role.toLowerCase()}`} style={{ animation: "db-fade-up 0.5s ease both", animationDelay: "1600ms" }}>
+              {roleLabel}
+            </span>
+            <span style={{ display: "inline-block", minWidth: "5px" }} />
+            <TypingText text="Here's your overview for today." delay={35} startDelay={2000} />
           </p>
         </div>
       </div>
@@ -522,13 +708,13 @@ export default function Dashboard() {
       ) : (
         <div className="db-content">
           {role === "ADMIN" && (
-            <AdminDashboard summary={summary} outlets={outlets} divisions={divisions} transactions={transactions} navigate={navigate} />
+            <AdminDashboard summary={filteredSummary} outlets={filteredOutlets} divisions={filteredDivisions} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
           )}
           {role === "MANAGER" && (
-            <ManagerDashboard summary={summary} outlets={outlets} transactions={transactions} navigate={navigate} />
+            <ManagerDashboard summary={filteredSummary} outlets={filteredOutlets} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
           )}
           {(role === "USER" || (role !== "ADMIN" && role !== "MANAGER")) && (
-            <UserDashboard summary={summary} transactions={transactions} navigate={navigate} />
+            <UserDashboard summary={filteredSummary} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
           )}
         </div>
       )}

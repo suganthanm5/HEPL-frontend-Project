@@ -18,6 +18,7 @@ import { stockService } from "../../services/stockService";
 import { useAuth } from "../../context/AuthContext";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatStockData } from "../../utils/exportUtils";
 import "./Stock.css";
 import "../UserManagement/UserManagement.css";
@@ -182,7 +183,7 @@ const Stock = () => {
       <Box className="page-header">
         <Box className="page-header-left">
           <Typography className="page-title">
-            {isOutletUser ? "Available Stock" : "Stock Management"}
+            <TypingText text={isOutletUser ? "Available Stock" : "Stock Management"} />
           </Typography>
           <Typography className="page-subtitle">
             {isOutletUser ? "View available inventory and request stock additions" : "Monitor and transfer outlet stock"}
@@ -345,12 +346,12 @@ const Stock = () => {
       {!isOutletUser && (
       <Box className="stat-cards-row">
         {[
-          { label: "Stock Entries",  value: stock.length,  bg: "#f5f0ff", color: "#7d2ae8", Icon: WarehouseRounded },
-          { label: "Total IN",       value: totalIn,        bg: "#dcfce7", color: "#16a34a", Icon: TrendingUpRounded },
-          { label: "Total OUT",      value: totalOut,       bg: "#fee2e2", color: "#ef4444", Icon: TrendingDownRounded },
-          { label: "Transactions",   value: txns.length,    bg: "#e0f2fe", color: "#0284c7", Icon: SwapHorizRounded },
-        ].map(({ label, value, bg, color, Icon }) => (
-          <Box className="stat-card" key={label}>
+          { label: "Stock Entries",  value: stock.length,  bg: "#f5f0ff", color: "#7d2ae8", Icon: WarehouseRounded, theme: "purple" },
+          { label: "Total IN",       value: totalIn,        bg: "#dcfce7", color: "#16a34a", Icon: TrendingUpRounded, theme: "green" },
+          { label: "Total OUT",      value: totalOut,       bg: "#fee2e2", color: "#ef4444", Icon: TrendingDownRounded, theme: "rose" },
+          { label: "Transactions",   value: txns.length,    bg: "#e0f2fe", color: "#0284c7", Icon: SwapHorizRounded, theme: "blue" },
+        ].map(({ label, value, bg, color, Icon, theme }) => (
+          <Box className={`stat-card stat-${theme}`} key={label}>
             <Box className="stat-card-icon" sx={{ background: bg }}><Icon sx={{ color, fontSize: 22 }} /></Box>
             <Box>
               <Typography className="stat-card-value">{value}</Typography>

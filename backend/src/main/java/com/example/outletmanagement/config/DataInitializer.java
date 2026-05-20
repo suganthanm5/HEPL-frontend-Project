@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
 import java.math.BigDecimal;
 
 @Component
@@ -17,9 +18,18 @@ public class DataInitializer implements CommandLineRunner {
         private final LocationRepository locationRepository;
         private final OutletRepository outletRepository;
         private final OutletDivisionProductRepository mappingRepository;
+        private final JdbcTemplate jdbcTemplate;
 
         @Override
         public void run(String... args) throws Exception {
+                // Ensure profile_picture column exists in users table
+                try {
+                        jdbcTemplate.execute("ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255)");
+                        log.info("Successfully added profile_picture column to users table");
+                } catch (Exception e) {
+                        log.debug("Could not add profile_picture column (it may already exist): " + e.getMessage());
+                }
+
                 try {
                         if (divisionRepository.count() == 0) {
                                 log.info("Initializing divisions...");

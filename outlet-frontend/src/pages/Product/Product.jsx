@@ -5,6 +5,7 @@ import { getDivisions } from "../../services/divisionService";
 import { orderService } from "../../services/orderService";
 import API, { ENDPOINTS } from '../../api/apiClient';
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatProductData } from "../../utils/exportUtils";
 import "./Product.css";
 
@@ -77,8 +78,8 @@ const ChartCard = ({ title, subtitle, action, children }) => (
     elevation={0}
     sx={{
       border: "1px solid #f1f5f9",
-      borderRadius: 4,
-      p: 3,
+      borderRadius: "16px",
+      p: { xs: 2, sm: 3 },
       height: "100%",
       display: "flex",
       flexDirection: "column",
@@ -90,16 +91,29 @@ const ChartCard = ({ title, subtitle, action, children }) => (
       }
     }}
   >
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3 }}>
+    <Box sx={{ 
+      display: "flex", 
+      flexDirection: { xs: "column", sm: "row" }, 
+      justifyContent: "space-between", 
+      alignItems: { xs: "stretch", sm: "center" }, 
+      gap: 2,
+      mb: 3 
+    }}>
       <Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>{title}</Typography>
         {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ 
+        display: "flex", 
+        alignItems: "center", 
+        gap: 1,
+        flexWrap: "wrap",
+        justifyContent: { xs: "flex-start", sm: "flex-end" }
+      }}>
         {action}
         <Box sx={{ px: 1.5, py: 0.5, bgcolor: "#f8fafc", borderRadius: 1.5, border: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 1 }}>
           <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>2025-10-14 - 2025-10-17</Typography>
-          <Box sx={{ width: 14, height: 14, color: "#94a3b8" }}><BarChartIcon sx={{ fontSize: 14 }} /></Box>
+          <Box sx={{ width: 14, height: 14, color: "#94a3b8", display: "flex", alignItems: "center" }}><BarChartIcon sx={{ fontSize: 14 }} /></Box>
         </Box>
       </Box>
     </Box>
@@ -160,14 +174,33 @@ const PAGE_SIZES = [5, 10, 25, 50];
 const EMPTY_FORM = { name: "", productCode: "", uimPrice: "", mrp: "", sellingPrice: "", purchasePrice: "", divisionId: "", image: "" };
 
 /* ── Stat Card ── */
-const StatCard = ({ label, value, color, bg, icon }) => (
-  <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 160 }}>
+const StatCard = ({ label, value, color, bg, icon, gradient, border }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      border: `1.5px solid ${border}`,
+      borderRadius: "16px",
+      p: 2.5,
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+      flex: 1,
+      minWidth: 160,
+      background: gradient,
+      transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
+      "&:hover": {
+        transform: "translateY(-5px) scale(1.01)",
+        boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
+        borderColor: color
+      }
+    }}
+  >
     <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: bg, color, "& svg": { fontSize: 22 } }}>
       {icon}
     </Box>
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color, lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{label}</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e1b4b", lineHeight: 1.1 }}>{value}</Typography>
+      <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{label}</Typography>
     </Box>
   </Paper>
 );
@@ -592,7 +625,9 @@ const Product = () => {
 
         {/* ── Hero ── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>Product Management</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>
+            <TypingText text="Product Management" />
+          </Typography>
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <Button variant="outlined" startIcon={<UploadFileIcon />}
               sx={{
@@ -769,20 +804,28 @@ const Product = () => {
           <>
             {/* ── 1. Insights Row (Graphs) ── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={12} md={6}>
                 <ChartCard title="Products by Division" subtitle="Division-wise distribution">
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={performanceData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 10, fill: "#94a3b8" }} 
+                        height={40}
+                        angle={-12}
+                        textAnchor="end"
+                      />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
                       <ReChartsTooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
                       <Bar dataKey="count" name="Product Count" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={24} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartCard>
               </Grid>
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={12} md={6}>
                 <ChartCard
                   title="Order Summary"
                   subtitle="Revenue by day"
@@ -807,8 +850,8 @@ const Product = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(v) => `${v / 1000}k`} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => `${v / 1000}k`} />
                       <ReChartsTooltip content={<CustomTooltip />} />
                       <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#prodRevGrad)" dot={{ fill: "#6366f1", r: 3 }} activeDot={{ r: 5 }} />
                     </AreaChart>
@@ -819,9 +862,9 @@ const Product = () => {
 
             {/* ── 2. Stats Row (Top Cards) ── */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 4 }}>
-              <StatCard label="Total Products" value={loading ? "—" : products.length} color="#f59e0b" bg="#fffbeb" icon={<Inventory2Icon />} />
-              <StatCard label="Filtered Results" value={loading ? "—" : filtered.length} color="#6366f1" bg="#eef2ff" icon={<SearchIcon />} />
-              <StatCard label="Total Pages" value={loading ? "—" : totalPages} color="#10b981" bg="#ecfdf5" icon={<GridViewIcon />} />
+              <StatCard label="Total Products" value={loading ? "—" : products.length} color="#b45309" bg="#fffbeb" icon={<Inventory2Icon />} gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" border="#fef3c7" />
+              <StatCard label="Filtered Results" value={loading ? "—" : filtered.length} color="#4f46e5" bg="#f5f7ff" icon={<SearchIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%)" border="#e0e7ff" />
+              <StatCard label="Total Pages" value={loading ? "—" : totalPages} color="#15803d" bg="#ecfdf5" icon={<GridViewIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" border="#dcfce7" />
             </Stack>
 
             {/* ── 3. Table View ── */}

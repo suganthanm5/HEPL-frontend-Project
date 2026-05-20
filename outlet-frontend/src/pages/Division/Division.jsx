@@ -6,6 +6,7 @@ import {
   getProductsByDivision, createProduct, deleteProduct,
 } from "../../services/productService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatDivisionData } from "../../utils/exportUtils";
 
 import { styled } from "@mui/material/styles";
@@ -411,7 +412,7 @@ const Division = () => {
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700} sx={{ fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
-            Division Management
+            <TypingText text="Division Management" />
           </Typography>
           <Typography variant="body2" sx={{ color: "#64748b" }}>
             Manage and organize your business division units
@@ -527,21 +528,38 @@ const Division = () => {
           {/* ── Stat Cards ── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { label: "Total Divisions", value: loading ? "—" : totalElements, icon: <FolderIcon />, color: "#6366f1", bg: "#f5f3ff" },
-          { label: "Current Page", value: loading ? "—" : safePage, icon: <TrendingUpIcon />, color: "#22c55e", bg: "#f0fdf4" },
-          { label: "Total Pages", value: loading ? "—" : totalPages, icon: <GridViewIcon />, color: "#a855f7", bg: "#fdf4ff" },
+          { label: "Total Divisions", value: loading ? "—" : totalElements, icon: <FolderIcon />, color: "#4f46e5", bg: "#f5f0ff", gradient: "linear-gradient(135deg, #ffffff 0%, #faf5ff 100%)", border: "#f3e8ff" },
+          { label: "Current Page", value: loading ? "—" : safePage, icon: <TrendingUpIcon />, color: "#15803d", bg: "#f0fdf4", gradient: "linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)", border: "#dcfce7" },
+          { label: "Total Pages", value: loading ? "—" : totalPages, icon: <GridViewIcon />, color: "#1d4ed8", bg: "#f0f7ff", gradient: "linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)", border: "#dbeafe" },
         ].map((stat, i) => (
-          <Grid xs={12} sm={4} key={i}>
-            <Card sx={{ borderRadius: 3, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", border: "1px solid #f1f5f9" }}>
+          <Grid xs={12} sm={4} key={i} item>
+            <Card sx={{ 
+              borderRadius: "16px", 
+              p: 2.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flex: 1,
+              minWidth: 160,  
+              boxShadow: "0 2px 12px rgba(125, 42, 232, 0.06)", 
+              border: `1.5px solid ${stat.border}`,
+              background: stat.gradient,
+              transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
+              "&:hover": {
+                transform: "translateY(-5px) scale(1.01)",
+                boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
+                borderColor: stat.color
+              }
+            }}>
               <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px !important" }}>
                 <Avatar sx={{ bgcolor: stat.bg, color: stat.color, width: 48, height: 48, borderRadius: 2 }}>
                   {stat.icon}
                 </Avatar>
                 <Box>
-                  <Typography variant="h5" fontWeight={700} sx={{ color: "#1e1b4b", lineHeight: 1.2 }}>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: "#1e1b4b", lineHeight: 1.2 }}>
                     {stat.value}
                   </Typography>
-                  <Typography variant="caption" fontWeight={600} sx={{ color: "#64748b" }}>
+                  <Typography variant="caption" fontWeight={600} sx={{ color: stat.color }}>
                     {stat.label}
                   </Typography>
                 </Box>
@@ -807,34 +825,93 @@ const Division = () => {
             </Grid>
           ) : (
             filteredDivisions.map((d, i) => (
-              <Grid xs={12} sm={6} lg={4} key={d.id}>
-                <Card sx={{ borderRadius: 3, transition: "all 0.3s", "&:hover": { transform: "translateY(-4px)", boxShadow: "0 12px 24px rgba(0,0,0,0.1)" }, border: "1px solid #f1f5f9" }}>
-                  <CardContent sx={{ p: 2.5 }}>
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-                      <Box sx={{ display: "flex", gap: 1.5 }}>
-                        <Avatar sx={{ bgcolor: "#f5f3ff", color: "#6366f1", fontWeight: 700, width: 44, height: 44, borderRadius: 2 }}>
-                          {d.name?.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#1e1b4b", lineHeight: 1.2 }}>{d.name}</Typography>
-                          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600 }}>
-                            {d.products?.length || 0} Products
-                          </Typography>
-                        </Box>
+              <Grid xs={12} sm={6} lg={4} key={d.id} item>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    border: "1px solid #f1f5f9",
+                    borderRadius: 3,
+                    p: 2.5,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: "all 0.22s ease-in-out",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: "0 8px 24px rgba(99, 102, 241, 0.08)",
+                      borderColor: "#e0e7ff"
+                    }
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Avatar sx={{ width: 44, height: 44, fontSize: "1rem", fontWeight: 700, bgcolor: "#f5f3ff", color: "#6366f1" }}>
+                        {d.name?.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", mb: 0.25 }}>{d.name}</Typography>
+                        <Chip
+                          label={`${d.products?.length || 0} Products`}
+                          size="small"
+                          sx={{ bgcolor: "#f5f3ff", color: "#6366f1", fontWeight: 700, fontSize: "0.72rem", height: 22 }}
+                        />
                       </Box>
-                      <Typography variant="caption" sx={{ fontWeight: 800, color: "#cbd5e1" }}>
-                        #{(safePage - 1) * pageSize + i + 1}
-                      </Typography>
                     </Box>
-                    
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                      <Button onClick={() => setViewModal(d)} size="small" variant="outlined" startIcon={<VisibilityIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>View</Button>
-                      <Button onClick={() => openProducts(d)} size="small" variant="outlined" color="success" startIcon={<InventoryIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>Products</Button>
-                      <Button onClick={() => openEdit(d)} size="small" variant="outlined" color="secondary" startIcon={<EditIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>Edit</Button>
-                      <Button onClick={() => setDeleteModal(d)} size="small" variant="outlined" color="error" startIcon={<DeleteIcon />} sx={{ textTransform: "none", borderRadius: 1.5, fontSize: "0.75rem", flex: 1 }}>Delete</Button>
-                    </Box>
-                  </CardContent>
-                </Card>
+                    <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 600 }}>
+                      #{(safePage - 1) * pageSize + i + 1}
+                    </Typography>
+                  </Box>
+
+                  <Typography variant="caption" sx={{ color: "#94a3b8", mb: 2, display: "block" }}>Division Node</Typography>
+                  <Divider sx={{ mb: 1.5 }} />
+
+                  <Grid container spacing={1} sx={{ mt: "auto" }}>
+                    <Grid item xs={6}>
+                      <Button
+                        onClick={() => setViewModal(d)}
+                        fullWidth
+                        size="small"
+                        startIcon={<VisibilityIcon sx={{ fontSize: 13 }} />}
+                        sx={{ color: "#4f46e5", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#eae8ff" }, fontWeight: 600, fontSize: "0.72rem", textTransform: "none", borderRadius: 1.5 }}
+                      >
+                        View
+                      </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Button
+                        onClick={() => openProducts(d)}
+                        fullWidth
+                        size="small"
+                        startIcon={<InventoryIcon sx={{ fontSize: 13 }} />}
+                        sx={{ color: "#15803d", bgcolor: "#f0fdf4", "&:hover": { bgcolor: "#dcfce7" }, fontWeight: 600, fontSize: "0.72rem", textTransform: "none", borderRadius: 1.5 }}
+                      >
+                        Products
+                      </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Button
+                        onClick={() => openEdit(d)}
+                        fullWidth
+                        size="small"
+                        startIcon={<EditIcon sx={{ fontSize: 13 }} />}
+                        sx={{ color: "#2563eb", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" }, fontWeight: 600, fontSize: "0.72rem", textTransform: "none", borderRadius: 1.5 }}
+                      >
+                        Edit
+                      </Button>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Button
+                        onClick={() => setDeleteModal(d)}
+                        fullWidth
+                        size="small"
+                        startIcon={<DeleteIcon sx={{ fontSize: 13 }} />}
+                        sx={{ color: "#ef4444", bgcolor: "#fef2f2", "&:hover": { bgcolor: "#fee2e2" }, fontWeight: 600, fontSize: "0.72rem", textTransform: "none", borderRadius: 1.5 }}
+                      >
+                        Delete
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Paper>
               </Grid>
             ))
           )}

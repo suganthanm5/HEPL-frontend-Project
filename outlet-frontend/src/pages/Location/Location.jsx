@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLocations, createLocation, updateLocation, deleteLocation, bulkCreateLocations } from "../../services/locationService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatLocationData } from "../../utils/exportUtils";
 
 // Material UI imports
@@ -88,14 +89,33 @@ const theme = createTheme({
 });
 
 /* ── Stat Card ── */
-const StatCard = ({ label, value, color, bg, icon }) => (
-  <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 160 }}>
+const StatCard = ({ label, value, color, bg, icon, gradient, border }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      border: `1.5px solid ${border}`,
+      borderRadius: "16px",
+      p: 2.5,
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+      flex: 1,
+      minWidth: 160,
+      background: gradient,
+      transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
+      "&:hover": {
+        transform: "translateY(-5px) scale(1.01)",
+        boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
+        borderColor: color
+      }
+    }}
+  >
     <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: bg, color, "& svg": { fontSize: 22 } }}>
       {icon}
     </Box>
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color, lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{label}</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e1b4b", lineHeight: 1.1 }}>{value}</Typography>
+      <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{label}</Typography>
     </Box>
   </Paper>
 );
@@ -284,18 +304,28 @@ const Location = () => {
       <Box sx={{ p: { xs: 2, md: 3 } }}>
 
         {/* ── Hero ── */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", mb: 3, gap: 1.5 }}>
-          <Button variant="outlined" startIcon={<UploadFileIcon />}
-            sx={{ borderColor: "#10b981", color: "#10b981", fontWeight: 600, textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#f0fdf4", borderColor: "#10b981" } }}
-            onClick={() => setBulkOpen(true)}>
-            Bulk Upload
-          </Button>
-          <ExportMenu getData={() => formatLocationData(allLocations)} filename="locations" title="Locations Report" backendType="locations" />
-          <Button variant="contained" startIcon={<AddIcon />} color="primary"
-            sx={{ boxShadow: "none", "&:hover": { boxShadow: "none" } }}
-            onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}>
-            Add Location
-          </Button>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+          <Box>
+            <Typography variant="h5" fontWeight={700} sx={{ fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+              <TypingText text="Location Management" />
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#64748b" }}>
+              Manage geographic locations for your outlets
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1.5 }}>
+            <Button variant="outlined" startIcon={<UploadFileIcon />}
+              sx={{ borderColor: "#10b981", color: "#10b981", fontWeight: 600, textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#f0fdf4", borderColor: "#10b981" } }}
+              onClick={() => setBulkOpen(true)}>
+              Bulk Upload
+            </Button>
+            <ExportMenu getData={() => formatLocationData(allLocations)} filename="locations" title="Locations Report" backendType="locations" />
+            <Button variant="contained" startIcon={<AddIcon />} color="primary"
+              sx={{ boxShadow: "none", "&:hover": { boxShadow: "none" } }}
+              onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}>
+              Add Location
+            </Button>
+          </Box>
         </Box>
 
         {isFormView ? (
@@ -368,9 +398,9 @@ const Location = () => {
           <>
             {/* ── Stats ── */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-              <StatCard label="Total Locations" value={loading ? "—" : totalElements} color="#10b981" bg="#ecfdf5" icon={<LocationOnIcon />} />
-              <StatCard label="Current Page" value={loading ? "—" : locations.length} color="#6366f1" bg="#eef2ff" icon={<SearchIcon />} />
-              <StatCard label="Total Pages" value={loading ? "—" : totalPages} color="#f59e0b" bg="#fffbeb" icon={<GridViewIcon />} />
+              <StatCard label="Total Locations" value={loading ? "—" : totalElements} color="#15803d" bg="#ecfdf5" icon={<LocationOnIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" border="#dcfce7" />
+              <StatCard label="Current Page" value={loading ? "—" : locations.length} color="#4f46e5" bg="#eef2ff" icon={<SearchIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%)" border="#e0e7ff" />
+              <StatCard label="Total Pages" value={loading ? "—" : totalPages} color="#b45309" bg="#fffbeb" icon={<GridViewIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" border="#fef3c7" />
             </Stack>
 
             {/* ── Error ── */}

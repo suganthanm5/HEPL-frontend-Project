@@ -45,6 +45,9 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(name = "profile_picture")
+    private String profilePicture;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "outlet_id")
     @JsonIgnore

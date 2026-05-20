@@ -4,6 +4,7 @@ import { getOutlets, createOutlet, updateOutlet, deleteOutlet, bulkCreateOutlets
 import { getLocations } from "../../services/locationService";
 import { getDivisions, getDivisionById } from "../../services/divisionService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatOutletData } from "../../utils/exportUtils";
 
 import {
@@ -116,14 +117,33 @@ const EMPTY_FORM = {
 const PAGE_SIZES = [5, 10, 25, 50];
 
 /* ── Stat Card ── */
-const StatCard = ({ label, value, color, bg, icon }) => (
-  <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 160 }}>
+const StatCard = ({ label, value, color, bg, icon, gradient, border }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      border: `1.5px solid ${border}`,
+      borderRadius: "16px",
+      p: 2.5,
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+      flex: 1,
+      minWidth: 160,
+      background: gradient,
+      transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
+      "&:hover": {
+        transform: "translateY(-5px) scale(1.01)",
+        boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
+        borderColor: color
+      }
+    }}
+  >
     <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: bg, color, "& svg": { fontSize: 22 } }}>
       {icon}
     </Box>
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color, lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{label}</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e1b4b", lineHeight: 1.1 }}>{value}</Typography>
+      <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{label}</Typography>
     </Box>
   </Paper>
 );
@@ -824,7 +844,9 @@ export default function Outlet() {
 
         {/* ── Hero ── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>Outlet Management</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>
+            <TypingText text="Outlet Management" />
+          </Typography>
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <Button variant="outlined" startIcon={<UploadFileIcon />}
               sx={{ borderColor: "#6366f1", color: "#6366f1", fontWeight: 600, textTransform: "none", borderRadius: 2,
@@ -849,10 +871,10 @@ export default function Outlet() {
 
         {/* ── Stats ── */}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-          <StatCard label="Total Outlets" value={loading ? "—" : outlets.length} color="#6366f1" bg="#eef2ff" icon={<HomeWorkIcon />} />
-          <StatCard label="Filtered" value={loading ? "—" : filtered.length} color="#10b981" bg="#ecfdf5" icon={<SearchIcon />} />
-          <StatCard label="Locations Used" value={loading ? "—" : [...new Set(outlets.map((o) => o.locationName).filter(Boolean))].length} color="#f59e0b" bg="#fffbeb" icon={<LocationOnIcon />} />
-          <StatCard label="Types" value={loading ? "—" : [...new Set(outlets.map((o) => o.outletType).filter(Boolean))].length} color="#06b6d4" bg="#ecfeff" icon={<GridViewIcon />} />
+          <StatCard label="Total Outlets" value={loading ? "—" : outlets.length} color="#4f46e5" bg="#eef2ff" icon={<HomeWorkIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%)" border="#e0e7ff" />
+          <StatCard label="Filtered" value={loading ? "—" : filtered.length} color="#15803d" bg="#ecfdf5" icon={<SearchIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" border="#dcfce7" />
+          <StatCard label="Locations Used" value={loading ? "—" : [...new Set(outlets.map((o) => o.locationName).filter(Boolean))].length} color="#b45309" bg="#fffbeb" icon={<LocationOnIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" border="#fef3c7" />
+          <StatCard label="Types" value={loading ? "—" : [...new Set(outlets.map((o) => o.outletType).filter(Boolean))].length} color="#0891b2" bg="#ecfeff" icon={<GridViewIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #ecfeff 100%)" border="#cffafe" />
         </Stack>
 
         {/* ── Error ── */}

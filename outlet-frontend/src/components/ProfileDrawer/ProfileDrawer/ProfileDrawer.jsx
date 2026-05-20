@@ -12,7 +12,10 @@ import {
   Building2,
   LogOut,
   Edit3,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import './ProfileDrawer.css';
 
@@ -21,6 +24,15 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState('system');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
   const drawerRef = useRef(null);
 
   // Fetch user profile when drawer opens
@@ -56,6 +68,20 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
+
+  // Reset password visibility when modal opens/closes
+  useEffect(() => {
+    if (!showChangePassword) {
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      setPasswordForm({
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setPasswordError('');
+      setPasswordSuccess('');
+    }
+  }, [showChangePassword]);
 
   const fetchUserProfile = async () => {
     setLoading(true);
@@ -129,6 +155,75 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    // Validation
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordError('Both password fields are required');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+
+    // Check if password contains at least one number
+    if (!/\d/.test(passwordForm.newPassword)) {
+      setPasswordError('Password must include at least one number (0-9)');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newPassword: passwordForm.newPassword
+        })
+      });
+
+      if (response.ok) {
+        setPasswordSuccess('Password changed successfully');
+        setPasswordForm({
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setTimeout(() => {
+          setShowChangePassword(false);
+          setPasswordSuccess('');
+        }, 2000);
+      } else {
+        const error = await response.json();
+        setPasswordError(error.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Change password error:', error);
+      setPasswordError('An error occurred. Please try again.');
+    }
+  };
+
+  const resetPasswordForm = () => {
+    setPasswordForm({
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+    setPasswordError('');
+    setPasswordSuccess('');
+    setShowChangePassword(false);
+  };
+
   const getInitials = (name) => {
     return name
       ?.split(' ')
@@ -144,6 +239,12 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
       label: 'Edit Profile',
       action: () => console.log('Edit Profile'),
       color: 'text-blue-600'
+    },
+    {
+      icon: Lock,
+      label: 'Change Password',
+      action: () => setShowChangePassword(true),
+      color: 'text-indigo-600'
     },
     {
       icon: Settings,
@@ -313,6 +414,117 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
                   className="profile-logout-confirm"
                 >
                   Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showChangePassword && (
+          <div className="profile-logout-modal" onClick={resetPasswordForm}>
+            <div className="profile-logout-modal-content profile-change-password-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="change-password-header">
+                <h3>Change Password</h3>
+                <button
+                  onClick={resetPasswordForm}
+                  className="change-password-close"
+                  type="button"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {passwordSuccess && (
+                <div className="password-success-message">
+                  ✓ {passwordSuccess}
+                </div>
+              )}
+
+              {passwordError && (
+                <div className="password-error-message">
+                  ✕ {passwordError}
+                </div>
+              )}
+
+              <div className="password-requirements">
+                <p className="requirements-title">Password Requirements:</p>
+                <ul className="requirements-list">
+                  <li>At least 6 characters long</li>
+                  <li>Must include at least one number (0-9)</li>
+                </ul>
+              </div>
+
+              <div className="change-password-form">
+                {/* New Password */}
+                <div className="password-input-group">
+                  <label htmlFor="new-password">New Password</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      key={`new-${showNewPassword}`}
+                      id="new-password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      placeholder="Enter your new password"
+                      className="password-input"
+                      autoComplete="new-password"
+                      spellCheck="false"
+                    />
+                    <button
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="password-toggle-btn"
+                      type="button"
+                      tabIndex="-1"
+                      title={showNewPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div className="password-input-group">
+                  <label htmlFor="confirm-password">Confirm New Password</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      key={`confirm-${showConfirmPassword}`}
+                      id="confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      placeholder="Confirm your new password"
+                      className="password-input"
+                      autoComplete="new-password"
+                      spellCheck="false"
+                    />
+                    <button
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="password-toggle-btn"
+                      type="button"
+                      tabIndex="-1"
+                      title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="profile-logout-modal-actions">
+                <button
+                  onClick={resetPasswordForm}
+                  className="profile-logout-cancel"
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleChangePassword}
+                  className="profile-logout-confirm password-update-btn"
+                  type="button"
+                >
+                  Update Password
                 </button>
               </div>
             </div>

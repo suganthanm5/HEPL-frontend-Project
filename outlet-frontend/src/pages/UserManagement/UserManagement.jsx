@@ -16,6 +16,7 @@ import {
 import { userService } from "../../services/userService";
 import { outletService } from "../../services/outletService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatUserData } from "../../utils/exportUtils";
 import "./UserManagement.css";
 
@@ -248,32 +249,36 @@ const UserManagement = () => {
           {/* Header */}
           <Box className="page-header">
             <Box className="page-header-left">
-              <Typography className="page-title">User Management</Typography>
+              <Typography className="page-title">
+                <TypingText text="User Management" />
+              </Typography>
               <Typography className="page-subtitle">Manage users and their roles</Typography>
             </Box>
-            <ButtonBase
-              onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }}
-              sx={{
-                display: "flex", alignItems: "center", gap: 1,
-                px: 2.5, py: 1.2, borderRadius: "50px",
-                background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
-                color: "#fff", fontFamily: "Poppins, sans-serif",
-                fontSize: "0.875rem", fontWeight: 600,
-                boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
-                transition: "all 0.25s ease",
-                "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
-              }}
-              disableRipple
-            >
-              <PersonAddRounded sx={{ fontSize: 18 }} />
-              Add User
-            </ButtonBase>
+            <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+              <ButtonBase
+                onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }}
+                sx={{
+                  display: "flex", alignItems: "center", gap: 1,
+                  px: 2.5, py: 1.2, borderRadius: "50px",
+                  background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
+                  color: "#fff", fontFamily: "Poppins, sans-serif",
+                  fontSize: "0.875rem", fontWeight: 600,
+                  boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
+                  transition: "all 0.25s ease",
+                  "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
+                }}
+                disableRipple
+              >
+                <PersonAddRounded sx={{ fontSize: 18 }} />
+                Add User
+              </ButtonBase>
+            </Box>
           </Box>
 
 
           {/* Stat Cards */}
           <Box className="stat-cards-row">
-            <Box className="stat-card">
+            <Box className="stat-card stat-indigo">
               <Box className="stat-card-icon" sx={{ background: "#f5f0ff" }}>
                 <PeopleRounded sx={{ color: "#7d2ae8", fontSize: 22 }} />
               </Box>
@@ -284,8 +289,9 @@ const UserManagement = () => {
             </Box>
             {ROLES.map((r) => {
               const meta = ROLE_META[r];
+              const theme = r === "ADMIN" ? "purple" : r === "MANAGER" ? "blue" : "green";
               return (
-                <Box className="stat-card" key={r}>
+                <Box className={`stat-card stat-${theme}`} key={r}>
                   <Box className="stat-card-icon" sx={{ background: meta.bg }}>
                     <meta.Icon sx={{ color: meta.color, fontSize: 22 }} />
                   </Box>

@@ -442,3 +442,422 @@
 .text-green-600 { color: #16a34a; }
 .text-indigo-600 { color: #4f46e5; }
 .text-gray-400 { color: #9ca3af; }
+
+/* Change Password Modal */
+.profile-change-password-modal {
+  max-width: 480px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.change-password-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1.5px solid #e5e7eb;
+}
+
+.change-password-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.change-password-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.change-password-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: scale(1.05);
+}
+
+.password-requirements {
+  padding: 14px 16px;
+  background: #f0f9ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.requirements-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0 0 8px 0;
+}
+
+.requirements-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.requirements-list li {
+  font-size: 13px;
+  color: #1e40af;
+  margin: 4px 0;
+  position: relative;
+  padding-left: 16px;
+}
+
+.requirements-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+.password-success-message {
+  padding: 14px 16px;
+  background: #dcfce7;
+  border: 1.5px solid #86efac;
+  color: #166534;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+.password-error-message {
+  padding: 14px 16px;
+  background: #fee2e2;
+  border: 1.5px solid #fca5a5;
+  color: #991b1b;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.change-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.password-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.password-input-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.password-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.password-input-wrapper:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: #fff;
+}
+
+.password-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+  background: transparent;
+  color: #111827;
+  letter-spacing: normal;
+}
+
+.password-input::placeholder {
+  color: #9ca3af !important;
+  letter-spacing: normal;
+  opacity: 1;
+}
+
+.password-input::-webkit-input-placeholder {
+  color: #9ca3af !important;
+  letter-spacing: normal;
+  opacity: 1;
+}
+
+.password-input::-moz-placeholder {
+  color: #9ca3af !important;
+  letter-spacing: normal;
+  opacity: 1;
+}
+
+.password-input:-ms-input-placeholder {
+  color: #9ca3af !important;
+  letter-spacing: normal;
+  opacity: 1;
+}
+
+.password-input::-webkit-outer-spin-button,
+.password-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ensure placeholder is visible in password fields */
+.password-input-wrapper input:not(:placeholder-shown)::placeholder {
+  color: transparent;
+}
+
+/* Chrome/Safari autofill styles */
+.password-input:-webkit-autofill,
+.password-input:-webkit-autofill:hover,
+.password-input:-webkit-autofill:focus,
+.password-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  box-shadow: 0 0 0 30px white inset !important;
+}
+
+.password-input:-webkit-autofill {
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.password-input:focus:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+}
+
+/* Empty password field - show placeholder instead of dots */
+.password-input:placeholder-shown {
+  letter-spacing: normal;
+}
+
+.password-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.password-toggle-btn:hover {
+  color: #1f2937;
+  background: #f3f4f6;
+}
+
+.password-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.password-update-btn {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: white !important;
+}
+
+.password-update-btn:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.profile-logout-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.profile-logout-cancel,
+.profile-logout-confirm {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 15px;
+  border: 1.5px solid;
+}
+
+.profile-logout-cancel {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.profile-logout-cancel:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.profile-logout-confirm {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: white;
+}
+
+.profile-logout-confirm:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Dark mode support for change password */
+@media (prefers-color-scheme: dark) {
+  .change-password-header h3 {
+    color: #f3f4f6;
+  }
+
+  .password-input-group label {
+    color: #e5e7eb;
+  }
+
+  .password-input-wrapper {
+    border-color: #4b5563;
+    background: #1f2937;
+  }
+
+  .password-input-wrapper:focus-within {
+    border-color: #3b82f6;
+    background: #1f2937;
+  }
+
+  .password-input {
+    color: #f3f4f6;
+  }
+
+  .password-input::placeholder {
+    color: #9ca3af !important;
+    letter-spacing: normal;
+    opacity: 1;
+  }
+
+  .password-input::-webkit-input-placeholder {
+    color: #9ca3af !important;
+    letter-spacing: normal;
+    opacity: 1;
+  }
+
+  .password-input::-moz-placeholder {
+    color: #9ca3af !important;
+    letter-spacing: normal;
+    opacity: 1;
+  }
+
+  .password-input:-ms-input-placeholder {
+    color: #9ca3af !important;
+    letter-spacing: normal;
+    opacity: 1;
+  }
+
+  .password-toggle-btn {
+    color: #9ca3af;
+  }
+
+  .password-toggle-btn:hover {
+    color: #e5e7eb;
+    background: #374151;
+  }
+
+  /* Autofill in dark mode */
+  .password-input:-webkit-autofill,
+  .password-input:-webkit-autofill:hover,
+  .password-input:-webkit-autofill:focus,
+  .password-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #374151 inset !important;
+    box-shadow: 0 0 0 30px #374151 inset !important;
+  }
+
+  .password-input:-webkit-autofill {
+    -webkit-text-fill-color: #f3f4f6 !important;
+  }
+
+  .password-requirements {
+    background: #0c4a6e;
+    border-color: #0284c7;
+  }
+
+  .requirements-title {
+    color: #bfdbfe;
+  }
+
+  .requirements-list li {
+    color: #bfdbfe;
+  }
+
+  .password-success-message {
+    background: #064e3b;
+    border-color: #10b981;
+    color: #86efac;
+  }
+
+  .password-error-message {
+    background: #7f1d1d;
+    border-color: #fca5a5;
+    color: #fca5a5;
+  }
+
+  .change-password-close {
+    background: #374151;
+    color: #e5e7eb;
+  }
+
+  .change-password-close:hover {
+    background: #4b5563;
+    color: #f3f4f6;
+  }
+
+  .profile-logout-cancel {
+    border-color: #4b5563;
+    background: #374151;
+    color: #e5e7eb;
+  }
+
+  .profile-logout-cancel:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+  }
+}

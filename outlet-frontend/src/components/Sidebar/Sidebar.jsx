@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -19,7 +19,8 @@ import {
   DarkModeRounded,
   LightModeRounded,
   SearchRounded,
-  ChevronLeftRounded,
+  MenuRounded,
+  ExpandMoreRounded,
   PeopleRounded,
   InventoryRounded as BatchIcon,
   SwapHorizRounded,
@@ -33,9 +34,17 @@ import "./Sidebar.css";
 const ALL_NAV = [
   { to: "/dashboard", label: "Dashboard", icon: <DashboardRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
   { to: "/users", label: "User Management", icon: <PeopleRounded />, roles: ["ADMIN"] },
-  { to: "/division", label: "Division", icon: <AccountTreeRounded />, roles: ["ADMIN"] },
-  { to: "/location", label: "Location", icon: <PlaceRounded />, roles: ["ADMIN"] },
-  { to: "/outlet", label: "Outlet", icon: <StoreRounded />, roles: ["ADMIN", "MANAGER"] },
+  {
+    label: "Outlet",
+    icon: <StoreRounded />,
+    roles: ["ADMIN", "MANAGER"],
+    isDropdown: true,
+    children: [
+      { to: "/location", label: "Location", icon: <PlaceRounded />, roles: ["ADMIN"] },
+      { to: "/division", label: "Division", icon: <AccountTreeRounded />, roles: ["ADMIN"] },
+      { to: "/outlet", label: "Outlet", icon: <StorefrontRounded />, roles: ["ADMIN", "MANAGER"] },
+    ]
+  },
   { to: "/product", label: "Product", icon: <InventoryRounded />, roles: ["ADMIN", "MANAGER"] },
   { to: "/batch", label: "Batch", icon: <BatchIcon />, roles: ["ADMIN", "MANAGER"] },
   { to: "/stock", label: "Stock", icon: <SwapHorizRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
@@ -101,34 +110,66 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   const handleToggle = () => setCollapsed((prev) => !prev);
 
+  const location = useLocation();
+  const [isMasterOpen, setIsMasterOpen] = useState(false);
+
+  // Auto-open Master dropdown if a child route is active
+  useEffect(() => {
+    const isChildActive = ["/location", "/division", "/outlet"].includes(location.pathname);
+    if (isChildActive && !collapsed) {
+      setIsMasterOpen(true);
+    }
+  }, [location.pathname, collapsed]);
+
   // Get role from context or cookies as fallback
   const currentRole = role || getCookie("role") || "USER";
   const userRoleStr = currentRole.toString().toUpperCase().replace('ROLE_', '').trim();
-  
-  const filteredNav = ALL_NAV
-    .map((item) => {
-      if (userRoleStr === "USER") {
-        if (item.to === "/orders") {
-          return { ...item, label: "My Requests" };
+
+  // Recursively process and filter navigation items based on role permissions and search query
+  const filterByRoleAndSearch = (items) => {
+    return items
+      .map((item) => {
+        let processed = { ...item };
+        if (userRoleStr === "USER") {
+          if (processed.to === "/orders") processed.label = "My Requests";
+          if (processed.to === "/stock") processed.label = "Available Stock";
+        } else {
+          if (processed.to === "/orders") processed.label = "Requests";
         }
-        if (item.to === "/stock") {
-          return { ...item, label: "Available Stock" };
+
+        if (processed.children) {
+          processed.children = filterByRoleAndSearch(processed.children);
         }
-      } else {
-        if (item.to === "/orders") {
-          return { ...item, label: "Requests" };
+
+        return processed;
+      })
+      .filter((item) => {
+        // Filter by role permissions
+        if (item.roles && item.roles.length > 0) {
+          const allowedRoles = item.roles.map(r => r.toString().toUpperCase().replace('ROLE_', '').trim());
+          if (!allowedRoles.includes(userRoleStr)) return false;
         }
-      }
-      return item;
-    })
-    .filter((item) => {
-      if (!item.roles || item.roles.length === 0) return true;
-      if (!currentRole) return false;
-      
-      const allowedRoles = item.roles.map(r => r.toString().toUpperCase().replace('ROLE_', '').trim());
-      return allowedRoles.includes(userRoleStr);
-    })
-    .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()));
+
+        // If dropdown, only show if it has visible children
+        if (item.isDropdown && (!item.children || item.children.length === 0)) {
+          return false;
+        }
+
+        // Apply search query
+        if (search) {
+          const matchesSelf = item.label.toLowerCase().includes(search.toLowerCase());
+          if (item.isDropdown) {
+            const matchesChildren = item.children.some(child => child.label.toLowerCase().includes(search.toLowerCase()));
+            return matchesSelf || matchesChildren;
+          }
+          return matchesSelf;
+        }
+
+        return true;
+      });
+  };
+
+  const filteredNav = filterByRoleAndSearch(ALL_NAV);
 
   return (
     <Box
@@ -150,7 +191,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           onClick={handleToggle}
           title={collapsed ? "Expand" : "Collapse"}
         >
-          <ChevronLeftRounded className="toggle-icon" sx={{ fontSize: "1.75rem" }} />
+          <MenuRounded className="toggle-icon" sx={{ fontSize: "1.5rem" }} />
         </ButtonBase>
       </Box>
 
@@ -205,22 +246,78 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
         {/* Menu links */}
         <List className="new-menu-list" disablePadding>
-          {filteredNav.map(({ to, label, icon }) => (
-            <ListItem key={to} disablePadding>
-              <NavLink
-                to={to}
-                title={collapsed ? label : ""}
-                className={({ isActive }) =>
-                  `new-menu-link${isActive ? " active" : ""}`
-                }
-              >
-                <Box component="span" className="menu-icon">{icon}</Box>
-                <Typography component="span" className="new-menu-label">
-                  {label}
-                </Typography>
-              </NavLink>
-            </ListItem>
-          ))}
+          {filteredNav.map((item) => {
+            if (item.isDropdown) {
+              const isChildActive = item.children.some(child => child.to === location.pathname);
+              return (
+                <ListItem key={item.label} disablePadding sx={{ display: "block" }}>
+                  <ButtonBase
+                    onClick={(e) => {
+                      if (collapsed) {
+                        setCollapsed(false);
+                        setIsMasterOpen(true);
+                      } else {
+                        setIsMasterOpen(!isMasterOpen);
+                      }
+                    }}
+                    className={`new-menu-link dropdown-parent${isChildActive ? " active-parent" : ""}`}
+                    sx={{ width: "calc(100% - 16px)", textAlign: "left", justifyContent: "flex-start", mx: "8px" }}
+                  >
+                    <Box component="span" className="menu-icon">{item.icon}</Box>
+                    <Typography component="span" className="new-menu-label" sx={{ flex: 1 }}>
+                      {item.label}
+                    </Typography>
+                    {!collapsed && (
+                      <ExpandMoreRounded
+                        className={`dropdown-chevron ${isMasterOpen ? "open" : ""}`}
+                        sx={{ fontSize: "1.25rem" }}
+                      />
+                    )}
+                  </ButtonBase>
+
+                  <Box className={`submenu-container ${isMasterOpen && !collapsed ? "open" : ""}`}>
+                    <Box className="submenu-inner">
+                      <List className="new-submenu-list" disablePadding>
+                        {item.children.map((child) => (
+                          <ListItem key={child.to} disablePadding>
+                            <NavLink
+                              to={child.to}
+                              title={collapsed ? child.label : ""}
+                              className={({ isActive }) =>
+                                `new-submenu-link${isActive ? " active" : ""}`
+                              }
+                            >
+                              <Box component="span" className="menu-icon sub-menu-icon">{child.icon}</Box>
+                              <Typography component="span" className="new-menu-label">
+                                {child.label}
+                              </Typography>
+                            </NavLink>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  </Box>
+                </ListItem>
+              );
+            }
+
+            return (
+              <ListItem key={item.to} disablePadding>
+                <NavLink
+                  to={item.to}
+                  title={collapsed ? item.label : ""}
+                  className={({ isActive }) =>
+                    `new-menu-link${isActive ? " active" : ""}`
+                  }
+                >
+                  <Box component="span" className="menu-icon">{item.icon}</Box>
+                  <Typography component="span" className="new-menu-label">
+                    {item.label}
+                  </Typography>
+                </NavLink>
+              </ListItem>
+            );
+          })}
         </List>
       </Box>
 

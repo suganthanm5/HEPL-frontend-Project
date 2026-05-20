@@ -19,6 +19,50 @@ const extractList = (res) => {
   return [];
 };
 
+const enrichOutlets = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((o) => {
+    let divObjs = [];
+    if (Array.isArray(o.divisions)) {
+      divObjs = o.divisions;
+    } else if (Array.isArray(o.mappings) && o.mappings.length > 0) {
+      const divisionMap = new Map();
+      o.mappings.forEach((mapping) => {
+        const divId = mapping.divisionId || mapping.division?.id;
+        const divName = mapping.divisionName || mapping.division?.name;
+        if (divId) {
+          if (!divisionMap.has(divId)) divisionMap.set(divId, { id: divId, name: divName, products: [] });
+          const prodId = mapping.productId || mapping.product?.id;
+          const prodName = mapping.productName || mapping.product?.name;
+          const prodCode = mapping.productCode || mapping.product?.productCode;
+          if (prodId) divisionMap.get(divId).products.push({ id: prodId, name: prodName, productCode: prodCode });
+        }
+      });
+      divObjs = Array.from(divisionMap.values());
+    } else if (o.division) {
+      divObjs = [o.division];
+    }
+
+    let allProducts = [];
+    divObjs.forEach((d) => {
+      if (Array.isArray(d.products))
+        allProducts = allProducts.concat(d.products.map((p) => ({ ...p, divisionName: d.name })));
+    });
+
+    return {
+      ...o,
+      locationName: o.locationName || o.location?.name || null,
+      divisions: divObjs,
+      divisionIds: divObjs.map((d) => d.id).filter(Boolean),
+      divisionNames: divObjs.map((d) => d.name).filter(Boolean),
+      productNames: allProducts.map((p) => p.name).filter(Boolean),
+      allProducts,
+      ownerName: o.ownerName ?? null,
+      address: o.address ?? null,
+    };
+  });
+};
+
 export const fetchDashboardData = createAsyncThunk(
   "dashboard/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -40,7 +84,7 @@ export const fetchDashboardData = createAsyncThunk(
       });
 
       return {
-        outlets: extractList(o),
+        outlets: enrichOutlets(extractList(o)),
         locations: extractList(l),
         divisions: extractList(d),
       };
@@ -61,7 +105,7 @@ const dashboardSlice = createSlice({
   },
   reducers: {
     setDashboardData: (state, action) => {
-      state.outlets = action.payload.outlets;
+      state.outlets = enrichOutlets(action.payload.outlets);
       state.locations = action.payload.locations;
       state.divisions = action.payload.divisions;
       state.loading = false;
@@ -70,7 +114,8 @@ const dashboardSlice = createSlice({
       state.loading = action.payload;
     },
     addOutlet: (state, action) => {
-      state.outlets.unshift(action.payload);
+      const enriched = enrichOutlets([action.payload])[0] || action.payload;
+      state.outlets.unshift(enriched);
     },
     addLocation: (state, action) => {
       state.locations.unshift(action.payload);

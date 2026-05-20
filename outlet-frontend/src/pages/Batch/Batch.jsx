@@ -17,6 +17,7 @@ import SearchableSelect from "../../components/SearchableSelect/SearchableSelect
 import { batchService } from "../../services/batchService";
 import { productService } from "../../services/productService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatBatchData } from "../../utils/exportUtils";
 import "./Batch.css";
 import "../UserManagement/UserManagement.css"; /* shared page styles */
@@ -311,7 +312,9 @@ const Batch = () => {
           {/* Header */}
           <Box className="page-header">
             <Box className="page-header-left">
-              <Typography className="page-title">Batch Management</Typography>
+              <Typography className="page-title">
+                <TypingText text="Batch Management" />
+              </Typography>
               <Typography className="page-subtitle">Track product batches and expiry</Typography>
             </Box>
             <ButtonBase onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }} disableRipple
@@ -324,12 +327,12 @@ const Batch = () => {
       {/* Stat Cards */}
       <Box className="stat-cards-row">
         {[
-          { label: "Total Batches", value: batches.length, bg: "#f5f0ff", color: "#7d2ae8", Icon: InventoryRounded },
-          { label: "Active",        value: batches.filter((b) => b.status === "ACTIVE").length, bg: "#dcfce7", color: "#16a34a", Icon: CheckRounded },
-          { label: "Expiring Soon", value: batches.filter((b) => expiryClass(b.expiryDate) === "warning").length, bg: "#fef9c3", color: "#ca8a04", Icon: WarningRounded },
-          { label: "Expired",       value: batches.filter((b) => expiryClass(b.expiryDate) === "expired").length, bg: "#fee2e2", color: "#ef4444", Icon: WarningRounded },
-        ].map(({ label, value, bg, color, Icon }) => (
-          <Box className="stat-card" key={label}>
+          { label: "Total Batches", value: batches.length, bg: "#f5f0ff", color: "#7d2ae8", Icon: InventoryRounded, theme: "purple" },
+          { label: "Active",        value: batches.filter((b) => b.status === "ACTIVE").length, bg: "#dcfce7", color: "#16a34a", Icon: CheckRounded, theme: "green" },
+          { label: "Expiring Soon", value: batches.filter((b) => expiryClass(b.expiryDate) === "warning").length, bg: "#fef9c3", color: "#ca8a04", Icon: WarningRounded, theme: "orange" },
+          { label: "Expired",       value: batches.filter((b) => expiryClass(b.expiryDate) === "expired").length, bg: "#fee2e2", color: "#ef4444", Icon: WarningRounded, theme: "rose" },
+        ].map(({ label, value, bg, color, Icon, theme }) => (
+          <Box className={`stat-card stat-${theme}`} key={label}>
             <Box className="stat-card-icon" sx={{ background: bg }}>
               <Icon sx={{ color, fontSize: 22 }} />
             </Box>

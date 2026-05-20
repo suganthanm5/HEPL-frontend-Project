@@ -22,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getCookie } from "../../utils/cookieUtils";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
+import TypingText from "../../components/TypingText";
 import { formatOrderData } from "../../utils/exportUtils";
 import "./Orders.css";
 import "../UserManagement/UserManagement.css";
@@ -226,7 +227,9 @@ const Orders = () => {
       {/* ── Header ── */}
       <Box className="page-header">
         <Box className="page-header-left">
-          <Typography className="page-title">Orders</Typography>
+          <Typography className="page-title">
+            <TypingText text="Orders" />
+          </Typography>
           <Typography className="page-subtitle">Track and manage batch orders</Typography>
         </Box>
         {(isAdmin || isManager || role === "USER") && (
@@ -397,28 +400,35 @@ const Orders = () => {
         <>
           {/* ── Stat Cards ── */}
           <Box className="stat-cards-row">
-            {Object.entries(STATUS_META).map(([key, meta]) => (
-              <Box className="stat-card" key={key}>
-                <Box className="stat-card-icon" sx={{
-                  background:
-                    key === "PENDING" ? "#fef9c3" :
-                      key === "APPROVED" ? "#dcfce7" :
-                        key === "REJECTED" ? "#fee2e2" : "#e0f2fe",
-                }}>
-                  <meta.Icon sx={{
-                    color:
-                      key === "PENDING" ? "#ca8a04" :
-                        key === "APPROVED" ? "#16a34a" :
-                          key === "REJECTED" ? "#ef4444" : "#0284c7",
-                    fontSize: 22,
-                  }} />
+            {Object.entries(STATUS_META).map(([key, meta]) => {
+              const theme = 
+                key === "PENDING" ? "orange" :
+                key === "APPROVED" ? "green" :
+                key === "REJECTED" ? "rose" :
+                key === "COMPLETED" ? "blue" : "indigo";
+              return (
+                <Box className={`stat-card stat-${theme}`} key={key}>
+                  <Box className="stat-card-icon" sx={{
+                    background:
+                      key === "PENDING" ? "#fef9c3" :
+                        key === "APPROVED" ? "#dcfce7" :
+                          key === "REJECTED" ? "#fee2e2" : "#e0f2fe",
+                  }}>
+                    <meta.Icon sx={{
+                      color:
+                        key === "PENDING" ? "#ca8a04" :
+                          key === "APPROVED" ? "#16a34a" :
+                            key === "REJECTED" ? "#ef4444" : "#0284c7",
+                      fontSize: 22,
+                    }} />
+                  </Box>
+                  <Box>
+                    <Typography className="stat-card-value">{counts[key] || 0}</Typography>
+                    <Typography className="stat-card-label">{meta.label}</Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography className="stat-card-value">{counts[key] || 0}</Typography>
-                  <Typography className="stat-card-label">{meta.label}</Typography>
-                </Box>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
 
           {/* ── Table ── */}

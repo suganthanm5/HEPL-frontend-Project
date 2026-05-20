@@ -47,13 +47,43 @@ const Navbar = ({ title = "Dashboard" }) => {
   const navigate = useNavigate();
   const searchRef = useRef(null);
 
+  /* Helper to load user profile dynamically */
+  const loadUserFromCookie = () => {
+    try {
+      const raw = getCookie("user");
+      if (raw && raw !== "null" && raw !== "undefined") {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          return {
+            name: parsed.name || getCookie("username") || "Admin",
+            email: parsed.email || getCookie("email") || "admin@company.com",
+            role: parsed.role || getCookie("role") || "Administrator",
+            profilePicture: parsed.profilePicture || null,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Navbar: Failed to load user from cookie", e);
+    }
+    return {
+      name: getCookie("username") || "Admin",
+      email: getCookie("email") || "admin@company.com",
+      role: getCookie("role") || "Administrator",
+      profilePicture: null,
+    };
+  };
+
+  const getAvatarUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:') || path.startsWith('blob:')) return path;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBaseUrl}${cleanPath}`;
+  };
+
   /* User state */
-  const [user, setUser] = useState(() => ({
-    name: getCookie("username") || "Admin",
-    email: getCookie("email") || "admin@company.com",
-    role: getCookie("role") || "Administrator",
-    profilePicture: localStorage.getItem("profilePicture") || null,
-  }));
+  const [user, setUser] = useState(() => loadUserFromCookie());
 
   /* Clock */
   const [time, setTime] = useState(new Date());
@@ -83,22 +113,22 @@ const Navbar = ({ title = "Dashboard" }) => {
 
         if (!active) return;
         if (summ) setSummary(summ);
-        
+
         if (ords) {
           const oList = ords.content ?? ords.data?.content ?? ords.data ?? ords;
           if (Array.isArray(oList)) setOrdersList(oList);
         }
-        
+
         if (outs) {
           const ouList = outs.content ?? outs.data?.content ?? outs.data ?? outs;
           if (Array.isArray(ouList)) setOutletsList(ouList);
         }
-        
+
         if (locs) {
           const lList = locs.content ?? locs.data?.content ?? locs.data ?? locs;
           if (Array.isArray(lList)) setLocationsListRaw(lList);
         }
-        
+
         if (prods) {
           const pList = prods.content ?? prods.data?.content ?? prods.data ?? prods;
           if (Array.isArray(pList)) setProductsList(pList);
@@ -148,7 +178,7 @@ const Navbar = ({ title = "Dashboard" }) => {
       let text = `Order ${orderNo} status updated`;
       let timeLabel = "Status changed";
       let color = "#7d2ae8";
-      
+
       if (status === "PENDING") {
         text = `Order ${orderNo} is pending approval`;
         timeLabel = "Order pending";
@@ -229,25 +259,20 @@ const Navbar = ({ title = "Dashboard" }) => {
   /* Profile updates and sync across tabs */
   useEffect(() => {
     const handleStorageChange = () => {
-      setUser({
-        name: getCookie("username") || "Admin",
-        email: getCookie("email") || "admin@company.com",
-        role: getCookie("role") || "Administrator",
-        profilePicture: localStorage.getItem("profilePicture") || null,
-      });
+      setUser(loadUserFromCookie());
     };
-    
+
     const handleStorageEvent = (e) => {
-      if (e.key === "username" || e.key === "email" || e.key === "role" || e.key === "profilePicture") {
-        handleStorageChange();
-      }
+      handleStorageChange();
     };
-    
+
     window.addEventListener("profileUpdated", handleStorageChange);
+    window.addEventListener("userDataUpdated", handleStorageChange);
     window.addEventListener("storage", handleStorageEvent);
-    
+
     return () => {
       window.removeEventListener("profileUpdated", handleStorageChange);
+      window.removeEventListener("userDataUpdated", handleStorageChange);
       window.removeEventListener("storage", handleStorageEvent);
     };
   }, []);
@@ -289,18 +314,14 @@ const Navbar = ({ title = "Dashboard" }) => {
     <>
       <Box component="header" className="navbar">
 
-        {/* LEFT — Page title */}
-        <Box className="navbar-left">
-          <Typography className="nb-page" component="h1">
-            {title}
-          </Typography>
-        </Box>
+        {/* LEFT — Placeholder to maintain center alignment */}
+        <Box className="navbar-left" />
 
         {/* CENTER — Animated search */}
         <Box className="navbar-center">
           <Box className="navbar-search">
             <Box className="search-icon-nb">
-              <SearchRounded sx={{ fontSize: 20, color: "#7d2ae8" }} />
+              <SearchRounded sx={{ fontSize: 20, color: "#f43f5e" }} />
             </Box>
             <InputBase
               inputRef={searchRef}
@@ -311,8 +332,8 @@ const Navbar = ({ title = "Dashboard" }) => {
                 flex: 1,
                 fontSize: "0.875rem",
                 fontFamily: "Poppins, sans-serif",
-                color: "#1e1b4b",
-                "& input::placeholder": { color: "#7d2ae880", fontSize: "0.85rem" },
+                color: "#0f172a",
+                "& input::placeholder": { color: "#94a3b8", fontSize: "0.85rem" },
               }}
             />
             <Typography component="span" className="search-kbd">⌘K</Typography>
@@ -395,8 +416,8 @@ const Navbar = ({ title = "Dashboard" }) => {
             >
               <Avatar
                 className="user-avatar"
-                src={user.profilePicture || undefined}
-                sx={{ width: 36, height: 36, background: "linear-gradient(135deg, #7d2ae8, #a855f7)" }}
+                src={getAvatarUrl(user.profilePicture) || undefined}
+                sx={{ width: 32, height: 32, background: "linear-gradient(135deg, #f43f5e, #fda4af)" }}
               >
                 {!user.profilePicture && initials}
               </Avatar>
@@ -410,7 +431,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                 <KeyboardArrowDownRounded
                   sx={{
                     fontSize: 18,
-                    color: "#7d2ae8",
+                    color: "#f43f5e",
                     transform: userOpen ? "rotate(180deg)" : "rotate(0deg)",
                     transition: "transform 0.3s ease",
                   }}
@@ -426,7 +447,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                 <Box className="user-dropdown-header">
                   <Avatar
                     className="user-avatar lg"
-                    src={user.profilePicture || undefined}
+                    src={getAvatarUrl(user.profilePicture) || undefined}
                     sx={{ width: 46, height: 46, background: "rgba(255,255,255,0.25)" }}
                   >
                     {!user.profilePicture && initials}
@@ -448,7 +469,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <PersonRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#334155" }}>
                         My Profile
                       </Typography>
                     </ListItemButton>
@@ -459,14 +480,14 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <SettingsRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#334155" }}>
                         Settings
                       </Typography>
                     </ListItemButton>
                   </ListItem>
                 </List>
 
-                <Divider sx={{ borderColor: "rgba(125,42,232,0.1)" }} />
+                <Divider sx={{ borderColor: "rgba(244,63,94,0.1)" }} />
 
                 {/* Logout */}
                 <Box className="user-dropdown-footer">

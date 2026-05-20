@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import TypingText from "../../components/TypingText";
 import {
   Box,
   Card,
@@ -303,7 +304,7 @@ const NotificationPage = () => {
             </Box>
             <Box>
               <Typography variant="h5" className="notif-page-title">
-                Notification Centre
+                <TypingText text="Notification Centre" />
               </Typography>
               <Typography variant="body2" className="notif-page-subtitle">
                 Inspect real-time system events, order changes, and inventory alerts.

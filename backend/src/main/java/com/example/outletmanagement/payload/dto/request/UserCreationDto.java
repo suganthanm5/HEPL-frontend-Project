@@ -31,4 +31,5 @@ public class UserCreationDto {
     private String role;
 
     private Long outletId;
+    private String profilePicture;
 }

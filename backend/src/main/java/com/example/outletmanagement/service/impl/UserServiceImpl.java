@@ -86,6 +86,9 @@ public class UserServiceImpl implements UserService {
         user.setName(request.getName() != null ? request.getName().trim() : user.getName());
         user.setEmail(request.getEmail() != null ? request.getEmail().trim() : user.getEmail());
         user.setUsername(request.getUsername() != null ? request.getUsername().trim() : user.getUsername());
+        if (request.getProfilePicture() != null) {
+            user.setProfilePicture(request.getProfilePicture().trim());
+        }
         
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
@@ -150,6 +153,9 @@ public class UserServiceImpl implements UserService {
         if (request.getEmail() != null) {
             user.setEmail(request.getEmail().trim());
         }
+        if (request.getProfilePicture() != null) {
+            user.setProfilePicture(request.getProfilePicture().trim());
+        }
         
         user.setUpdatedAt(new java.util.Date());
         return mapToResponse(userRepository.save(user));
@@ -184,7 +190,12 @@ public class UserServiceImpl implements UserService {
             Path filepath = Paths.get(uploadDir, filename);
             Files.write(filepath, file.getBytes());
             
-            return "/uploads/profile-pictures/" + filename;
+            String picturePath = "/uploads/profile-pictures/" + filename;
+            user.setProfilePicture(picturePath);
+            user.setUpdatedAt(new java.util.Date());
+            userRepository.save(user);
+            
+            return picturePath;
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload profile picture: " + e.getMessage());
         }
@@ -198,6 +209,7 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
                 .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
+                .profilePicture(user.getProfilePicture())
                 .build();
     }
 }

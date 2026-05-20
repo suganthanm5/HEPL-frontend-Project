@@ -53,6 +53,8 @@ public class SecurityConfig {
                                 "/logo.svg",
                                 "/tn-map.png",
                                 "/api/v1/auth/**",
+                                "/uploads/**",
+                                "/error",
                                 "/v2/api-docs",
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
