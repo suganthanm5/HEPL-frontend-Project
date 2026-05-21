@@ -26,6 +26,7 @@
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -37,6 +38,7 @@
     opacity: 0;
     transform: translateX(10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -51,7 +53,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #f43f5e, #fda4af, transparent);
+  background: linear-gradient(90deg, transparent, #7C3AED, #C084FC, transparent);
   opacity: 0.8;
 }
 
@@ -96,6 +98,7 @@
     opacity: 0;
     transform: scale(0.95) translateY(5px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -104,20 +107,21 @@
 
 .navbar-search:focus-within {
   width: 380px;
-  border-color: #f43f5e;
-  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+  border-color: #7C3AED;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
   background: #ffffff;
 }
 
 .search-icon-nb {
-  color: #f43f5e;
+  color: #94a3b8;
   flex-shrink: 0;
   display: flex;
   font-size: 18px;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .navbar-search:focus-within .search-icon-nb {
+  color: #7C3AED;
   transform: scale(1.08);
 }
 
@@ -139,9 +143,9 @@
 .search-kbd {
   font-size: 10px;
   font-weight: 600;
-  color: #f43f5e;
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.15);
+  color: #7C3AED;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.15);
   border-radius: 5px;
   padding: 2px 6px;
   white-space: nowrap;
@@ -185,7 +189,7 @@
 
 .clock-date {
   font-size: 10.5px;
-  color: #f43f5e;
+  color: #7C3AED;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.2px;
@@ -217,17 +221,17 @@
 }
 
 .navbar-icon-btn:hover {
-  background: rgba(244, 63, 94, 0.05);
-  color: #f43f5e;
-  border-color: rgba(244, 63, 94, 0.3);
+  background: rgba(124, 58, 237, 0.05);
+  color: #7C3AED;
+  border-color: rgba(124, 58, 237, 0.3);
   transform: translateY(-1px);
 }
 
 .navbar-icon-btn.active {
-  background: #f43f5e;
+  background: #7C3AED;
   color: #ffffff;
-  border-color: #f43f5e;
-  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+  border-color: #7C3AED;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
 }
 
 /* Notification badge */
@@ -235,7 +239,7 @@
   position: absolute;
   top: -3px;
   right: -3px;
-  background: linear-gradient(135deg, #f43f5e, #fb7185);
+  background: linear-gradient(135deg, #7C3AED, #9333EA);
   color: #ffffff;
   font-size: 9px;
   font-weight: 800;
@@ -247,14 +251,22 @@
   justify-content: center;
   border: 2px solid #ffffff;
   padding: 0 3px;
-  box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4);
+  box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
   animation: pulse-badge 2s infinite;
 }
 
 @keyframes pulse-badge {
-  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 6px rgba(124, 58, 237, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+  }
 }
 
 /* ── Notification Dropdown ── */
@@ -283,7 +295,7 @@
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  background: linear-gradient(135deg, #fff5f6, #ffebee);
+  background: linear-gradient(135deg, #F3E8FF, #E9D5FF);
 }
 
 .notif-header-title {
@@ -295,7 +307,7 @@
 .notif-count {
   font-size: 10px;
   font-weight: 700;
-  background: linear-gradient(135deg, #f43f5e, #fb7185);
+  background: linear-gradient(135deg, #7C3AED, #9333EA);
   color: #fff;
   padding: 2px 8px;
   border-radius: 20px;
@@ -319,7 +331,7 @@
 }
 
 .notif-item:hover {
-  background: #fff5f6;
+  background: #F3E8FF;
 }
 
 .notif-item-icon {
@@ -349,7 +361,7 @@
 
 .notif-item-body span {
   font-size: 11px;
-  color: #f43f5e;
+  color: #7C3AED;
   font-weight: 500;
 }
 
@@ -365,15 +377,15 @@
   text-align: center;
   font-size: 13px;
   font-weight: 600;
-  color: #f43f5e;
+  color: #7C3AED;
   border-top: 1px solid rgba(226, 232, 240, 0.8);
   cursor: pointer;
   transition: background 0.15s;
-  background: #fff8f9;
+  background: #FAF5FF;
 }
 
 .notif-footer:hover {
-  background: #fff0f2;
+  background: #F3E8FF;
 }
 
 /* ── User Trigger ── */
@@ -396,15 +408,15 @@
 
 .navbar-user:hover,
 .navbar-user.active {
-  background: rgba(244, 63, 94, 0.05);
-  border-color: rgba(244, 63, 94, 0.3);
+  background: rgba(124, 58, 237, 0.05);
+  border-color: rgba(124, 58, 237, 0.3);
 }
 
 .user-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f43f5e, #fda4af);
+  background: linear-gradient(135deg, #7C3AED, #C084FC);
   color: #fff;
   display: flex;
   align-items: center;
@@ -412,7 +424,7 @@
   font-weight: 800;
   font-size: 13px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
 }
 
 .user-avatar.lg {
@@ -437,14 +449,14 @@
 
 .user-role {
   font-size: 10px;
-  color: #f43f5e;
+  color: #7C3AED;
   font-weight: 600;
 }
 
 .user-chevron {
   width: 16px;
   height: 16px;
-  color: #f43f5e;
+  color: #7C3AED;
   display: flex;
   align-items: center;
 }
@@ -469,7 +481,7 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: linear-gradient(135deg, #f43f5e 0%, #fda4af 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #C084FC 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
 }
@@ -530,12 +542,12 @@
 }
 
 .user-dropdown-menu li:hover {
-  background: #fff5f6;
-  color: #f43f5e;
+  background: #F3E8FF;
+  color: #7C3AED;
 }
 
 .user-dropdown-menu li:hover .udm-icon {
-  color: #f43f5e;
+  color: #7C3AED;
 }
 
 .udm-icon {
@@ -587,6 +599,7 @@
     opacity: 0;
     transform: translateY(-8px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -595,9 +608,23 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .navbar { padding: 0 16px; }
-  .navbar-center { display: none; }
-  .navbar-clock { display: none; }
-  .navbar-divider { display: none; }
-  .user-info { display: none; }
+  .navbar {
+    padding: 0 16px;
+  }
+
+  .navbar-center {
+    display: none;
+  }
+
+  .navbar-clock {
+    display: none;
+  }
+
+  .navbar-divider {
+    display: none;
+  }
+
+  .user-info {
+    display: none;
+  }
 }

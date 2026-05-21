@@ -42,15 +42,9 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Page<LocationResponse> getAllLocations(String search, Pageable pageable) {
-        Page<Location> locations;
-
-        if (search != null && !search.isBlank()) {
-            locations = locationRepository.findByNameContainingIgnoreCase(search, pageable);
-        } else {
-            locations = locationRepository.findAll(pageable);
-        }
-
-        return locations.map(this::mapToResponse);
+        org.springframework.data.jpa.domain.Specification<Location> spec = 
+                com.example.outletmanagement.specification.LocationSpecification.searchAndFilter(search);
+        return locationRepository.findAll(spec, pageable).map(this::mapToResponse);
     }
 
     @Override

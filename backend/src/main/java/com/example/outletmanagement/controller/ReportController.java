@@ -79,6 +79,7 @@ public class ReportController {
             Map<String, Object> stat = new HashMap<>();
             stat.put("name", d.getName());
             long count = d.getProducts() != null ? d.getProducts().size() : 0;
+            stat.put("count", count);
             stat.put("value", totalProducts > 0 ? (count * 100.0 / totalProducts) : 0);
             return stat;
         }).toList();

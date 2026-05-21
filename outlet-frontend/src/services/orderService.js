@@ -2,8 +2,8 @@ import apiClient from '../api/apiClient';
 
 export const orderService = {
   /** Get all orders */
-  getAll: async (params = {}) => {
-    const res = await apiClient.get('/api/orders', { params });
+  getAll: async (params = {}, signal) => {
+    const res = await apiClient.get('/api/orders', { params, signal });
     return res.data?.data;
   },
 

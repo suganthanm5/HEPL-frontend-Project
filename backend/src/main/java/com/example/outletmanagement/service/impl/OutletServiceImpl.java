@@ -68,13 +68,11 @@ public class OutletServiceImpl implements OutletService {
     @Transactional(readOnly = true)
     public Page<OutletResponse> getAllOutlets(String search, Long locationId, String type, Long divisionId,
             Pageable pageable) {
-        Page<Outlet> outlets;
-
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        if (currentUser.getRole() != User.Role.ADMIN) {
+        if (currentUser.getRole() != User.Role.ADMIN && currentUser.getRole() != User.Role.MANAGER) {
             if (currentUser.getOutlet() == null) {
                 return Page.empty(pageable);
             }
@@ -84,11 +82,10 @@ public class OutletServiceImpl implements OutletService {
             return new PageImpl<>(Collections.singletonList(response), pageable, 1);
         }
 
-        if (search != null && !search.isBlank()) {
-            outlets = outletRepository.findByOutletNameContainingIgnoreCase(search, pageable);
-        } else {
-            outlets = outletRepository.findAll(pageable);
-        }
+        org.springframework.data.jpa.domain.Specification<Outlet> spec = 
+                com.example.outletmanagement.specification.OutletSpecification.searchAndFilter(
+                        search, locationId, type, divisionId);
+        Page<Outlet> outlets = outletRepository.findAll(spec, pageable);
 
         List<Long> outletIds = outlets.getContent().stream().map(Outlet::getId).collect(Collectors.toList());
         List<Outlet> outletsWithMappings = outletRepository.findAllByIdWithMappings(outletIds);

@@ -6,7 +6,7 @@ import {
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
   CircularProgress, Snackbar, Alert, IconButton, Paper,
-  Grid, Stack,
+  Grid, Stack, Pagination,
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, EditRounded,
@@ -46,6 +46,10 @@ const Batch = () => {
   const [products, setProducts] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
   const [isFormView, setIsFormView] = useState(false);
   const [filters,  setFilters]  = useState({ productId: "", status: "" });
   const [dialog,   setDialog]   = useState({ open: false, mode: "add", data: emptyForm });
@@ -53,29 +57,37 @@ const Batch = () => {
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
 
   /* ── Load ── */
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal) => {
     setLoading(true);
     try {
-      const activeFilters = {};
+      const activeFilters = { page: page - 1, size: pageSize };
+      if (search) activeFilters.search = search;
       if (filters.productId) activeFilters.productId = filters.productId;
       if (filters.status) activeFilters.status = filters.status;
 
       // 1. Fetch Batches
       try {
-        const bData = await batchService.getAll(activeFilters);
-        console.log("Batch API Response:", bData);
+        const bData = await batchService.getAll(activeFilters, signal);
         let extractedBatches = [];
-        if (Array.isArray(bData)) extractedBatches = bData;
-        else if (Array.isArray(bData?.content)) extractedBatches = bData.content;
-        else if (Array.isArray(bData?.data)) extractedBatches = bData.data;
-        else if (Array.isArray(bData?.data?.content)) extractedBatches = bData.data.content;
+        let tPages = 1;
+        let tElements = 0;
+        if (Array.isArray(bData)) {
+            extractedBatches = bData;
+            tElements = bData.length;
+        }
+        else if (Array.isArray(bData?.content)) {
+            extractedBatches = bData.content;
+            tPages = bData.totalPages || 1;
+            tElements = bData.totalElements || bData.content.length;
+        }
         
         const batches = extractedBatches;
         
-        console.log("Batch Final array:", batches);
         setBatches(batches);
-        console.log("Batches loaded:", batches.length);
+        setTotalPages(tPages);
+        setTotalElements(tElements);
       } catch (err) {
+        if (err?.name === "CanceledError" || err?.name === "AbortError") return;
         console.error("Batch fetch error:", err);
         setBatches([]);
         toast("Failed to load batches: " + (err.response?.data?.message || err.message), "error");
@@ -83,8 +95,7 @@ const Batch = () => {
 
       // 2. Fetch Products (for labels/filters)
       try {
-        const pData = await (productService.getAll ? productService.getAll(0, 1000) : Promise.resolve([]));
-        // productService.getAll returns a Page object { content, totalPages, ... }
+        const pData = await (productService.getProducts ? productService.getProducts(0, 1000, "", {}, signal) : Promise.resolve([]));
         const productList = Array.isArray(pData)
           ? pData
           : Array.isArray(pData?.content)
@@ -92,25 +103,31 @@ const Batch = () => {
             : [];
         setProducts(productList);
       } catch (err) {
+        if (err?.name === "CanceledError" || err?.name === "AbortError") return;
         console.error("Product fetch error:", err);
       }
 
     } catch (err) {
+      if (err?.name === "CanceledError" || err?.name === "AbortError") return;
       console.error("Load general error:", err);
       toast("Error loading page data", "error");
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, search, page, pageSize]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      load(controller.signal);
+    }, 800);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [load]);
 
   const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
   /* ── Filter ── */
-  const filtered = batches.filter((b) =>
-    [b.batchNo, b.productName || b.product?.name, b.status].join(" ").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = batches; // Backend handles filtering
 
   /* ── Save ── */
   const handleSave = async () => {
@@ -425,7 +442,7 @@ const Batch = () => {
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 0.75 }}>
-                          <Tooltip title="Edit"><ButtonBase className="action-btn edit" onClick={() => { setDialog({ open: true, mode: "edit", data: { ...b } }); setIsFormView(true); }} disableRipple><EditRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
+                          <Tooltip title="Edit"><ButtonBase className="action-btn edit" onClick={() => { setDialog({ open: true, mode: "edit", data: { ...b, productId: b.product?.id || b.productId || "" } }); setIsFormView(true); }} disableRipple><EditRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
                           <Tooltip title="Delete"><ButtonBase className="action-btn delete" onClick={() => setDelDialog({ open: true, id: b.id })} disableRipple><DeleteRounded sx={{ fontSize: 16 }} /></ButtonBase></Tooltip>
                         </Box>
                       </TableCell>

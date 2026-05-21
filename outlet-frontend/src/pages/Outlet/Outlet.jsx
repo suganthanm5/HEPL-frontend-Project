@@ -173,6 +173,8 @@ export default function Outlet() {
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
   const [view, setView] = useState("table");
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -227,9 +229,17 @@ export default function Outlet() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchAll(false, controller.signal);
+    fetchMetadata(controller.signal);
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const delay = setTimeout(() => {
+      fetchOutletsData(false, controller.signal);
+    }, 800);
+    return () => { clearTimeout(delay); controller.abort(); };
+  }, [page, pageSize, search, locationFilter, typeFilter, divisionFilter, productFilter]);
 
   const extractList = (val) => {
     if (!val) return [];
@@ -240,35 +250,35 @@ export default function Outlet() {
     return [];
   };
 
-  const fetchAll = async (silent = false, signal) => {
-    if (!silent) setLoading(true);
-    setError("");
+  const fetchMetadata = async (signal) => {
     try {
-      const [oRes, lRes, dRes] = await Promise.allSettled([
-        getOutlets(0, 1000, "", signal),
+      const [lRes, dRes] = await Promise.allSettled([
         getLocations(0, 1000, "", signal),
         getDivisions(0, 1000, "", signal),
       ]);
+      if (lRes.status === "fulfilled") setLocations(extractList(lRes.value).map(l => ({ ...l, name: l.name || l.locationName })));
+      if (dRes.status === "fulfilled") setDivisions(extractList(dRes.value).map(d => ({ ...d, name: d.name || d.divisionName })));
+    } catch(e) {}
+  };
 
-      if (lRes.status === "fulfilled") {
-        const list = extractList(lRes.value);
-        setLocations(list.map(l => ({ ...l, name: l.name || l.locationName })));
-      } else {
-        setLocations([]);
-      }
+  const fetchOutletsData = async (silent = false, signal) => {
+    if (!silent) setLoading(true);
+    setError("");
+    try {
+      const filters = {
+        locationId: locationFilter || undefined,
+        outletType: typeFilter || undefined,
+        divisionId: divisionFilter || undefined,
+      };
+      
+      const oRes = await getOutlets(page - 1, pageSize, search, filters, signal);
+      
+      setTotalPages(oRes.totalPages || 1);
+      setTotalElements(oRes.totalElements || 0);
 
-      if (dRes.status === "fulfilled") {
-        const list = extractList(dRes.value);
-        setDivisions(list.map(d => ({ ...d, name: d.name || d.divisionName })));
-      } else {
-        setDivisions([]);
-      }
+      const raw = extractList(oRes);
 
-      if (oRes.status === "fulfilled") {
-        const httpStatus = oRes.value?.data?.httpStatus;
-        if (httpStatus === 401 || httpStatus === 403) return;
-        const raw = extractList(oRes.value);
-        const enriched = raw.map((o) => {
+      const enriched = raw.map((o) => {
           let divObjs = [];
           if (Array.isArray(o.divisions)) {
             divObjs = o.divisions;
@@ -309,7 +319,6 @@ export default function Outlet() {
           };
         });
         setOutlets(enriched);
-      }
     } catch (e) {
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
     } finally {
@@ -318,6 +327,11 @@ export default function Outlet() {
   };
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  // Call when an edit/add happens
+  const fetchAll = async (silent = false) => {
+    await fetchOutletsData(silent);
+  };
 
   const handleDivisionSelect = async (divisionId) => {
     if (!divisionId) return;
@@ -472,29 +486,11 @@ export default function Outlet() {
     } finally { setSaving(false); }
   };
 
-  const filtered = useMemo(() => {
-    let result = outlets.filter((o) =>
-      [o.outletName, o.outletType, o.locationName, o.location, o.ownerName]
-        .some((v) => v?.toLowerCase().includes(search.toLowerCase()))
-    );
-    if (locationFilter) {
-      const filterStr = String(locationFilter).toLowerCase();
-      result = result.filter((o) => 
-        String(o.locationId) === String(locationFilter) || 
-        o.locationName?.toLowerCase().includes(filterStr)
-      );
-    }
-    if (typeFilter) result = result.filter((o) => o.outletType === typeFilter);
-    if (divisionFilter) result = result.filter((o) => (o.divisionIds || []).some(id => String(id) === String(divisionFilter)));
-    if (productFilter) result = result.filter((o) => (o.allProducts || []).some(p => String(p.id) === String(productFilter)));
-    return result;
-  }, [outlets, search, locationFilter, typeFilter, divisionFilter, productFilter]);
+  const filtered = outlets; // backend already filtered
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const start = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const end = Math.min(safePage * pageSize, filtered.length);
+  const paginated = outlets; // backend already paginated
+  const start = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalElements);
 
   /* ── Form Fields ── */
   const renderFormFields = () => (
@@ -1011,7 +1007,7 @@ export default function Outlet() {
                     const tc = TYPE_COLOR[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b" };
                     return (
                       <StyledTableRow key={o.id}>
-                        <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(safePage - 1) * pageSize + i + 1}</TableCell>
+                        <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * pageSize + i + 1}</TableCell>
                         <TableCell>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Avatar sx={{ width: 30, height: 30, fontSize: "0.75rem", fontWeight: 700, bgcolor: "#eef2ff", color: "#6366f1" }}>
@@ -1124,7 +1120,7 @@ export default function Outlet() {
                         <Avatar sx={{ width: 44, height: 44, fontSize: "1rem", fontWeight: 700, bgcolor: "#eef2ff", color: "#6366f1" }}>
                           {o.outletName?.charAt(0).toUpperCase()}
                         </Avatar>
-                        <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 600 }}>#{(safePage - 1) * pageSize + i + 1}</Typography>
+                        <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 600 }}>#{(page - 1) * pageSize + i + 1}</Typography>
                       </Box>
                       <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", mb: 0.5 }}>{o.outletName}</Typography>
                       {o.outletCode && (
@@ -1176,13 +1172,13 @@ export default function Outlet() {
         )}
 
         {/* ── Pagination ── */}
-        {!loading && filtered.length > 0 && (
+        {!loading && totalElements > 0 && (
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, flexWrap: "wrap", gap: 1 }}>
             <Typography variant="body2" sx={{ color: "#64748b" }}>
-              Showing <strong>{start}–{end}</strong> of <strong>{filtered.length}</strong> entries
+              Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
             </Typography>
             <Pagination
-              count={totalPages} page={safePage} onChange={(_, v) => setPage(v)}
+              count={totalPages} page={page} onChange={(_, v) => setPage(v)}
               shape="rounded" size="small"
               sx={{
                 "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600 },
@@ -1230,28 +1226,70 @@ export default function Outlet() {
           onClose={() => setBulkOpen(false)}
           title="Bulk Upload Outlets"
           accent="#6366f1"
-          templateHeaders={["outletName", "ownerName", "address", "locationId", "outletType"]}
+          templateHeaders={["outletName", "ownerName", "address", "locationName", "outletType", "divisionNames", "productNames"]}
           templateRows={[
-            ["Main Branch", "John Doe", "123 Main St", "1", "Retail"],
-            ["North Hub", "Jane Smith", "45 North Ave", "2", "Wholesale"],
+            ["Main Branch", "John Doe", "123 Main St", "New York", "Retail", "Electronics", "Laptop"],
+            ["North Hub", "Jane Smith", "45 North Ave", "Los Angeles", "Wholesale", "Groceries", "Apple, Banana"],
           ]}
           parseRow={(row) => {
             const outletName   = (row["outletname"]   || row["outletName"]   || "").trim();
             const ownerName    = (row["ownername"]    || row["ownerName"]    || "").trim();
             const address      = (row["address"]      || "").trim();
-            const locationId   = (row["locationid"]   || row["locationId"]   || "").trim();
+            const locationName = (row["locationname"] || row["locationName"] || "").trim();
             const outletType   = (row["outlettype"]   || row["outletType"]   || "").trim();
+            const divisionNamesStr = (row["divisionnames"] || row["divisionNames"] || "").trim();
+            const productNamesStr  = (row["productnames"]  || row["productNames"]  || "").trim();
+
             if (!outletName)  return { valid: false, error: "outletName is required" };
             if (/\d/.test(outletName)) return { valid: false, error: "outletName cannot contain numbers" };
             if (!ownerName)   return { valid: false, error: "ownerName is required" };
             if (/\d/.test(ownerName))  return { valid: false, error: "ownerName cannot contain numbers" };
             if (!address)     return { valid: false, error: "address is required" };
-            if (!locationId)  return { valid: false, error: "locationId is required" };
+            if (!locationName) return { valid: false, error: "locationName is required" };
             if (!outletType)  return { valid: false, error: "outletType is required" };
             if (!OUTLET_TYPES.includes(outletType)) return { valid: false, error: `outletType must be one of: ${OUTLET_TYPES.join(", ")}` };
+
+            const loc = locations.find(l => l.name.toLowerCase() === locationName.toLowerCase());
+            if (!loc) return { valid: false, error: `Location not found: ${locationName}` };
+
+            let mappings = [];
+            
+            if (divisionNamesStr) {
+              const divNames = divisionNamesStr.split(",").map(s => s.trim()).filter(Boolean);
+              for (let divName of divNames) {
+                const d = divisions.find(x => x.name.toLowerCase() === divName.toLowerCase());
+                if (d) {
+                  mappings.push({ divisionId: d.id, productId: null });
+                } else {
+                  return { valid: false, error: `Division not found: ${divName}` };
+                }
+              }
+            }
+
+            if (productNamesStr) {
+              const prodNames = productNamesStr.split(",").map(s => s.trim()).filter(Boolean);
+              for (let prodName of prodNames) {
+                let foundProd = null;
+                let foundDivId = null;
+                for (let d of divisions) {
+                  const p = d.products?.find(x => x.name.toLowerCase() === prodName.toLowerCase() || String(x.productCode).toLowerCase() === prodName.toLowerCase());
+                  if (p) {
+                    foundProd = p;
+                    foundDivId = d.id;
+                    break;
+                  }
+                }
+                if (foundProd) {
+                  mappings.push({ divisionId: foundDivId, productId: foundProd.id });
+                } else {
+                  return { valid: false, error: `Product not found: ${prodName}` };
+                }
+              }
+            }
+
             return {
               valid: true,
-              data: { outletName, ownerName, address, locationId: Number(locationId), outletType, mappings: [] },
+              data: { outletName, ownerName, address, locationId: loc.id, outletType, mappings },
             };
           }}
           onUpload={(rows) => bulkCreateOutlets(rows)}

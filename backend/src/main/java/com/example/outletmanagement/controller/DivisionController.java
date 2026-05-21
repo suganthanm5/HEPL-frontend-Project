@@ -49,12 +49,14 @@ public class DivisionController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllDivisions(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean hasProducts,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        log.info("Fetching divisions - page: {}, size: {}, keyword: {}", page, size, keyword);
-        Page<DivisionResponse> response = divisionService.getAllDivisions(keyword, hasProducts, PageRequest.of(page, size));
+        String activeSearch = keyword != null ? keyword : search;
+        log.info("Fetching divisions - page: {}, size: {}, keyword: {}", page, size, activeSearch);
+        Page<DivisionResponse> response = divisionService.getAllDivisions(activeSearch, hasProducts, PageRequest.of(page, size));
         log.info("Found {} divisions", response.getTotalElements());
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())

@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface OutletStockService {
     Page<OutletStockResponse> getStockByOutlet(Long outletId, Pageable pageable);
-    Page<OutletStockResponse> getAllStock(Pageable pageable);
+    Page<OutletStockResponse> getAllStock(String search, Long outletId, Long productId, Pageable pageable);
     OutletStockResponse transferStock(Long fromOutletId, Long toOutletId, Long productId, Long batchId, Integer quantity, String remarks);
     Page<StockTransactionResponse> getTransactions(Long outletId, Long productId, Pageable pageable);
     Page<StockTransactionResponse> getFilteredTransactions(Long outletId, Long productId, StockTransaction.TransactionType type, Pageable pageable);

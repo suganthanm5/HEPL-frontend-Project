@@ -66,20 +66,23 @@ public class OutletStockServiceImpl implements OutletStockService {
 
         @Override
         @Transactional(readOnly = true)
-        public Page<OutletStockResponse> getAllStock(Pageable pageable) {
+        public Page<OutletStockResponse> getAllStock(String search, Long outletId, Long productId, Pageable pageable) {
                 String username = SecurityContextHolder.getContext().getAuthentication().getName();
                 User currentUser = userRepository.findByUsername(username)
                                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
+                Long activeOutletId = outletId;
                 if (currentUser.getRole() != User.Role.ADMIN) {
                         if (currentUser.getOutlet() == null) {
                                 return Page.empty(pageable);
                         }
-                        return outletStockRepository.findByOutletId(currentUser.getOutlet().getId(), pageable)
-                                        .map(this::toOutletStockResponse);
+                        activeOutletId = currentUser.getOutlet().getId();
                 }
 
-                return outletStockRepository.findAll(pageable)
+                org.springframework.data.jpa.domain.Specification<OutletStock> spec = 
+                                com.example.outletmanagement.specification.OutletStockSpecification.searchAndFilter(
+                                                search, activeOutletId, productId);
+                return outletStockRepository.findAll(spec, pageable)
                                 .map(this::toOutletStockResponse);
         }
 

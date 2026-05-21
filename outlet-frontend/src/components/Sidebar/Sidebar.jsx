@@ -324,23 +324,6 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
       {/* ── Footer ─────────────────────────────────────── */}
       <Box className="new-sidebar-footer">
 
-        {/* Theme toggle */}
-        <ButtonBase className="theme-toggle" onClick={toggleTheme} disableRipple>
-          <Box component="span" className="theme-label">
-            {isDark ? (
-              <LightModeRounded sx={{ fontSize: "1.3rem", color: "var(--color-text-primary)" }} />
-            ) : (
-              <DarkModeRounded sx={{ fontSize: "1.3rem", color: "var(--color-text-primary)" }} />
-            )}
-            <Typography component="span" className="theme-text">
-              {isDark ? "Light Mode" : "Dark Mode"}
-            </Typography>
-          </Box>
-
-          <Box className="theme-toggle-track">
-            <Box className="theme-toggle-indicator" />
-          </Box>
-        </ButtonBase>
 
         {/* Logout */}
         <ButtonBase

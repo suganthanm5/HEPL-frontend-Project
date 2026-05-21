@@ -49,25 +49,10 @@ public class DivisionServiceImpl implements DivisionService {
     @Override
     @Transactional(readOnly = true)
     public Page<DivisionResponse> getAllDivisions(String search, Boolean hasProducts, Pageable pageable) {
-        // Fetch all divisions with products (no lazy loading issue)
-        List<Division> allWithProducts;
-        if (search != null && !search.isBlank()) {
-            allWithProducts = divisionRepository.findByNameContainingIgnoreCaseWithProducts(search);
-        } else {
-            allWithProducts = divisionRepository.findAllWithProducts();
-        }
-
-        // Apply pagination manually
-        int total = allWithProducts.size();
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), total);
-        List<Division> pageContent = start >= total ? List.of() : allWithProducts.subList(start, end);
-
-        List<DivisionResponse> responses = pageContent.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(responses, pageable, total);
+        org.springframework.data.jpa.domain.Specification<com.example.outletmanagement.entity.Division> spec = 
+                com.example.outletmanagement.specification.DivisionSpecification.searchAndFilter(search, hasProducts);
+        Page<com.example.outletmanagement.entity.Division> divisions = divisionRepository.findAll(spec, pageable);
+        return divisions.map(this::mapToResponse);
     }
 
     @Override

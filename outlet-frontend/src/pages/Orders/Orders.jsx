@@ -77,7 +77,7 @@ const Orders = () => {
   };
 
   /* ── Load Orders (Dynamic) ── */
-  const loadOrders = useCallback(async () => {
+  const loadOrders = useCallback(async (signal) => {
     setLoading(true);
     try {
       const activeFilters = {
@@ -89,7 +89,7 @@ const Orders = () => {
       if (filters.outletId) activeFilters.outletId = filters.outletId;
       if (search) activeFilters.orderNo = search;
 
-      const oData = await orderService.getAll(activeFilters);
+      const oData = await orderService.getAll(activeFilters, signal);
       if (oData && oData.content) {
         setOrders(oData.content);
         setTotalPages(oData.totalPages);
@@ -98,6 +98,7 @@ const Orders = () => {
         setOrders(extractArr(oData));
       }
     } catch (err) {
+      if (err?.name === "CanceledError" || err?.name === "AbortError") return;
       console.error("Fetch orders error:", err);
     } finally {
       setLoading(false);
@@ -139,7 +140,14 @@ const Orders = () => {
   }, []);
 
   useEffect(() => { loadMetadata(); }, [loadMetadata]);
-  useEffect(() => { loadOrders(); }, [loadOrders]);
+  
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      loadOrders(controller.signal);
+    }, 800);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [loadOrders]);
 
   // Ensure filters and new order data reflect the user's outlet
   useEffect(() => {

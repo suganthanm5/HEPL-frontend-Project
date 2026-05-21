@@ -19,15 +19,16 @@ public class ProductBatchController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllBatches(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long productId,
-            @RequestParam(required = false) ProductBatch.Status status) {
+            @RequestParam(required = false) ProductBatch.Status status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         
-        List<ProductBatch> batches;
-        if (productId != null || status != null) {
-            batches = productBatchService.getFilteredBatches(productId, status);
-        } else {
-            batches = productBatchService.getAllBatches();
-        }
+        String activeSearch = keyword != null ? keyword : search;
+        org.springframework.data.domain.Page<ProductBatch> batches = productBatchService.getAllBatches(
+                activeSearch, productId, status, org.springframework.data.domain.PageRequest.of(page, size));
         
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())

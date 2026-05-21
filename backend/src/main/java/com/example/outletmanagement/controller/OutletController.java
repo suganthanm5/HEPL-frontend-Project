@@ -59,14 +59,16 @@ public class OutletController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllOutlets(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long locationId,
             @RequestParam(required = false) Long divisionId,
             @RequestParam(required = false) String outletType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        log.info("Fetching outlets - page: {}, size: {}, keyword: {}", page, size, keyword);
-        Page<OutletResponse> response = outletService.getAllOutlets(keyword, locationId, outletType, divisionId, PageRequest.of(page, size));
+        String activeSearch = keyword != null ? keyword : search;
+        log.info("Fetching outlets - page: {}, size: {}, keyword: {}", page, size, activeSearch);
+        Page<OutletResponse> response = outletService.getAllOutlets(activeSearch, locationId, outletType, divisionId, PageRequest.of(page, size));
         log.info("Found {} outlets", response.getTotalElements());
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())

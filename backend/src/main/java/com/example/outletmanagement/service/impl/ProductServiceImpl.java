@@ -46,14 +46,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> getAllProducts(String search, Long divisionId, BigDecimal minSellingPrice, BigDecimal maxSellingPrice, BigDecimal minPurchasePrice, BigDecimal maxPurchasePrice, Pageable pageable) {
-        Page<Product> products;
-        
-        if (search != null && !search.isBlank()) {
-            products = productRepository.findByNameContainingIgnoreCase(search, pageable);
-        } else {
-            products = productRepository.findAll(pageable);
-        }
-        
+        org.springframework.data.jpa.domain.Specification<Product> spec = 
+                com.example.outletmanagement.specification.ProductSpecification.searchAndFilter(
+                        search, divisionId, minSellingPrice, maxSellingPrice, minPurchasePrice, maxPurchasePrice);
+        Page<Product> products = productRepository.findAll(spec, pageable);
         return products.map(this::mapToResponse);
     }
 

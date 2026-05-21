@@ -43,7 +43,9 @@ const getDivisions = async (page = 0, size = 10, keyword = "", signal) => {
       pageSize: pageData.pageSize || size,
     };
   } catch (error) {
-    console.error('getDivisions error:', error);
+    if (error?.name !== "CanceledError" && error?.name !== "AbortError") {
+      console.error('getDivisions error:', error);
+    }
     throw error;
   }
 };

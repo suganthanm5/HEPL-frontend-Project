@@ -48,6 +48,7 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllProducts(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long divisionId,
             @RequestParam(required = false) BigDecimal minSellingPrice,
             @RequestParam(required = false) BigDecimal maxSellingPrice,
@@ -56,7 +57,8 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        Page<ProductResponse> response = productService.getAllProducts(keyword, divisionId, minSellingPrice, maxSellingPrice, minPurchasePrice, maxPurchasePrice, PageRequest.of(page, size));
+        String activeSearch = keyword != null ? keyword : search;
+        Page<ProductResponse> response = productService.getAllProducts(activeSearch, divisionId, minSellingPrice, maxSellingPrice, minPurchasePrice, maxPurchasePrice, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Products fetched successfully")

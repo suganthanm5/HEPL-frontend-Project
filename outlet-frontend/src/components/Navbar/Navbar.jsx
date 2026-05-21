@@ -321,7 +321,7 @@ const Navbar = ({ title = "Dashboard" }) => {
         <Box className="navbar-center">
           <Box className="navbar-search">
             <Box className="search-icon-nb">
-              <SearchRounded sx={{ fontSize: 20, color: "#f43f5e" }} />
+              <SearchRounded sx={{ fontSize: 20, color: "inherit" }} />
             </Box>
             <InputBase
               inputRef={searchRef}

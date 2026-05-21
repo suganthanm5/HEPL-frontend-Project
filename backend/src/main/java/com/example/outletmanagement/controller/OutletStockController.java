@@ -24,8 +24,14 @@ public class OutletStockController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    public ResponseEntity<ApiResponse> getAllStock(@ParameterObject Pageable pageable) {
-        Page<OutletStockResponse> response = outletStockService.getAllStock(pageable);
+    public ResponseEntity<ApiResponse> getAllStock(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long outletId,
+            @RequestParam(required = false) Long productId,
+            @ParameterObject Pageable pageable) {
+        String activeSearch = keyword != null ? keyword : search;
+        Page<OutletStockResponse> response = outletStockService.getAllStock(activeSearch, outletId, productId, pageable);
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Stock fetched successfully")

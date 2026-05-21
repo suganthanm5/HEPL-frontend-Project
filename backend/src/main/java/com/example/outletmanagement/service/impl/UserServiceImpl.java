@@ -67,8 +67,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserResponse> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(this::mapToResponse);
+    public Page<UserResponse> getAllUsers(String search, Pageable pageable) {
+        org.springframework.data.jpa.domain.Specification<User> spec = 
+                com.example.outletmanagement.specification.UserSpecification.searchAndFilter(search);
+        return userRepository.findAll(spec, pageable).map(this::mapToResponse);
     }
 
     @Override

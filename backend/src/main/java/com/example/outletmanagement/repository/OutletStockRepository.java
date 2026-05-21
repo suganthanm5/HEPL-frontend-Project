@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface OutletStockRepository extends JpaRepository<OutletStock, Long> {
+public interface OutletStockRepository extends JpaRepository<OutletStock, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<OutletStock> {
     org.springframework.data.domain.Page<OutletStock> findByOutletId(Long outletId, org.springframework.data.domain.Pageable pageable);
     Optional<OutletStock> findByOutletIdAndProductIdAndBatchId(Long outletId, Long productId, Long batchId);
 

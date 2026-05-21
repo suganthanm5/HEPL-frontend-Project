@@ -10,6 +10,12 @@ import {
   BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart,
 } from "recharts";
 import { Typography } from "@mui/material";
+import {
+  GroupRounded, StoreRounded, AttachMoneyRounded,
+  WarningAmberRounded, CategoryRounded, ShoppingCartRounded,
+  PendingActionsRounded, Inventory2Rounded, CheckCircleRounded,
+  CallMadeRounded, CallReceivedRounded, ListAltRounded, LayersRounded
+} from "@mui/icons-material";
 import TypingText from "../../components/TypingText";
 import "./Dashboard.css";
 
@@ -128,38 +134,39 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
     <>
       {/* Stat Cards */}
       <div className="db-stats-grid">
-        <StatCard icon="👥" label="Total Users" value={fmt(summary?.totalUsers)} color="indigo" trend={{ up: true, label: "+12%" }} delay={0} />
-        <StatCard icon="🏪" label="Total Outlets" value={fmt(outlets.length)} color="blue" trend={{ up: true, label: "Active" }} delay={60} />
-        <StatCard icon="💰" label="Total Revenue" value={fmtCurrency(summary?.totalRevenue)} color="green" trend={{ up: true, label: "+8.4%" }} delay={120} />
-        <StatCard icon="📦" label="Low Stock Alerts" value={fmt(summary?.lowStockCount)} color={summary?.lowStockCount > 0 ? "rose" : "green"} sub={summary?.lowStockCount > 0 ? "Needs attention" : "All stocked"} delay={180} />
-        <StatCard icon="🗂️" label="Divisions" value={fmt(divisions.length)} color="purple" delay={240} />
-        <StatCard icon="🛒" label="Total Orders" value={fmt(summary?.totalOrders)} color="orange" trend={{ up: true, label: "+5.2%" }} delay={300} />
+        <StatCard icon={<GroupRounded />} label="Total Users" value={fmt(summary?.totalUsers)} color="indigo" trend={{ up: true, label: "+12%" }} delay={0} />
+        <StatCard icon={<StoreRounded />} label="Total Outlets" value={fmt(outlets.length)} color="blue" trend={{ up: true, label: "Active" }} delay={60} />
+        <StatCard icon={<AttachMoneyRounded />} label="Total Revenue" value={fmtCurrency(summary?.totalRevenue)} color="green" trend={{ up: true, label: "+8.4%" }} delay={120} />
+        <StatCard icon={<WarningAmberRounded />} label="Low Stock Alerts" value={fmt(summary?.lowStockCount)} color={summary?.lowStockCount > 0 ? "rose" : "green"} sub={summary?.lowStockCount > 0 ? "Needs attention" : "All stocked"} delay={180} />
+        <StatCard icon={<CategoryRounded />} label="Divisions" value={fmt(divisions.length)} color="purple" delay={240} />
+        <StatCard icon={<ShoppingCartRounded />} label="Total Orders" value={fmt(summary?.totalOrders)} color="orange" trend={{ up: true, label: "+5.2%" }} delay={300} />
       </div>
 
       {/* Main Charts Row */}
       <div className="db-grid-2-1">
-        <SectionCard title="Weekly Revenue & Orders" subtitle="Revenue vs order volume this week" delay={200} action={filters}>
+        <SectionCard title="Products per Division" subtitle="Number of products available in each division" delay={200} action={filters}>
           <ResponsiveContainer width="100%" height={320}>
-            <ComposedChart data={revenueData} margin={{ top: 10, right: -10, left: -10, bottom: 0 }}>
+            <BarChart data={summary?.divisionStats || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                <linearGradient id="prodGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontFamily: "inherit" }} />
-              <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(v) => `₹${v / 1000}k`} />
-              <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend iconType="circle" wrapperStyle={{ paddingTop: 20, fontSize: 13 }} />
-              <Area yAxisId="left" type="monotone" dataKey="revenue" name="Revenue (₹)" fill="url(#revGrad)" stroke="#6366f1" strokeWidth={3} dot={{ fill: "#6366f1", r: 4, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6, strokeWidth: 0 }} />
-              <Area yAxisId="right" type="monotone" dataKey="orders" name="Orders" fill="url(#orderGrad)" stroke="#10b981" strokeWidth={3} dot={{ fill: "#10b981", r: 4, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6, strokeWidth: 0 }} />
-            </ComposedChart>
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} domain={[0, dataMax => (dataMax === 0 ? 5 : dataMax)]} />
+              <Tooltip 
+                contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                formatter={(value) => [value, 'Products']}
+                cursor={{ fill: '#f8fafc' }}
+              />
+              <Bar dataKey="count" name="Products" radius={[4, 4, 0, 0]} barSize={30}>
+                {(summary?.divisionStats || []).map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </SectionCard>
 
@@ -248,14 +255,14 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
           </ResponsiveContainer>
           <div className="db-activity-list mt-3">
             <div className="db-activity-item">
-              <span className="db-activity-icon orange">⏳</span>
+              <span className="db-activity-icon orange"><PendingActionsRounded sx={{ fontSize: 20 }} /></span>
               <div className="db-activity-info">
                 <span className="db-activity-title">Pending Orders</span>
                 <span className="db-activity-sub">{summary?.pendingOrdersCount || 0} orders awaiting approval</span>
               </div>
             </div>
             <div className="db-activity-item">
-              <span className="db-activity-icon green">✅</span>
+              <span className="db-activity-icon green"><CheckCircleRounded sx={{ fontSize: 20 }} /></span>
               <div className="db-activity-info">
                 <span className="db-activity-title">Processed Orders</span>
                 <span className="db-activity-sub">{(summary?.totalOrders || 0) - (summary?.pendingOrdersCount || 0)} orders completed</span>
@@ -293,10 +300,10 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
   return (
     <>
       <div className="db-stats-grid db-stats-grid-4">
-        <StatCard icon="🛒" label="Total Orders" value={fmt(summary?.totalOrders)} color="orange" trend={{ up: true, label: "This Month" }} delay={0} />
-        <StatCard icon="⏳" label="Pending Orders" value={fmt(summary?.pendingOrdersCount)} color={summary?.pendingOrdersCount > 0 ? "rose" : "green"} sub={summary?.pendingOrdersCount > 0 ? "Needs action" : "All clear"} delay={60} />
-        <StatCard icon="📦" label="Low Stock Items" value={fmt(summary?.lowStockCount)} color={summary?.lowStockCount > 0 ? "rose" : "green"} sub={summary?.lowStockCount > 0 ? "Reorder needed" : "Healthy"} delay={120} />
-        <StatCard icon="💰" label="Revenue" value={fmtCurrency(summary?.totalRevenue)} color="green" trend={{ up: true, label: "+6.1%" }} delay={180} />
+        <StatCard icon={<ShoppingCartRounded />} label="Total Orders" value={fmt(summary?.totalOrders)} color="orange" trend={{ up: true, label: "This Month" }} delay={0} />
+        <StatCard icon={<PendingActionsRounded />} label="Pending Orders" value={fmt(summary?.pendingOrdersCount)} color={summary?.pendingOrdersCount > 0 ? "rose" : "green"} sub={summary?.pendingOrdersCount > 0 ? "Needs action" : "All clear"} delay={60} />
+        <StatCard icon={<WarningAmberRounded />} label="Low Stock Items" value={fmt(summary?.lowStockCount)} color={summary?.lowStockCount > 0 ? "rose" : "green"} sub={summary?.lowStockCount > 0 ? "Reorder needed" : "Healthy"} delay={120} />
+        <StatCard icon={<AttachMoneyRounded />} label="Revenue" value={fmtCurrency(summary?.totalRevenue)} color="green" trend={{ up: true, label: "+6.1%" }} delay={180} />
       </div>
 
       <div className="db-grid-2-1">
@@ -347,11 +354,11 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
 
       <SectionCard title="Quick Actions" subtitle="Navigate to key sections" delay={300}>
         <div className="db-quick-actions">
-          <button className="db-quick-btn indigo" onClick={() => navigate("/orders")}>📋 Manage Orders</button>
-          <button className="db-quick-btn green" onClick={() => navigate("/stock")}>📦 View Stock</button>
-          <button className="db-quick-btn orange" onClick={() => navigate("/outlet")}>🏪 Outlets</button>
-          <button className="db-quick-btn blue" onClick={() => navigate("/product")}>🛍️ Products</button>
-          <button className="db-quick-btn purple" onClick={() => navigate("/batch")}>🗂️ Batches</button>
+          <button className="db-quick-btn indigo" onClick={() => navigate("/orders")}><ListAltRounded sx={{mr: 1, fontSize: 20}}/> Manage Orders</button>
+          <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{mr: 1, fontSize: 20}}/> View Stock</button>
+          <button className="db-quick-btn orange" onClick={() => navigate("/outlet")}><StoreRounded sx={{mr: 1, fontSize: 20}}/> Outlets</button>
+          <button className="db-quick-btn blue" onClick={() => navigate("/product")}><ShoppingCartRounded sx={{mr: 1, fontSize: 20}}/> Products</button>
+          <button className="db-quick-btn purple" onClick={() => navigate("/batch")}><LayersRounded sx={{mr: 1, fontSize: 20}}/> Batches</button>
         </div>
       </SectionCard>
 
@@ -396,7 +403,7 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
               const isOut = tx.type?.toLowerCase().includes("sale") || tx.type?.toLowerCase().includes("out");
               return (
                 <div key={i} className="db-activity-item">
-                  <span className={`db-activity-icon ${isOut ? "green" : "indigo"}`}>{isOut ? "💸" : "📥"}</span>
+                  <span className={`db-activity-icon ${isOut ? "green" : "indigo"}`}>{isOut ? <CallMadeRounded sx={{fontSize: 20}}/> : <CallReceivedRounded sx={{fontSize: 20}}/>}</span>
                   <div className="db-activity-info">
                     <span className="db-activity-title">{tx.productName || tx.type || "Transaction"}</span>
                     <span className="db-activity-sub">{tx.quantity ? `${tx.quantity} units` : ""} {tx.outletName ? `· ${tx.outletName}` : ""}</span>
@@ -420,10 +427,10 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
   return (
     <>
       <div className="db-stats-grid db-stats-grid-4">
-        <StatCard icon="🛒" label="My Orders" value={fmt(summary?.totalOrders)} color="orange" delay={0} />
-        <StatCard icon="⏳" label="Pending Orders" value={fmt(summary?.pendingOrdersCount)} color={summary?.pendingOrdersCount > 0 ? "rose" : "green"} delay={60} />
-        <StatCard icon="📦" label="Low Stock Items" value={fmt(summary?.lowStockCount)} color={summary?.lowStockCount > 0 ? "rose" : "green"} delay={120} />
-        <StatCard icon="💰" label="Revenue" value={fmtCurrency(summary?.totalRevenue)} color="green" delay={180} />
+        <StatCard icon={<ShoppingCartRounded />} label="My Orders" value={fmt(summary?.totalOrders)} color="orange" delay={0} />
+        <StatCard icon={<PendingActionsRounded />} label="Pending Orders" value={fmt(summary?.pendingOrdersCount)} color={summary?.pendingOrdersCount > 0 ? "rose" : "green"} delay={60} />
+        <StatCard icon={<WarningAmberRounded />} label="Low Stock Items" value={fmt(summary?.lowStockCount)} color={summary?.lowStockCount > 0 ? "rose" : "green"} delay={120} />
+        <StatCard icon={<AttachMoneyRounded />} label="Revenue" value={fmtCurrency(summary?.totalRevenue)} color="green" delay={180} />
       </div>
 
       <div className="db-grid-2-1">
@@ -447,8 +454,8 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
 
         <SectionCard title="Quick Actions" subtitle="Common tasks" delay={280}>
           <div className="db-quick-actions">
-            <button className="db-quick-btn orange" onClick={() => navigate("/orders")}>📋 My Orders</button>
-            <button className="db-quick-btn green" onClick={() => navigate("/stock")}>📦 Check Stock</button>
+            <button className="db-quick-btn orange" onClick={() => navigate("/orders")}><ListAltRounded sx={{mr: 1, fontSize: 20}}/> My Orders</button>
+            <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{mr: 1, fontSize: 20}}/> Check Stock</button>
           </div>
         </SectionCard>
       </div>
@@ -570,7 +577,10 @@ export default function Dashboard() {
       orders: Math.round(Math.max(d.orders * scaleFactor, scaleFactor > 0 ? 1 : 0))
     }));
     
-    let divisionStats = summary.divisionStats || [];
+    let divisionStats = (summary.divisionStats || []).map(ds => ({
+      ...ds,
+      count: ds.count !== undefined ? ds.count : (ds.value ? Math.round(ds.value) : 0)
+    }));
     if (selectedDivisionId) {
       const targetDiv = divisions.find(d => String(d.id) === String(selectedDivisionId));
       if (targetDiv) {

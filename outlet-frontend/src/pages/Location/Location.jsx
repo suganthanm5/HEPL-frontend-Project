@@ -163,11 +163,11 @@ const Location = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchLocations(controller.signal);
-    return () => controller.abort();
-  }, [page, pageSize]);
-
-  useEffect(() => { filterLocations(); }, [search, allLocations, pageSize, page]);
+    const delay = setTimeout(() => {
+      fetchLocations(controller.signal);
+    }, 800);
+    return () => { clearTimeout(delay); controller.abort(); };
+  }, [page, pageSize, search]);
 
   const showToast = (message, type = "error") => setToast({ message, type });
 
@@ -187,34 +187,22 @@ const Location = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await getLocations(0, 1000, "", signal);
-      let allLocs = [];
-      if (Array.isArray(res)) allLocs = res;
-      else if (Array.isArray(res?.content)) allLocs = res.content;
-      else if (Array.isArray(res?.data)) allLocs = res.data;
-      else if (Array.isArray(res?.data?.content)) allLocs = res.data.content;
-      setAllLocations(allLocs);
+      const res = await getLocations(page - 1, pageSize, search, signal);
+      let list = [];
+      if (Array.isArray(res)) list = res;
+      else if (Array.isArray(res?.content)) list = res.content;
+      else if (Array.isArray(res?.data)) list = res.data;
+      else if (Array.isArray(res?.data?.content)) list = res.data.content;
+      
+      setLocations(list);
+      setTotalPages(res?.totalPages || 1);
+      setTotalElements(res?.totalElements || list.length);
     } catch (e) {
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
       setError("Failed to load locations. Check API connection.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterLocations = () => {
-    let filtered = allLocations;
-    if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      filtered = allLocations.filter((l) => l.name?.toLowerCase().includes(q));
-    }
-    const totalFiltered = filtered.length;
-    const totalPgs = Math.ceil(totalFiltered / pageSize) || 1;
-    const safePg = Math.min(page, totalPgs);
-    const startIdx = (safePg - 1) * pageSize;
-    setLocations(filtered.slice(startIdx, startIdx + pageSize));
-    setTotalPages(totalPgs);
-    setTotalElements(totalFiltered);
   };
 
   const handleAdd = async () => {

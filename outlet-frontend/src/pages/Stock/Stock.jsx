@@ -80,7 +80,7 @@ const Stock = () => {
   }, [userOutletId, isAdmin]);
 
   /* ── Load Dynamic Data (Stock/Txns) ── */
-  const loadDynamicData = useCallback(async () => {
+  const loadDynamicData = useCallback(async (signal) => {
     setLoading(true);
     try {
       const activeFilters = {
@@ -90,7 +90,11 @@ const Stock = () => {
       };
       
       if (tab === "stock") {
-        const sData = await stockService.getAll(activeFilters);
+        if (search) activeFilters.search = search;
+        if (filters.productId) activeFilters.productId = filters.productId;
+        if (filters.outletId) activeFilters.outletId = filters.outletId;
+
+        const sData = await stockService.getAll(activeFilters, signal);
         if (sData && sData.content) {
           setStock(sData.content);
           setTotalStockPages(sData.totalPages);
@@ -101,8 +105,7 @@ const Stock = () => {
         if (filters.productId) activeFilters.productId = filters.productId;
         if (filters.outletId)  activeFilters.outletId  = filters.outletId;
         if (filters.type)      activeFilters.type       = filters.type;
-        
-        const tData = await stockService.getTransactions(activeFilters);
+        const tData = await stockService.getTransactions(activeFilters, signal);
         if (tData && tData.content) {
           setTxns(tData.content);
           setTotalTxnPages(tData.totalPages);
@@ -111,11 +114,12 @@ const Stock = () => {
         }
       }
     } catch (err) {
+      if (err?.name === "CanceledError" || err?.name === "AbortError") return;
       console.error("Dynamic data load error:", err);
     } finally {
       setLoading(false);
     }
-  }, [tab, filters, stockPage, txnPage, pageSize]);
+  }, [tab, filters, search, stockPage, txnPage, pageSize]);
 
   /* ── Load Metadata (Initial Only) ── */
   const loadMetadata = useCallback(async () => {
@@ -139,13 +143,18 @@ const Stock = () => {
   }, []);
 
   useEffect(() => { loadMetadata(); }, [loadMetadata]);
-  useEffect(() => { loadDynamicData(); }, [loadDynamicData]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      loadDynamicData(controller.signal);
+    }, 800);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [loadDynamicData]);
 
   const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
-  const filteredStock = stock.filter((s) =>
-    [s.productName, s.outletName, s.batchNo].join(" ").toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredStock = stock; // Backend handles filtering
 
   const handleTransfer = async () => {
     const { fromOutletId, outletId, productId, batchId, quantity } = transfer.data;

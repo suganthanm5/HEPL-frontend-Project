@@ -5,7 +5,7 @@ import {
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Select,
   MenuItem, FormControl, Tooltip, CircularProgress,
-  Snackbar, Alert, Chip, Paper, Grid, Stack,
+  Snackbar, Alert, Chip, Paper, Grid, Stack, Pagination
 } from "@mui/material";
 import {
   PersonAddRounded, SearchRounded, EditRounded,
@@ -41,37 +41,44 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isFormView, setIsFormView] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+
   const [dialog, setDialog] = useState({ open: false, mode: "add", data: emptyForm });
   const [delDialog, setDelDialog] = useState({ open: false, id: null, name: "" });
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
 
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal) => {
     setLoading(true);
     try {
-      console.log('[DEBUG] Fetching users...');
-      const data = await userService.getAllUsers();
-      console.log('[DEBUG] Users fetched:', data);
-      setUsers(Array.isArray(data) ? data : []);
+      const data = await userService.getAllUsers(page - 1, pageSize, search, signal);
+      setUsers(data?.content || []);
+      setTotalPages(data?.totalPages || 1);
+      setTotalElements(data?.totalElements || 0);
     } catch (err) {
-      console.error("[DEBUG] Failed to load users:", err);
-      console.error("[DEBUG] Error response:", err.response?.data);
+      if (err?.name === "CanceledError" || err?.name === "AbortError") return;
       setUsers([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, search]);
 
   useEffect(() => {
-    load();
-    outletService.getAll(0, 1000).then(data => setOutlets(data.content || []));
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      load(controller.signal);
+    }, 800);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [load]);
 
-  
-  const filtered = users.filter((u) =>
-    [u.name, u.username, u.email, u.role]
-      .join(" ").toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    outletService.getAll(0, 1000).then(data => setOutlets(data.content || []));
+  }, []);
+
+  const filtered = users; // Backend handles filtering
 
 
   const counts = ROLES.reduce((acc, r) => {
@@ -404,6 +411,22 @@ const UserManagement = () => {
               </Table>
             </TableContainer>
           </Box>
+          {/* Pagination */}
+          {!loading && totalElements > 0 && (
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, flexWrap: "wrap", gap: 1 }}>
+              <Typography variant="body2" sx={{ color: "#64748b" }}>
+                Showing <strong>{totalElements === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalElements)}</strong> of <strong>{totalElements}</strong> entries
+              </Typography>
+              <Pagination
+                count={totalPages} page={page} onChange={(_, v) => setPage(v)}
+                shape="rounded" size="small"
+                sx={{
+                  "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600, fontFamily: "Poppins, sans-serif" },
+                  "& .Mui-selected": { bgcolor: "#7d2ae8 !important", color: "#fff" },
+                }}
+              />
+            </Box>
+          )}
         </>
       )}
 

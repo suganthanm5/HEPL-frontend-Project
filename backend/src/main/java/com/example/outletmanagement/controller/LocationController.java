@@ -47,10 +47,12 @@ public class LocationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllLocations(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        Page<LocationResponse> response = locationService.getAllLocations(keyword, PageRequest.of(page, size));
+        String activeSearch = keyword != null ? keyword : search;
+        Page<LocationResponse> response = locationService.getAllLocations(activeSearch, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Locations fetched successfully")

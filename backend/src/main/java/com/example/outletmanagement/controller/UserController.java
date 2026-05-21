@@ -38,9 +38,12 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> getAllUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<UserResponse> response = userService.getAllUsers(PageRequest.of(page, size));
+        String activeSearch = keyword != null ? keyword : search;
+        Page<UserResponse> response = userService.getAllUsers(activeSearch, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
                 .message("Users fetched successfully")

@@ -1,7 +1,8 @@
 import API, { ENDPOINTS } from '../api/apiClient';
 
-const getProducts = async (page = 0, size = 10, signal) => {
-  const res = await API.get(ENDPOINTS.products, { params: { page, size }, signal });
+const getProducts = async (page = 0, size = 10, search = "", filters = {}, signal) => {
+  const params = { page, size, ...(search ? { search } : {}), ...filters };
+  const res = await API.get(ENDPOINTS.products, { params, signal });
   const pageData = res.data?.data;
   return pageData || { content: [], totalPages: 0, totalElements: 0 };
 };

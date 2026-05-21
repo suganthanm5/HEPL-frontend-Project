@@ -65,7 +65,7 @@ import { reportService } from '../../services/reportService';
 
 const ProfileDrawer = ({ open, onClose }) => {
   const navigate = useNavigate();
-  
+
   const getAvatarUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http') || path.startsWith('data:') || path.startsWith('blob:')) return path;
@@ -249,10 +249,10 @@ const ProfileDrawer = ({ open, onClose }) => {
     setTimeout(() => {
       setSubmittingSupport(false);
       setSupportForm({ topic: 'Technical Issue', message: '' });
-      setToast({ 
-        open: true, 
-        message: `Support ticket #${Math.floor(1000 + Math.random() * 9000)} submitted successfully! Our tech team will email you shortly.`, 
-        severity: 'success' 
+      setToast({
+        open: true,
+        message: `Support ticket #${Math.floor(1000 + Math.random() * 9000)} submitted successfully! Our tech team will email you shortly.`,
+        severity: 'success'
       });
     }, 1500);
   };
@@ -967,7 +967,7 @@ const ProfileDrawer = ({ open, onClose }) => {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', flex: 1 }}>Notifications</Typography>
-        
+
         {notifications.some(n => !n.read) && (
           <Tooltip title="Mark all as read">
             <IconButton onClick={handleMarkAllNotificationsRead} sx={{ mr: 1, color: '#10b981' }}>
@@ -1052,7 +1052,7 @@ const ProfileDrawer = ({ open, onClose }) => {
                     <DeleteIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Box>
-                
+
                 {isExpanded && (
                   <Box sx={{ mt: 1.5, ml: 5.5, p: 1.5, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }} className="animate-fade-in">
                     <Typography variant="body2" sx={{ color: '#475569', fontSize: '12.5px', lineHeight: 1.5 }}>
@@ -1090,20 +1090,20 @@ const ProfileDrawer = ({ open, onClose }) => {
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Message Details
           </Typography>
-          
+
           <Tooltip title={selectedMessage.read ? "Mark as unread" : "Mark as read"}>
             <IconButton onClick={() => handleToggleReadMessage(selectedMessage.id)} sx={{ mr: 1, color: '#64748b' }}>
               <DraftsIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
-          
+
           <Tooltip title="Delete Message">
             <IconButton onClick={() => handleDeleteMessage(selectedMessage.id)} sx={{ color: '#ef4444' }}>
               <DeleteIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
         </Box>
-        
+
         {/* Detail Content */}
         <Box sx={{ p: 3, flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ borderBottom: '1px dashed #e2e8f0', pb: 2 }}>
@@ -1124,13 +1124,13 @@ const ProfileDrawer = ({ open, onClose }) => {
               </Box>
             </Box>
           </Box>
-          
+
           <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0', minHeight: 120 }}>
             <Typography variant="body2" sx={{ color: '#334155', fontSize: '12.5px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
               {selectedMessage.content}
             </Typography>
           </Box>
-          
+
           {/* Reply Form */}
           <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid #f1f5f9' }}>
             <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', mb: 1, display: 'block' }}>
@@ -1178,7 +1178,7 @@ const ProfileDrawer = ({ open, onClose }) => {
     if (selectedMessage) {
       return renderMessageDetailView();
     }
-    
+
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff', m: 1, borderRadius: '12px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', p: 3, borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}>
@@ -1203,7 +1203,7 @@ const ProfileDrawer = ({ open, onClose }) => {
             <MessageIcon sx={{ color: '#64748b' }} />
           </Badge>
         </Box>
-        
+
         {messages.length === 0 ? (
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 3 }}>
             <Typography variant="body2" sx={{ color: '#94a3b8' }}>No messages available.</Typography>
@@ -1395,13 +1395,13 @@ const ProfileDrawer = ({ open, onClose }) => {
               {faqs.map(faq => {
                 const isOpen = activeFaqId === faq.id;
                 return (
-                  <Box 
-                    key={faq.id} 
+                  <Box
+                    key={faq.id}
                     onClick={() => setActiveFaqId(isOpen ? null : faq.id)}
-                    sx={{ 
-                      p: 2, 
-                      borderRadius: '10px', 
-                      bgcolor: '#f8fafc', 
+                    sx={{
+                      p: 2,
+                      borderRadius: '10px',
+                      bgcolor: '#f8fafc',
                       border: '1px solid #e2e8f0',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -1412,9 +1412,9 @@ const ProfileDrawer = ({ open, onClose }) => {
                       <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', fontSize: '12.5px' }}>
                         {faq.q}
                       </Typography>
-                      <ChevronRightIcon sx={{ 
-                        fontSize: 16, 
-                        color: '#64748b', 
+                      <ChevronRightIcon sx={{
+                        fontSize: 16,
+                        color: '#64748b',
                         transform: isOpen ? 'rotate(90deg)' : 'none',
                         transition: 'transform 0.2s'
                       }} />
@@ -1440,7 +1440,7 @@ const ProfileDrawer = ({ open, onClose }) => {
             <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 2, fontSize: '11px' }}>
               Having a technical glitch? Submit a support request ticket below.
             </Typography>
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 select

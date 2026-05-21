@@ -23,6 +23,12 @@ public class ProductBatchServiceImpl implements ProductBatchService {
     }
 
     @Override
+    public org.springframework.data.domain.Page<ProductBatch> getAllBatches(String search, Long productId, ProductBatch.Status status, org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.jpa.domain.Specification<ProductBatch> spec = com.example.outletmanagement.specification.ProductBatchSpecification.searchAndFilter(search, productId, status);
+        return productBatchRepository.findAll(spec, pageable);
+    }
+
+    @Override
     public List<ProductBatch> getFilteredBatches(Long productId, ProductBatch.Status status) {
         return productBatchRepository.findFilteredBatches(productId, status);
     }

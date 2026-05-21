@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
-import { addProduct, updateProduct, deleteProduct, bulkCreateProducts } from "../../services/productService";
+import { getProducts, addProduct, updateProduct, deleteProduct, bulkCreateProducts } from "../../services/productService";
 import { getDivisions } from "../../services/divisionService";
 import { orderService } from "../../services/orderService";
 import API, { ENDPOINTS } from '../../api/apiClient';
@@ -227,8 +227,11 @@ const Product = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
   const [view, setView] = useState("table");
   const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState(null);
@@ -260,36 +263,26 @@ const Product = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchProducts(controller.signal);
-    fetchDivisions(controller.signal);
+    fetchMetadata(controller.signal);
     return () => controller.abort();
   }, []);
 
-  const fetchDivisions = async (signal) => {
-    try {
-      const res = await getDivisions(0, 200, "", signal);
-      const divList = res?.content ?? [];
-      setDivisions(divList);
-    } catch (e) {
-      console.error("fetchDivisions error:", e);
-    }
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchProducts(controller.signal);
+    return () => controller.abort();
+  }, [page, pageSize, activeSearch, divisionFilter, priceRangeFilter]);
 
-  const fetchProducts = async (signal) => {
-    setLoading(true);
-    setError("");
+  const fetchMetadata = async (signal) => {
     try {
-      const [prodRes, summRes, orderData] = await Promise.all([
-        API.get(ENDPOINTS.products, { params: { page: 0, size: 1000 }, signal }),
-        reportService.getDashboardSummary(),
-        orderService.getAll({ size: 1000 }).catch(err => {
-          console.error("orderService error:", err);
-          return [];
-        })
+      const [divRes, summRes, orderData] = await Promise.all([
+        getDivisions(0, 200, "", signal),
+        reportService.getDashboardSummary().catch(() => null),
+        orderService.getAll({ size: 1000 }, signal).catch(err => [])
       ]);
-      const pageData = prodRes.data?.data;
-      const productList = pageData?.content ?? [];
-      setProducts(productList);
+      
+      const divList = divRes?.content ?? [];
+      setDivisions(divList);
       setSummary(summRes);
 
       let orderList = [];
@@ -298,6 +291,31 @@ const Product = () => {
       else if (Array.isArray(orderData?.data)) orderList = orderData.data;
       else if (Array.isArray(orderData?.data?.content)) orderList = orderData.data.content;
       setOrders(orderList);
+    } catch (e) {
+      if (e?.name === "CanceledError" || e?.name === "AbortError") return;
+      console.error("fetchMetadata error:", e);
+    }
+  };
+
+  const fetchProducts = async (signal) => {
+    setLoading(true);
+    setError("");
+    try {
+      const filters = {};
+      if (divisionFilter) filters.divisionId = divisionFilter;
+      if (priceRangeFilter) {
+        if (priceRangeFilter === "0-100") { filters.minSellingPrice = 0; filters.maxSellingPrice = 100; }
+        else if (priceRangeFilter === "101-500") { filters.minSellingPrice = 101; filters.maxSellingPrice = 500; }
+        else if (priceRangeFilter === "501-1000") { filters.minSellingPrice = 501; filters.maxSellingPrice = 1000; }
+        else if (priceRangeFilter === "1000+") { filters.minSellingPrice = 1001; }
+      }
+
+      const prodRes = await getProducts(page - 1, pageSize, activeSearch, filters, signal);
+      
+      const productList = prodRes?.content ?? [];
+      setProducts(productList);
+      setTotalPages(prodRes?.totalPages || 1);
+      setTotalElements(prodRes?.totalElements || 0);
     } catch (e) {
       console.error("fetchProducts error:", e);
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
@@ -385,29 +403,11 @@ const Product = () => {
     } finally { setSaving(false); }
   };
 
-  const filtered = useMemo(() => {
-    let result = products.filter((p) =>
-      [p.name, p.productCode, divNameOf(p)].some((v) => v?.toLowerCase().includes(search.toLowerCase()))
-    );
-    if (divisionFilter) result = result.filter((p) => (p.division?.id ?? p.divisionId) == divisionFilter);
-    if (priceRangeFilter) {
-      result = result.filter((p) => {
-        const mrp = Number(p.mrp) || 0;
-        if (priceRangeFilter === "0-100") return mrp <= 100;
-        if (priceRangeFilter === "101-500") return mrp >= 101 && mrp <= 500;
-        if (priceRangeFilter === "501-1000") return mrp >= 501 && mrp <= 1000;
-        if (priceRangeFilter === "1000+") return mrp > 1000;
-        return true;
-      });
-    }
-    return result;
-  }, [products, search, divMap, divisionFilter, priceRangeFilter]);
+  const filtered = products; // Backend handles filtering
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const start = filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1;
-  const end = Math.min(safePage * pageSize, filtered.length);
+  const paginated = products; // Backend handles pagination
+  const start = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, totalElements);
 
   const performanceData = useMemo(() => {
     const counts = {};
@@ -637,7 +637,7 @@ const Product = () => {
               onClick={() => setBulkOpen(true)}>
               Bulk Upload
             </Button>
-            <ExportMenu getData={() => formatProductData(filtered)} filename="products" title="Products Report" backendType="products" />
+            <ExportMenu getData={() => formatProductData(filtered)} filename="products" title="Products Report" />
             <Button variant="contained" startIcon={<AddIcon />} color="primary"
               sx={{ bgcolor: "#f59e0b", "&:hover": { bgcolor: "#d97706" }, color: "#fff", boxShadow: "none" }}
               onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
@@ -877,13 +877,19 @@ const Product = () => {
                 {/* Search */}
                 <TextField
                   size="small" placeholder="Search products…" value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setActiveSearch(search.trim());
+                      setPage(1);
+                    }
+                  }}
                   sx={{ minWidth: 240, flex: 1 }}
                   InputProps={{
                     startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
                     endAdornment: search ? (
                       <InputAdornment position="end">
-                        <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => { setSearch(""); setActiveSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
                       </InputAdornment>
                     ) : null,
                   }}
@@ -967,8 +973,8 @@ const Product = () => {
                         <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
                             <Inventory2Icon sx={{ fontSize: 48, color: "#cbd5e1" }} />
-                            <Typography color="text.secondary">{search ? "No products match your search" : "No products yet"}</Typography>
-                            {!search && (
+                            <Typography color="text.secondary">{activeSearch ? "No products match your search" : "No products yet"}</Typography>
+                            {!activeSearch && (
                               <Button variant="contained" size="small" startIcon={<AddIcon />}
                                 sx={{ bgcolor: "#f59e0b", "&:hover": { bgcolor: "#d97706" }, color: "#fff", boxShadow: "none" }}
                                 onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
@@ -981,7 +987,7 @@ const Product = () => {
                     ) : (
                       paginated.map((p, i) => (
                         <TableRow key={p.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                          <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(safePage - 1) * pageSize + i + 1}</TableCell>
+                          <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * pageSize + i + 1}</TableCell>
                           <TableCell>
                             <Avatar
                               variant="rounded"
@@ -1057,7 +1063,7 @@ const Product = () => {
                   <Grid item xs={12}>
                     <Box sx={{ py: 8, textAlign: "center" }}>
                       <Inventory2Icon sx={{ fontSize: 56, color: "#cbd5e1", mb: 1 }} />
-                      <Typography color="text.secondary">{search ? "No products match your search" : "No products yet"}</Typography>
+                      <Typography color="text.secondary">{activeSearch ? "No products match your search" : "No products yet"}</Typography>
                     </Box>
                   </Grid>
                 ) : (
@@ -1088,7 +1094,7 @@ const Product = () => {
                           >
                             {p.name?.charAt(0).toUpperCase()}
                           </Avatar>
-                          <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "#94a3b8", fontWeight: 600, backdropFilter: "blur(4px)" }}>#{(safePage - 1) * pageSize + i + 1}</Typography>
+                          <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "#94a3b8", fontWeight: 600, backdropFilter: "blur(4px)" }}>#{(page - 1) * pageSize + i + 1}</Typography>
                         </Box>
                         <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b", mb: 0.75 }}>{p.name}</Typography>
                         <Stack direction="row" spacing={0.75} flexWrap="wrap" sx={{ mb: 1.5 }}>
@@ -1120,13 +1126,13 @@ const Product = () => {
             )}
 
             {/* ── Pagination ── */}
-            {!loading && filtered.length > 0 && (
+            {!loading && totalElements > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, flexWrap: "wrap", gap: 1 }}>
                 <Typography variant="body2" sx={{ color: "#64748b" }}>
-                  Showing <strong>{start}–{end}</strong> of <strong>{filtered.length}</strong> entries
+                  Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
                 </Typography>
                 <Pagination
-                  count={totalPages} page={safePage} onChange={(_, v) => setPage(v)}
+                  count={totalPages} page={page} onChange={(_, v) => setPage(v)}
                   shape="rounded" size="small"
                   sx={{
                     "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600 },
@@ -1223,30 +1229,35 @@ const Product = () => {
           onClose={() => setBulkOpen(false)}
           title="Bulk Upload Products"
           accent="#f59e0b"
-          templateHeaders={["name", "divisionId", "uimPrice", "mrp", "sellingPrice", "purchasePrice", "image"]}
+          templateHeaders={["name", "divisionName", "uimPrice", "mrp", "sellingPrice", "purchasePrice", "image"]}
           templateRows={[
-            ["Milk 1L", "1", "40", "50", "48", "38", ""],
-            ["Cheese 500g", "1", "80", "100", "95", "75", ""],
+            ["Milk 1L", "Groceries", "40", "50", "48", "38", ""],
+            ["Cheese 500g", "Groceries", "80", "100", "95", "75", ""],
           ]}
           parseRow={(row) => {
             const name = (row["name"] || "").trim();
-            const divisionId = (row["divisionid"] || row["divisionId"] || "").trim();
+            const divisionName = (row["divisionname"] || row["divisionName"] || "").trim();
             const mrp = Number(row["mrp"] || 0);
             const sellingPrice = Number(row["sellingprice"] || row["sellingPrice"] || 0);
             const purchasePrice = Number(row["purchaseprice"] || row["purchasePrice"] || 0);
             const uimPrice = Number(row["uimprice"] || row["uimPrice"] || 0);
             const image = (row["image"] || "").trim();
+            
             if (!name) return { valid: false, error: "Name is required" };
-            if (!divisionId) return { valid: false, error: "divisionId is required" };
+            if (!divisionName) return { valid: false, error: "divisionName is required" };
             if (mrp <= 0) return { valid: false, error: "MRP must be > 0" };
             if (sellingPrice > mrp) return { valid: false, error: "Selling price must be ≤ MRP" };
             if (purchasePrice > mrp) return { valid: false, error: "Purchase price must be ≤ MRP" };
+            
+            const div = divisions.find(d => d.name.toLowerCase() === divisionName.toLowerCase());
+            if (!div) return { valid: false, error: `Division not found: ${divisionName}` };
+
             return {
               valid: true,
               data: {
                 name, uimPrice, mrp, sellingPrice, purchasePrice, image,
-                divisionId: Number(divisionId),
-                division: { id: Number(divisionId) },
+                divisionId: div.id,
+                division: { id: div.id },
               },
             };
           }}

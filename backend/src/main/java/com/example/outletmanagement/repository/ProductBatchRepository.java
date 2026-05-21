@@ -8,8 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long> {
+public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long>, JpaSpecificationExecutor<ProductBatch> {
     
     @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product ORDER BY b.id DESC")
     List<ProductBatch> findAll();
