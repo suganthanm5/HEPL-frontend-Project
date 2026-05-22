@@ -250,34 +250,11 @@
   color: #aaa;
 }
 
-/* Social */
-.social {
+/* Google Sign-In — centered */
+.social-google-center {
   display: flex;
-  gap: 10px;
-}
-
-.social-btn {
-  flex: 1;
-  padding: 8px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.3s;
-}
-
-.social-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.social-btn.fb {
-  background: linear-gradient(to right, #ff9e1e, #68c21f);
-  color: white;
-}
-
-.social-btn.tw {
-  background: linear-gradient(to right, #d87b02, #f57905);
-  color: white;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 /* Register */

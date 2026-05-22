@@ -53,8 +53,12 @@ public class AuthServiceImpl implements AuthService {
         String username = request.getUsername() != null ? request.getUsername().trim() : "";
         String password = request.getPassword() != null ? request.getPassword().trim() : "";
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password));
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password));
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            throw new RuntimeException("Incorrect username or password");
+        }
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + request.getUsername()));
         String token = jwtService.generateToken(user);
@@ -66,6 +70,55 @@ public class AuthServiceImpl implements AuthService {
                 .name(user.getName())
                 .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
                 .build();
+    }
+
+    @Override
+    public AuthResponse googleLogin(String token) {
+        try {
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setBearerAuth(token);
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>("", headers);
+            
+            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.exchange(
+                    "https://www.googleapis.com/oauth2/v3/userinfo", 
+                    org.springframework.http.HttpMethod.GET, 
+                    entity, 
+                    java.util.Map.class
+            );
+            
+            java.util.Map<String, Object> payload = response.getBody();
+            if (payload != null && payload.containsKey("email")) {
+                String email = (String) payload.get("email");
+                String name = (String) payload.get("name");
+                
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user == null) {
+                    user = User.builder()
+                            .username(email.split("@")[0] + "_" + System.currentTimeMillis())
+                            .email(email)
+                            .name(name)
+                            .password(passwordEncoder.encode("GOOGLE_LOGIN_PASSWORD_" + System.currentTimeMillis()))
+                            .role(User.Role.USER)
+                            .build();
+                    userRepository.save(user);
+                }
+                
+                String jwtToken = jwtService.generateToken(user);
+                return AuthResponse.builder()
+                        .token(jwtToken)
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .role(user.getRole() != null ? user.getRole().name() : "USER")
+                        .name(user.getName())
+                        .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
+                        .build();
+            } else {
+                throw new RuntimeException("Could not fetch user profile from Google.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Google Authentication Failed: " + e.getMessage());
+        }
     }
 
     @Override

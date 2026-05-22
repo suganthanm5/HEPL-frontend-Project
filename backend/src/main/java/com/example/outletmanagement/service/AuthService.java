@@ -7,5 +7,6 @@ import com.example.outletmanagement.payload.dto.response.AuthResponse;
 public interface AuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
+    AuthResponse googleLogin(String token);
     boolean validateToken(String token);
 }

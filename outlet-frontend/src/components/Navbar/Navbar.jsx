@@ -270,10 +270,14 @@ const Navbar = ({ title = "Dashboard" }) => {
     window.addEventListener("userDataUpdated", handleStorageChange);
     window.addEventListener("storage", handleStorageEvent);
 
+    const handleOpenProfileDrawerEvent = () => setProfileDrawerOpen(true);
+    window.addEventListener("openProfileDrawer", handleOpenProfileDrawerEvent);
+
     return () => {
       window.removeEventListener("profileUpdated", handleStorageChange);
       window.removeEventListener("userDataUpdated", handleStorageChange);
       window.removeEventListener("storage", handleStorageEvent);
+      window.removeEventListener("openProfileDrawer", handleOpenProfileDrawerEvent);
     };
   }, []);
 
@@ -303,8 +307,14 @@ const Navbar = ({ title = "Dashboard" }) => {
     setProfileDrawerOpen(true);
   };
 
-  const formatTime = (d) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const formatDate = (d) => d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  const formatTime = (d) => {
+    const is24h = (localStorage.getItem('timeFormat') || '12h') === '24h';
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !is24h });
+  };
+  const formatDate = (d) => {
+    const lang = localStorage.getItem('language') || 'english';
+    return d.toLocaleDateString(lang === 'tamil' ? 'ta-IN' : 'en-US', { weekday: "short", month: "short", day: "numeric" });
+  };
 
   /* Avatar initials */
   const initials = (user.name || "A").charAt(0).toUpperCase();
@@ -476,7 +486,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                   </ListItem>
 
                   <ListItem disablePadding sx={{ borderRadius: "12px", overflow: "hidden" }}>
-                    <ListItemButton onClick={() => setUserOpen(false)} sx={{ py: 1 }}>
+                    <ListItemButton onClick={() => { navigate('/settings'); setUserOpen(false); }} sx={{ py: 1 }}>
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <SettingsRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>

@@ -228,8 +228,8 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             inputProps={{ style: { pointerEvents: collapsed ? "none" : "auto" } }}
+            className="sidebar-search-input"
             sx={{
-              ml: "15px",
               flex: 1,
               fontSize: "1rem",
               fontFamily: "Poppins, sans-serif",

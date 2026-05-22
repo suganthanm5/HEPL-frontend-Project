@@ -56,7 +56,7 @@ const Orders = () => {
   const [create, setCreate] = useState({ open: false, data: emptyOrder });
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
   const [totalPages, setTotalPages] = useState(0);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);

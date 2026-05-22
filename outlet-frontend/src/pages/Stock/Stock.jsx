@@ -66,7 +66,7 @@ const Stock = () => {
   // Pagination state
   const [stockPage, setStockPage] = useState(0);
   const [txnPage,   setTxnPage]   = useState(0);
-  const [pageSize,  setPageSize]  = useState(10);
+  const [pageSize,  setPageSize]  = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
   const [totalStockPages, setTotalStockPages] = useState(0);
   const [totalTxnPages,   setTotalTxnPages]   = useState(0);
 

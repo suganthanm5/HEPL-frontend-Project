@@ -1,0 +1,231 @@
+.settings-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+}
+
+.settings-title {
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+
+.settings-subtitle {
+  color: #64748b;
+  font-size: 1rem !important;
+}
+
+.settings-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden;
+  min-height: 600px;
+}
+
+@media (min-width: 768px) {
+  .settings-content-wrapper {
+    flex-direction: row;
+  }
+}
+
+/* Sidebar Tabs */
+.settings-sidebar {
+  width: 100%;
+  padding: 1rem 0;
+  border-right: 1px solid rgba(150, 150, 150, 0.1);
+}
+
+@media (min-width: 768px) {
+  .settings-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+  }
+}
+
+.settings-tabs .MuiTabs-flexContainer {
+  gap: 0.25rem;
+}
+
+.settings-tab {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding: 12px 24px !important;
+  min-height: 48px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-family: 'Poppins', sans-serif !important;
+  transition: all 0.2s ease !important;
+  border-left: 3px solid transparent !important;
+}
+
+.settings-tab:hover {
+  background: rgba(150, 150, 150, 0.08);
+}
+
+.settings-tab.active {
+  background: rgba(150, 150, 150, 0.08);
+}
+
+/* Main Panel */
+.settings-panel {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-section {
+  flex: 1;
+}
+
+.section-title {
+  font-weight: 600 !important;
+  font-family: 'Poppins', sans-serif !important;
+  margin-bottom: 1rem !important;
+}
+
+.section-divider {
+  margin-bottom: 2rem !important;
+}
+
+/* Form Items */
+.setting-item {
+  margin-bottom: 1.5rem;
+}
+
+.setting-label {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+
+.setting-select {
+  border-radius: 8px !important;
+  border-radius: 8px !important;
+}
+
+/* Profile Card */
+.profile-management-card {
+  padding: 2rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pmc-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.pmc-info h6 {
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  margin-top: 4px !important;
+}
+
+/* Security Card */
+.security-card {
+  border-radius: 12px !important;
+  height: 100%;
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sc-icon {
+  opacity: 0.8;
+}
+
+.sc-header h6 {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* List Items */
+.setting-list-item {
+  padding: 1rem 0 !important;
+}
+
+.sessions-list .session-item {
+  padding: 1rem 0 !important;
+}
+
+.system-info-list .system-info-item {
+  padding: 1rem 0 !important;
+}
+
+/* Colors */
+.color-picker-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch.selected {
+  border: 2px solid #1e293b;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px #ffffff inset;
+}
+
+/* Footer */
+.settings-footer {
+  margin-top: auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(150, 150, 150, 0.1);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  text-transform: none !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-weight: 500 !important;
+  padding: 8px 24px !important;
+  border-radius: 8px !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}

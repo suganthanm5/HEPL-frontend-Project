@@ -15,6 +15,7 @@ import Stock from "../pages/Stock/Stock";
 import Orders from "../pages/Orders/Orders";
 import Unauthorized from "../pages/Unauthorized/Unauthorized";
 import NotificationPage from "../pages/NotificationPage/NotificationPage";
+import Settings from "../pages/Settings/Settings";
 
 import MainLayout from "../components/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -65,6 +66,7 @@ const AppRoutes = () => {
       <Route path="/stock" element={<Private title="Stock Management"><Stock /></Private>} />
       <Route path="/orders" element={<Private title="Orders"><Orders /></Private>} />
       <Route path="/notifications" element={<Private title="Notification Centre"><NotificationPage /></Private>} />
+      <Route path="/settings" element={<Private title="Settings"><Settings /></Private>} />
 
       {/* Admin + Manager */}
       <Route path="/outlet" element={<RoleRoute title="Outlet Management" roles={["ADMIN", "MANAGER"]}><Outlet /></RoleRoute>} />

@@ -4,7 +4,7 @@ export const userService = {
   getAllUsers: async (page = 0, size = 10, search = "", signal) => {
     const params = { page, size, ...(search ? { search } : {}) };
     const response = await apiClient.get(`/api/users`, { params, signal });
-    // response.data is ApiResponse { httpStatus, message, data: Page { content: [...], totalPages, ... } }
+   
     const pageData = response.data?.data;
     return pageData || { content: [], totalElements: 0, totalPages: 0 };
   },

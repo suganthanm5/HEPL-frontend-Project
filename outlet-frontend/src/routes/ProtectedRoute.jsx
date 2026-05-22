@@ -7,8 +7,8 @@ const ProtectedRoute = ({ children, roles }) => {
   const { user, role, isLoading } = useAuth();
   const location = useLocation();
 
-  const token       = getCookie("token");
-  const storedRole  = getCookie("role");
+  const token = getCookie("token");
+  const storedRole = getCookie("role");
 
 
   const stillInitializing = isLoading || (!user && !!token);
@@ -17,10 +17,10 @@ const ProtectedRoute = ({ children, roles }) => {
     return (
       <Box
         sx={{
-          display:         "flex",
-          justifyContent:  "center",
-          alignItems:      "center",
-          height:          "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
           backgroundColor: "#f8fafc",
         }}
       >
@@ -51,7 +51,7 @@ const ProtectedRoute = ({ children, roles }) => {
 
   const hasAccess = allowed.includes(activeRole);
 
-  
+
   if (!hasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }

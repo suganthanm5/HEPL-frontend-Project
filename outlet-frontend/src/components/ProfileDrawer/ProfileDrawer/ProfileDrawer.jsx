@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, 
-  User, 
-  Settings, 
-  Moon, 
-  Sun, 
+import {
+  X,
+  User,
+  Settings,
+  Moon,
+  Sun,
   Monitor,
-  Bell, 
-  Shield, 
-  HelpCircle, 
+  Bell,
+  Shield,
+  HelpCircle,
   Building2,
   LogOut,
   Edit3,
@@ -296,9 +296,9 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
     <>
       {/* Backdrop */}
       <div className="profile-drawer-backdrop" />
-      
+
       {/* Drawer */}
-      <div 
+      <div
         ref={drawerRef}
         className={`profile-drawer ${isOpen ? 'profile-drawer-open' : ''}`}
         role="dialog"
@@ -333,8 +333,8 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
               <div className="profile-user-section">
                 <div className="profile-avatar-container">
                   {user?.avatar ? (
-                    <img 
-                      src={user.avatar} 
+                    <img
+                      src={user.avatar}
                       alt={user.name}
                       className="profile-avatar"
                     />
@@ -345,7 +345,7 @@ const ProfileDrawer = ({ isOpen, onClose }) => {
                   )}
                   {user?.isOnline && <div className="profile-status-indicator"></div>}
                 </div>
-                
+
                 <div className="profile-user-info">
                   <h3 className="profile-user-name" id="profile-drawer-title">
                     {user?.name || 'User Name'}

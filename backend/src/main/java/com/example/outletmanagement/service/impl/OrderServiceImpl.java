@@ -6,6 +6,7 @@ import com.example.outletmanagement.exception.ResourceNotFoundException;
 import com.example.outletmanagement.repository.*;
 import com.example.outletmanagement.repository.RequestBatchRepository;
 import com.example.outletmanagement.service.OrderService;
+import com.example.outletmanagement.websocket.WebSocketEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class OrderServiceImpl implements OrderService {
     private final OutletDivisionProductRepository mappingRepository;
     private final OrderItemRepository orderItemRepository;
     private final RequestBatchRepository requestBatchRepository;
+    private final WebSocketEventPublisher webSocketEventPublisher;
 
     @Override
     public Page<Order> getAllOrders(Pageable pageable) {
@@ -121,7 +123,17 @@ public class OrderServiceImpl implements OrderService {
         }).toList();
 
         order.setItems(items);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // Publish real-time event
+        webSocketEventPublisher.publishNewOrder(
+                saved.getId(),
+                saved.getOrderNo(),
+                outlet.getOutletName(),
+                saved.getStatus().name()
+        );
+
+        return saved;
     }
 
     @Override
@@ -160,7 +172,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(status);
-        return orderRepository.save(order);
+        Order updated = orderRepository.save(order);
+
+        // Publish real-time status change event
+        webSocketEventPublisher.publishOrderStatusChange(updated.getId(), updated.getOrderNo(), status.name());
+
+        return updated;
     }
 
     private void allocateStockFIFO(Order order, User currentUser) {
@@ -184,11 +201,9 @@ public class OrderServiceImpl implements OrderService {
 
                 int allocationFromThisBatch = Math.min(batch.getQuantity(), remainingToAllocate);
 
-                
                 batch.setQuantity(batch.getQuantity() - allocationFromThisBatch);
                 productBatchRepository.save(batch);
 
-                
                 OutletStock outletStock = outletStockRepository
                         .findByOutletIdAndProductIdAndBatchId(order.getOutlet().getId(), item.getProduct().getId(),
                                 batch.getId())

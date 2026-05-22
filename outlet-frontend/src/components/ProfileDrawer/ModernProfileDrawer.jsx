@@ -520,7 +520,6 @@ const ProfileDrawer = ({ open, onClose }) => {
           }
         },
         { icon: DatabaseIcon, label: 'Database Info', action: () => setCurrentView('database') },
-        { icon: SettingsIcon, label: 'Settings', action: () => setCurrentView('settings') },
         { icon: ActivityIcon, label: 'Activity Log', action: () => setCurrentView('activity') }
       ]
     },
@@ -1664,78 +1663,7 @@ const ProfileDrawer = ({ open, onClose }) => {
       </Box>
     </Box>
   );
-  const renderSettingsView = () => (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff', m: 1, borderRadius: '12px' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', p: 3, borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', borderRadius: '12px 12px 0 0' }}>
-        <IconButton
-          onClick={() => setCurrentView('main')}
-          sx={{
-            mr: 2,
-            backgroundColor: '#4f46e5',
-            color: 'white',
-            '&:hover': { backgroundColor: '#4338ca' },
-            width: 40,
-            height: 40
-          }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b' }}>Settings</Typography>
-      </Box>
 
-      <Box sx={{ p: 3, flex: 1 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', mb: 2 }}>Display Preferences</Typography>
-          <Box sx={{
-            backgroundColor: darkMode ? '#f0fdf4' : '#f8fafc',
-            borderRadius: '12px',
-            p: 2,
-            border: `1px solid ${darkMode ? '#10b981' : '#e2e8f0'}`
-          }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={darkMode}
-                  onChange={(e) => setDarkMode(e.target.checked)}
-                />
-              }
-              label={
-                <Box sx={{ ml: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>Dark Mode</Typography>
-                  <Typography variant="caption" sx={{ color: '#64748b' }}>Switch between light and dark themes</Typography>
-                </Box>
-              }
-              sx={{ width: '100%', m: 0 }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', mb: 2 }}>System Configuration</Typography>
-          <Button
-            variant="contained"
-            onClick={() => {
-              onClose();
-              navigate('/settings');
-            }}
-            fullWidth
-            sx={{
-              backgroundColor: '#4f46e5',
-              '&:hover': { backgroundColor: '#4338ca' },
-              borderRadius: '10px',
-              py: 1.2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '13px',
-              boxShadow: '0 4px 6px -1px rgb(79 70 229 / 0.2)'
-            }}
-          >
-            Go to Full Settings Page
-          </Button>
-        </Box>
-      </Box>
-    </Box>
-  );
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -1745,7 +1673,6 @@ const ProfileDrawer = ({ open, onClose }) => {
       case 'notifications': return renderNotificationsView();
       case 'messages': return renderMessagesView();
       case 'activity': return renderActivityView();
-      case 'settings': return renderSettingsView();
       case 'help': return renderHelpView();
       default: return renderMainView();
     }

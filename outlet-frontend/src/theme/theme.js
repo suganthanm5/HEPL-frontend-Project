@@ -15,9 +15,25 @@ export const getTheme = () => {
     primaryLight = "#60a5fa";
     primaryDark = "#1e40af";
   } else if (themeColor === "Green") {
-    primaryMain = "#16a34a";
-    primaryLight = "#4ade80";
-    primaryDark = "#15803d";
+    primaryMain = "#10b981";
+    primaryLight = "#34d399";
+    primaryDark = "#047857";
+  } else if (themeColor === "Orange") {
+    primaryMain = "#f59e0b";
+    primaryLight = "#fbbf24";
+    primaryDark = "#b45309";
+  } else if (themeColor === "Red") {
+    primaryMain = "#ef4444";
+    primaryLight = "#f87171";
+    primaryDark = "#b91c1c";
+  } else if (themeColor === "Pink") {
+    primaryMain = "#ec4899";
+    primaryLight = "#f472b6";
+    primaryDark = "#be185d";
+  } else if (themeColor === "Violet") {
+    primaryMain = "#8b5cf6";
+    primaryLight = "#a78bfa";
+    primaryDark = "#6d28d9";
   }
 
   let htmlFontSize = 16;

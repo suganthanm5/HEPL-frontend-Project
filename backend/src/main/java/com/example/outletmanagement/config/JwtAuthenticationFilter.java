@@ -26,18 +26,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
-     
-        if (path.contains("/api/v1/auth/login") || 
-            path.contains("/api/v1/auth/register") ||
-            path.contains("/api/v1/auth/validate") ||
-            path.contains("/swagger-ui") ||
-            path.contains("/v3/api-docs") ||
-            path.contains("/swagger-resources") ||
-            path.contains("/webjars")) {
+
+        if (path.contains("/api/v1/auth/login") ||
+                path.contains("/api/v1/auth/register") ||
+                path.contains("/api/v1/auth/validate") ||
+                path.contains("/swagger-ui") ||
+                path.contains("/v3/api-docs") ||
+                path.contains("/swagger-resources") ||
+                path.contains("/webjars") ||
+                path.startsWith("/ws")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -48,9 +48,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
-        } else if (request.getCookies() != null) {
+        }
+        // Extract JWT from cookies
+        if (request.getCookies() != null) {
             for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("token".equals(cookie.getName())) {
+                if ("jwt".equals(cookie.getName()) || "token".equals(cookie.getName())) {
                     jwt = cookie.getValue();
                     break;
                 }
@@ -78,8 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
-                        userDetails.getAuthorities()
-                );
+                        userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             } else {

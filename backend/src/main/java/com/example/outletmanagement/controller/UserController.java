@@ -123,12 +123,6 @@ public class UserController {
         String oldPassword = request.get("oldPassword");
         String newPassword = request.get("newPassword");
         
-        if (oldPassword == null || oldPassword.isBlank()) {
-            return ResponseEntity.badRequest().body(ApiResponse.builder()
-                    .httpStatus(HttpStatus.BAD_REQUEST.value())
-                    .message("Old password is required")
-                    .build());
-        }
         if (newPassword == null || newPassword.isBlank()) {
             return ResponseEntity.badRequest().body(ApiResponse.builder()
                     .httpStatus(HttpStatus.BAD_REQUEST.value())

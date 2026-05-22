@@ -8,8 +8,7 @@ const API = axios.create({
 
 API.interceptors.request.use((config) => {
   const token = getCookie('token');
-  const url = config.url || '';
-  if (token && !url.includes('/login') && !url.includes('/register')) {
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

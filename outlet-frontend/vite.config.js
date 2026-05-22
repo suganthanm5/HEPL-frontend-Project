@@ -6,5 +6,25 @@ export default defineConfig({
   build: {
     outDir: '../backend/src/main/resources/static',
     emptyOutDir: true
-  }
+  },
+  server: {
+    proxy: {
+      // REST API calls
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      // WebSocket / SockJS endpoint
+      '/ws': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,          // Enable WebSocket proxying
+      },
+    },
+  },
+  define: {
+    global: 'globalThis', // Required for SockJS in Vite
+  },
 })

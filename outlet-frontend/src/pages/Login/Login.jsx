@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
+import { toast } from "react-hot-toast";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import bgImage from "../../assets/outlet-bg.jpg";
 import icon from "../../assets/login-icon.png";
 import { loginUser } from "../../services/authService";
+import API from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+
+const GOOGLE_CLIENT_ID = "589079070564-kdbonslaun7fjlr9t2ru9c0gr2tdmn71.apps.googleusercontent.com";
 
 const Login = () => {
     const { login } = useAuth();
@@ -16,13 +21,16 @@ const Login = () => {
 
     const navigate = useNavigate();
 
+    /* ── Regular username/password login ── */
     const handleLogin = async (e) => {
         e.preventDefault();
 
         if (isLoading) return;
 
         if (!username || !password) {
-            setError("Enter username and password");
+            const msg = "Enter username and password";
+            setError(msg);
+            toast.error(msg);
             return;
         }
 
@@ -32,7 +40,6 @@ const Login = () => {
         try {
             const res = await loginUser({ username, password });
 
-            // Backend uses ApiResponse { data: { token, role, ... } }
             const payload = res.data?.data || res.data;
             const token = payload?.token;
 
@@ -42,30 +49,85 @@ const Login = () => {
                     username: payload.username || username,
                     email: payload.email || "",
                     name: payload.name || payload.username || username,
-                    role: payload.role || 'USER',
-                    outletId: payload.outletId || null
+                    role: payload.role || "USER",
+                    outletId: payload.outletId || null,
                 };
 
                 login(userData, token);
 
-                console.log('✅ Login successful, user data:', userData);
+                toast.success("Login Successful! Welcome back.", {
+                    icon: "🚀",
+                    style: {
+                        borderRadius: "10px",
+                        background: "#333",
+                        color: "#fff",
+                    },
+                });
+
+                console.log("✅ Login successful, user data:", userData);
                 navigate("/dashboard", { replace: true });
             } else {
-                setError(res.data?.message || 'Login failed - no token received');
+                const msg = res.data?.message || "Login failed - no token received";
+                setError(msg);
+                toast.error(msg);
             }
-        } catch (error) {
-            console.error("❌ Login error:", error.response?.data || error.message);
+        } catch (err) {
+            console.error("❌ Login error:", err.response?.data || err.message);
 
-            if (error.response?.data) {
-                setError(error.response.data.message || 'Invalid username or password');
-            } else {
-                setError('Cannot connect to backend');
+            let msg = "Cannot connect to backend";
+            if (err.response?.data) {
+                msg = err.response.data.message || "Invalid username or password";
             }
+            setError(msg);
+            toast.error(msg, {
+                icon: "🔒",
+                style: {
+                    borderRadius: "10px",
+                    background: "#fef2f2",
+                    color: "#991b1b",
+                    border: "1px solid #fecaca",
+                },
+            });
         } finally {
             setIsLoading(false);
         }
     };
 
+    /* ── Google OAuth login ── */
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            const res = await API.post("/api/v1/auth/google-login", {
+                token: credentialResponse.credential,
+            });
+            const payload = res.data?.data || res.data;
+            const token = payload?.token;
+            if (token) {
+                const userData = {
+                    id: payload.id,
+                    username: payload.username || payload.email,
+                    email: payload.email || "",
+                    name: payload.name || payload.username,
+                    role: payload.role || "USER",
+                    outletId: payload.outletId || null,
+                };
+                login(userData, token);
+                toast.success("Signed in with Google! Welcome.", {
+                    icon: "🎉",
+                    style: { borderRadius: "10px", background: "#333", color: "#fff" },
+                });
+                navigate("/dashboard", { replace: true });
+            }
+        } catch (err) {
+            const msg = err.response?.data?.message || "Google sign-in failed";
+            toast.error(msg, { icon: "🔒" });
+        }
+    };
+
+    const handleGoogleError = () => {
+        toast.error("Google sign-in was cancelled or failed.", { icon: "🔒" });
+    };
+
+    /* ── JSX ── */
     return (
         <div className="login-page">
             <img src={bgImage} alt="bg" className="bg-image" />
@@ -124,16 +186,26 @@ const Login = () => {
                             className="login-btn"
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Logging in...' : 'Login'}
+                            {isLoading ? "Logging in..." : "Login"}
                         </button>
 
                     </form>
 
-                    <div className="divider">Or login with</div>
+                    <div className="divider">Or continue with</div>
 
-                    <div className="social">
-                        <button className="social-btn fb">Facebook</button>
-                        <button className="social-btn tw">Twitter</button>
+                    <div className="social-google-center">
+                        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={handleGoogleError}
+                                useOneTap={false}
+                                theme="filled_blue"
+                                shape="rectangular"
+                                width="330"
+                                text="signin_with"
+                                locale="en"
+                            />
+                        </GoogleOAuthProvider>
                     </div>
 
                     <p className="lp-register">

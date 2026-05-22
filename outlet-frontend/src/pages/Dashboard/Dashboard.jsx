@@ -156,7 +156,7 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontFamily: "inherit" }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} domain={[0, dataMax => (dataMax === 0 ? 5 : dataMax)]} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                 formatter={(value) => [value, 'Products']}
                 cursor={{ fill: '#f8fafc' }}
@@ -354,11 +354,11 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
 
       <SectionCard title="Quick Actions" subtitle="Navigate to key sections" delay={300}>
         <div className="db-quick-actions">
-          <button className="db-quick-btn indigo" onClick={() => navigate("/orders")}><ListAltRounded sx={{mr: 1, fontSize: 20}}/> Manage Orders</button>
-          <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{mr: 1, fontSize: 20}}/> View Stock</button>
-          <button className="db-quick-btn orange" onClick={() => navigate("/outlet")}><StoreRounded sx={{mr: 1, fontSize: 20}}/> Outlets</button>
-          <button className="db-quick-btn blue" onClick={() => navigate("/product")}><ShoppingCartRounded sx={{mr: 1, fontSize: 20}}/> Products</button>
-          <button className="db-quick-btn purple" onClick={() => navigate("/batch")}><LayersRounded sx={{mr: 1, fontSize: 20}}/> Batches</button>
+          <button className="db-quick-btn indigo" onClick={() => navigate("/orders")}><ListAltRounded sx={{ mr: 1, fontSize: 20 }} /> Manage Orders</button>
+          <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{ mr: 1, fontSize: 20 }} /> View Stock</button>
+          <button className="db-quick-btn orange" onClick={() => navigate("/outlet")}><StoreRounded sx={{ mr: 1, fontSize: 20 }} /> Outlets</button>
+          <button className="db-quick-btn blue" onClick={() => navigate("/product")}><ShoppingCartRounded sx={{ mr: 1, fontSize: 20 }} /> Products</button>
+          <button className="db-quick-btn purple" onClick={() => navigate("/batch")}><LayersRounded sx={{ mr: 1, fontSize: 20 }} /> Batches</button>
         </div>
       </SectionCard>
 
@@ -403,7 +403,7 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
               const isOut = tx.type?.toLowerCase().includes("sale") || tx.type?.toLowerCase().includes("out");
               return (
                 <div key={i} className="db-activity-item">
-                  <span className={`db-activity-icon ${isOut ? "green" : "indigo"}`}>{isOut ? <CallMadeRounded sx={{fontSize: 20}}/> : <CallReceivedRounded sx={{fontSize: 20}}/>}</span>
+                  <span className={`db-activity-icon ${isOut ? "green" : "indigo"}`}>{isOut ? <CallMadeRounded sx={{ fontSize: 20 }} /> : <CallReceivedRounded sx={{ fontSize: 20 }} />}</span>
                   <div className="db-activity-info">
                     <span className="db-activity-title">{tx.productName || tx.type || "Transaction"}</span>
                     <span className="db-activity-sub">{tx.quantity ? `${tx.quantity} units` : ""} {tx.outletName ? `· ${tx.outletName}` : ""}</span>
@@ -454,8 +454,8 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
 
         <SectionCard title="Quick Actions" subtitle="Common tasks" delay={280}>
           <div className="db-quick-actions">
-            <button className="db-quick-btn orange" onClick={() => navigate("/orders")}><ListAltRounded sx={{mr: 1, fontSize: 20}}/> My Orders</button>
-            <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{mr: 1, fontSize: 20}}/> Check Stock</button>
+            <button className="db-quick-btn orange" onClick={() => navigate("/orders")}><ListAltRounded sx={{ mr: 1, fontSize: 20 }} /> My Orders</button>
+            <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{ mr: 1, fontSize: 20 }} /> Check Stock</button>
           </div>
         </SectionCard>
       </div>
@@ -547,12 +547,12 @@ export default function Dashboard() {
 
   const getFilteredSummary = () => {
     if (!summary) return null;
-    
+
     let totalRevenue = Number(summary.totalRevenue) || 0;
     let totalOrders = Number(summary.totalOrders) || 0;
     let pendingOrders = Number(summary.pendingOrdersCount) || 0;
     let lowStock = Number(summary.lowStockCount) || 0;
-    
+
     let scaleFactor = 1.0;
     if (selectedOutletId) {
       const idNum = Number(selectedOutletId) || 1;
@@ -563,20 +563,20 @@ export default function Dashboard() {
       scaleFactor *= (0.3 + (divNum % 3) * 0.2);
     }
     scaleFactor = Math.min(Math.max(scaleFactor, 0.05), 1.0);
-    
+
     if (selectedOutletId || selectedDivisionId) {
       totalRevenue = Math.round(totalRevenue * scaleFactor);
       totalOrders = Math.round(Math.max(totalOrders * scaleFactor, 1));
       pendingOrders = Math.round(pendingOrders * scaleFactor);
       lowStock = Math.round(lowStock * scaleFactor);
     }
-    
+
     const trendData = (summary.revenueTrend || WEEKLY_DATA).map(d => ({
       ...d,
       revenue: Math.round(d.revenue * scaleFactor),
       orders: Math.round(Math.max(d.orders * scaleFactor, scaleFactor > 0 ? 1 : 0))
     }));
-    
+
     let divisionStats = (summary.divisionStats || []).map(ds => ({
       ...ds,
       count: ds.count !== undefined ? ds.count : (ds.value ? Math.round(ds.value) : 0)
@@ -587,7 +587,7 @@ export default function Dashboard() {
         divisionStats = divisionStats.filter(ds => ds.name === targetDiv.name);
       }
     }
-    
+
     return {
       ...summary,
       totalRevenue,
@@ -601,7 +601,7 @@ export default function Dashboard() {
 
   const filteredSummary = getFilteredSummary();
 
-  const filteredOutlets = outlets.filter(o => 
+  const filteredOutlets = outlets.filter(o =>
     (!selectedOutletId || String(o.id) === String(selectedOutletId)) &&
     (!selectedDivisionId || o.divisionIds?.map(Number).includes(Number(selectedDivisionId)))
   );
@@ -624,8 +624,8 @@ export default function Dashboard() {
             <path d="M2 7h20" />
           </svg>
         </span>
-        <select 
-          value={selectedOutletId} 
+        <select
+          value={selectedOutletId}
           onChange={(e) => setSelectedOutletId(e.target.value)}
           className="db-select-field-sm"
         >
@@ -649,8 +649,8 @@ export default function Dashboard() {
             <polyline points="2 12 12 17 22 12" />
           </svg>
         </span>
-        <select 
-          value={selectedDivisionId} 
+        <select
+          value={selectedDivisionId}
           onChange={(e) => setSelectedDivisionId(e.target.value)}
           className="db-select-field-sm"
         >
@@ -667,7 +667,7 @@ export default function Dashboard() {
       </div>
 
       {(selectedOutletId || selectedDivisionId) && (
-        <button 
+        <button
           onClick={() => { setSelectedOutletId(""); setSelectedDivisionId(""); }}
           className="db-reset-pill-btn"
           title="Clear Filters"

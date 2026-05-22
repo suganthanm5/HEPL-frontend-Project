@@ -169,10 +169,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new RuntimeException("Old password is incorrect");
-        }
-        
         user.setPassword(passwordEncoder.encode(newPassword.trim()));
         user.setUpdatedAt(new java.util.Date());
         userRepository.save(user);
