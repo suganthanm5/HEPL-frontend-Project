@@ -76,22 +76,16 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse googleLogin(String token) {
         try {
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
-            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setBearerAuth(token);
-            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>("", headers);
-            
-            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.exchange(
-                    "https://www.googleapis.com/oauth2/v3/userinfo", 
-                    org.springframework.http.HttpMethod.GET, 
-                    entity, 
-                    java.util.Map.class
-            );
-            
+            String url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + token;
+
+            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.getForEntity(url,
+                    java.util.Map.class);
+
             java.util.Map<String, Object> payload = response.getBody();
             if (payload != null && payload.containsKey("email")) {
                 String email = (String) payload.get("email");
                 String name = (String) payload.get("name");
-                
+
                 User user = userRepository.findByEmail(email).orElse(null);
                 if (user == null) {
                     user = User.builder()
@@ -103,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
                             .build();
                     userRepository.save(user);
                 }
-                
+
                 String jwtToken = jwtService.generateToken(user);
                 return AuthResponse.builder()
                         .token(jwtToken)

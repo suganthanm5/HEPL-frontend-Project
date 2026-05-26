@@ -61,13 +61,11 @@ export function useWebSocket() {
   const subscribe = useCallback((topic, callback) => {
     const socket = getOrCreateSocket();
     
-    // Manage global subscribers just to keep track, though Socket.IO supports multiple listeners per event
     if (!globalSubscribers.has(topic)) {
       globalSubscribers.set(topic, new Set());
     }
     globalSubscribers.get(topic).add(callback);
 
-    // Create wrapper to handle parsing if needed (Socket.IO usually parses JSON automatically though)
     const listener = (data) => {
         callback(data);
     };

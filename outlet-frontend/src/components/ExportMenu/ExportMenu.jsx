@@ -3,14 +3,7 @@ import { Box, ButtonBase, Menu, MenuItem, Typography, CircularProgress } from "@
 import { FileDownloadRounded } from "@mui/icons-material";
 import { exportToCSV, exportToExcel, exportToPDF, downloadBackendExport } from "../../utils/exportUtils";
 
-/**
- * ExportMenu — reusable export dropdown (PDF / Excel / CSV)
- * Props:
- *   getData()  → returns the formatted array to export
- *   filename   → base filename without extension (e.g. "orders")
- *   title      → PDF heading
- *   backendType→ type for backend-driven export (e.g. "orders", "users", etc.)
- */
+
 const ExportMenu = ({ getData, filename = "export", title = "Export", backendType }) => {
   const [anchor, setAnchor] = useState(null);
   const [loading, setLoading] = useState(false);

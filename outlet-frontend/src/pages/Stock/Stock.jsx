@@ -64,6 +64,7 @@ const Stock = () => {
   const [isFormView, setIsFormView] = useState(false);
   const [detailDialog, setDetailDialog] = useState({ open: false, data: null });
   const [addStockData, setAddStockData] = useState({ id: null, productId: "", quantity: "", purchasePrice: "", sellingPrice: "", expiryDate: "", batchNo: "" });
+  const [formErrors, setFormErrors] = useState({});
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
   
   // Pagination state
@@ -186,11 +187,28 @@ const Stock = () => {
 
   const handleFillStock = async () => {
     const { productId, quantity, purchasePrice, sellingPrice, expiryDate } = addStockData;
-    if (!productId) return toast("Please select a product", "error");
-    if (!quantity || Number(quantity) < 1) return toast("Please enter a valid quantity", "error");
-    if (!purchasePrice) return toast("Please enter purchase price", "error");
-    if (!sellingPrice) return toast("Please enter selling price", "error");
-    if (!expiryDate) return toast("Please select an expiry date", "error");
+    
+    // Frontend Validation
+    const errors = {};
+    if (!productId) errors.productId = "Please select a product";
+    
+    if (!quantity) errors.quantity = "Please enter quantity";
+    else if (isNaN(quantity) || Number(quantity) < 1) errors.quantity = "Only positive numbers are allowed";
+    
+    if (!purchasePrice) errors.purchasePrice = "Please enter purchase price";
+    else if (isNaN(purchasePrice) || Number(purchasePrice) <= 0) errors.purchasePrice = "Only positive numbers are allowed";
+    
+    if (!sellingPrice) errors.sellingPrice = "Please enter selling price";
+    else if (isNaN(sellingPrice) || Number(sellingPrice) <= 0) errors.sellingPrice = "Only positive numbers are allowed";
+    
+    if (!expiryDate) errors.expiryDate = "Please select an expiry date";
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
+    setFormErrors({});
 
     try {
       const payload = {
@@ -215,8 +233,13 @@ const Stock = () => {
       setAddStockData({ id: null, productId: "", quantity: "", purchasePrice: "", sellingPrice: "", expiryDate: "", batchNo: "" });
       loadDynamicData();
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to fill stock";
-      toast(msg, "error");
+      // Check if backend returned validation errors
+      if (err.response?.status === 400 && err.response?.data?.errors) {
+         setFormErrors(err.response.data.errors);
+      } else {
+         const msg = err.response?.data?.message || err.message || "Failed to fill stock";
+         toast(msg, "error");
+      }
     }
   };
 
@@ -251,7 +274,7 @@ const Stock = () => {
           <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
             <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <IconButton onClick={() => setIsFormView(false)} sx={{ color: "#64748b" }}>
+                <IconButton onClick={() => { setIsFormView(false); setFormErrors({}); }} sx={{ color: "#64748b" }}>
                   <CloseRounded />
                 </IconButton>
                 <Box>
@@ -265,7 +288,7 @@ const Stock = () => {
               </Box>
               <Box sx={{ display: "flex", gap: 1.5 }}>
                 <Button variant="outlined" color="inherit" 
-                  onClick={() => setIsFormView(false)}
+                  onClick={() => { setIsFormView(false); setFormErrors({}); }}
                   sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
                   Cancel
                 </Button>
@@ -290,45 +313,79 @@ const Stock = () => {
                 <Grid item xs={12} md={8}>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     <Box>
-                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Product *</Typography>
+                      <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.productId ? "#ef4444" : "inherit" }}>Product *</Typography>
                       <SearchableSelect
                         options={products.map(p => ({ id: p.id, name: p.name }))}
                         value={addStockData.productId}
                         onChange={(id) => {
                           const p = products.find(x => String(x.id) === String(id));
                           setAddStockData(t => ({ ...t, productId: id, purchasePrice: p?.purchasePrice || "", sellingPrice: p?.sellingPrice || "" }));
+                          if (formErrors.productId) setFormErrors(e => ({ ...e, productId: null }));
                         }}
                         placeholder="— Select Product —"
+                        error={!!formErrors.productId}
                       />
+                      {formErrors.productId && <Typography sx={{ color: "#ef4444", fontSize: "0.75rem", mt: 0.5 }}>{formErrors.productId}</Typography>}
                     </Box>
 
                     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 3 }}>
                       <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Purchase Price *</Typography>
-                        <TextField fullWidth size="small" type="number" placeholder="0"
-                          value={addStockData.purchasePrice} onChange={(e) => setAddStockData(t => ({ ...t, purchasePrice: e.target.value }))}
+                        <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.purchasePrice ? "#ef4444" : "inherit" }}>Purchase Price *</Typography>
+                        <TextField fullWidth size="small" type="text" placeholder="0"
+                          value={addStockData.purchasePrice} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            if (val && !/^\d*\.?\d*$/.test(val)) {
+                              setFormErrors(er => ({ ...er, purchasePrice: "Only numbers are allowed" }));
+                            } else {
+                              setAddStockData(t => ({ ...t, purchasePrice: val })); 
+                              if (formErrors.purchasePrice) setFormErrors(er => ({ ...er, purchasePrice: null })); 
+                            }
+                          }}
+                          error={!!formErrors.purchasePrice} helperText={formErrors.purchasePrice}
                           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
                       </Box>
                       <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Selling Price *</Typography>
-                        <TextField fullWidth size="small" type="number" placeholder="0"
-                          value={addStockData.sellingPrice} onChange={(e) => setAddStockData(t => ({ ...t, sellingPrice: e.target.value }))}
+                        <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.sellingPrice ? "#ef4444" : "inherit" }}>Selling Price *</Typography>
+                        <TextField fullWidth size="small" type="text" placeholder="0"
+                          value={addStockData.sellingPrice} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            if (val && !/^\d*\.?\d*$/.test(val)) {
+                              setFormErrors(er => ({ ...er, sellingPrice: "Only numbers are allowed" }));
+                            } else {
+                              setAddStockData(t => ({ ...t, sellingPrice: val })); 
+                              if (formErrors.sellingPrice) setFormErrors(er => ({ ...er, sellingPrice: null })); 
+                            }
+                          }}
+                          error={!!formErrors.sellingPrice} helperText={formErrors.sellingPrice}
                           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
                       </Box>
                     </Box>
 
                     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 3 }}>
                       <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Quantity *</Typography>
-                        <TextField fullWidth size="small" type="number" placeholder="Enter Quantity"
-                          value={addStockData.quantity} onChange={(e) => setAddStockData(t => ({ ...t, quantity: e.target.value }))}
+                        <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.quantity ? "#ef4444" : "inherit" }}>Quantity *</Typography>
+                        <TextField fullWidth size="small" type="text" placeholder="Enter Quantity"
+                          value={addStockData.quantity} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            if (val && !/^\d*$/.test(val)) {
+                              setFormErrors(er => ({ ...er, quantity: "Only numbers are allowed" }));
+                            } else {
+                              setAddStockData(t => ({ ...t, quantity: val })); 
+                              if (formErrors.quantity) setFormErrors(er => ({ ...er, quantity: null })); 
+                            }
+                          }}
+                          error={!!formErrors.quantity} helperText={formErrors.quantity}
                           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
                       </Box>
                       <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Expiry Date *</Typography>
+                        <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.expiryDate ? "#ef4444" : "inherit" }}>Expiry Date *</Typography>
                         <TextField fullWidth size="small" type="date"
-                          value={addStockData.expiryDate} onChange={(e) => setAddStockData(t => ({ ...t, expiryDate: e.target.value }))}
+                          value={addStockData.expiryDate} onChange={(e) => { setAddStockData(t => ({ ...t, expiryDate: e.target.value })); if (formErrors.expiryDate) setFormErrors(er => ({ ...er, expiryDate: null })); }}
                           InputLabelProps={{ shrink: true }}
+                          error={!!formErrors.expiryDate} helperText={formErrors.expiryDate}
                           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
                       </Box>
                     </Box>

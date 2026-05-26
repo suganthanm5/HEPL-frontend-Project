@@ -30,7 +30,6 @@ const Login = () => {
         if (!username || !password) {
             const msg = "Enter username and password";
             setError(msg);
-            toast.error(msg);
             return;
         }
 
@@ -69,7 +68,6 @@ const Login = () => {
             } else {
                 const msg = res.data?.message || "Login failed - no token received";
                 setError(msg);
-                toast.error(msg);
             }
         } catch (err) {
             console.error("❌ Login error:", err.response?.data || err.message);
@@ -79,15 +77,6 @@ const Login = () => {
                 msg = err.response.data.message || "Invalid username or password";
             }
             setError(msg);
-            toast.error(msg, {
-                icon: "🔒",
-                style: {
-                    borderRadius: "10px",
-                    background: "#fef2f2",
-                    color: "#991b1b",
-                    border: "1px solid #fecaca",
-                },
-            });
         } finally {
             setIsLoading(false);
         }
@@ -118,13 +107,24 @@ const Login = () => {
                 navigate("/dashboard", { replace: true });
             }
         } catch (err) {
-            const msg = err.response?.data?.message || "Google sign-in failed";
-            toast.error(msg, { icon: "🔒" });
+            let msg = "Google sign-in failed. Please try again.";
+            if (err.response?.status === 404 || err.response?.status >= 500) {
+                 msg = "Unable to authenticate with Google. Please try again later.";
+            } else if (err.response?.data?.message) {
+                 // Check if the backend error contains a raw JSON/Stacktrace string and sanitize it
+                 if (err.response.data.message.includes("{") || err.response.data.message.includes("Unauthorized") || err.response.data.message.includes("api/v1")) {
+                     msg = "Invalid Google Credentials. Please try signing in again.";
+                 } else {
+                     msg = err.response.data.message;
+                 }
+            }
+            
+            setError(msg);
         }
     };
 
     const handleGoogleError = () => {
-        toast.error("Google sign-in was cancelled or failed.", { icon: "🔒" });
+        setError("Google sign-in was cancelled or failed.");
     };
 
     /* ── JSX ── */

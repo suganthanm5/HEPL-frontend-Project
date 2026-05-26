@@ -46,6 +46,33 @@ public class AuthController {
                 .build());
     }
 
+    @PostMapping("/google-login")
+    public ResponseEntity<ApiResponse> googleLogin(@RequestBody java.util.Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST.value())
+                    .message("Token is required")
+                    .data(null)
+                    .build());
+        }
+        
+        try {
+            AuthResponse response = authService.googleLogin(token);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .httpStatus(HttpStatus.OK.value())
+                    .message("Google login successful")
+                    .data(response)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                    .httpStatus(HttpStatus.UNAUTHORIZED.value())
+                    .message("Google login failed: " + e.getMessage())
+                    .data(null)
+                    .build());
+        }
+    }
+
     @GetMapping("/validate")
     public ResponseEntity<ApiResponse> validateToken(@RequestHeader("Authorization") String token) {
         if (token == null || !token.startsWith("Bearer ")) {
