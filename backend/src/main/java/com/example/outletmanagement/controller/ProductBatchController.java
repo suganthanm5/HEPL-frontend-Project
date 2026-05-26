@@ -16,7 +16,7 @@ import java.util.List;
 public class ProductBatchController {
     private final ProductBatchService productBatchService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllBatches(
             @RequestParam(required = false) String keyword,
@@ -37,7 +37,7 @@ public class ProductBatchController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping("/product/{productId}")
     public ResponseEntity<ApiResponse> getBatchesByProduct(@PathVariable Long productId) {
         return ResponseEntity.ok(ApiResponse.builder()
@@ -47,7 +47,7 @@ public class ProductBatchController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getBatchById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.builder()
@@ -58,7 +58,7 @@ public class ProductBatchController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<ApiResponse> createBatch(@jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.ProductBatchRequest batch) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
                 .httpStatus(HttpStatus.CREATED.value())
@@ -68,7 +68,7 @@ public class ProductBatchController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<ApiResponse> updateBatch(@PathVariable Long id, @jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.ProductBatchRequest batch) {
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())

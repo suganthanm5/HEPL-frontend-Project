@@ -6,10 +6,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
+
 public class OutletManagementApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(OutletManagementApplication.class, args);
 		System.out.println("Application started successfully");
 	}
+
 }

@@ -23,7 +23,7 @@ import java.util.List;
 public class DivisionController {
     private final DivisionService divisionService;
     
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse> createDivision(@Valid @RequestBody DivisionRequest request) {
         DivisionResponse response = divisionService.createDivision(request);
@@ -34,7 +34,7 @@ public class DivisionController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse> bulkCreateDivisions(@RequestBody List<DivisionRequest> requests) {
         BulkUploadResult result = divisionService.bulkCreateDivisions(requests);
@@ -45,7 +45,7 @@ public class DivisionController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllDivisions(
             @RequestParam(required = false) String keyword,
@@ -65,7 +65,7 @@ public class DivisionController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getDivisionById(@PathVariable Long id) {
         DivisionResponse response = divisionService.getDivisionById(id);

@@ -70,9 +70,11 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
         if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.MANAGER) {
-            if (currentUser.getOutlet() == null)
-                throw new RuntimeException("User must be assigned to an outlet first");
-            request.setOutletId(currentUser.getOutlet().getId()); // force their outlet
+            if (request.getOutletId() == null) {
+                if (currentUser.getOutlet() == null)
+                    throw new RuntimeException("User must be assigned to an outlet first");
+                request.setOutletId(currentUser.getOutlet().getId()); // fallback to their outlet
+            }
         }
 
         Outlet outlet = outletRepository.findById(request.getOutletId())
@@ -147,42 +149,54 @@ public class OrderServiceImpl implements OrderService {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        if (status == Order.OrderStatus.APPROVED && order.getStatus() == Order.OrderStatus.PENDING) {
-            // Generate outlet-specific batch number
-            Integer maxBatch = orderRepository.findMaxBatchNumberByOutletId(order.getOutlet().getId());
-            Integer nextBatch = (maxBatch == null || maxBatch == 0) ? 1 : maxBatch + 1;
-            order.setBatchNumber(nextBatch);
+        // Only allocate stock and generate batch if transitioning to APPROVED
+        if (status == Order.OrderStatus.APPROVED && (order.getStatus() == Order.OrderStatus.PENDING || order.getStatus() == Order.OrderStatus.PARTIALLY_APPROVED)) {
+            // Generate outlet-specific batch number if not already set
+            if (order.getBatchNumber() == null) {
+                Integer maxBatch = orderRepository.findMaxBatchNumberByOutletId(order.getOutlet().getId());
+                Integer nextBatch = (maxBatch == null || maxBatch == 0) ? 1 : maxBatch + 1;
+                order.setBatchNumber(nextBatch);
+                order.setApprovedBy(currentUser.getName());
+                order.setApprovedDate(java.time.LocalDateTime.now());
+                
+                // Create request batch record
+                RequestBatch requestBatch = RequestBatch.builder()
+                        .request(order)
+                        .outlet(order.getOutlet())
+                        .batchNumber(nextBatch)
+                        .approvedBy(currentUser.getName())
+                        .approvedAt(java.time.LocalDateTime.now())
+                        .build();
+                requestBatchRepository.save(requestBatch);
+            }
 
-            // Deduct stock (FIFO)
-            allocateStockFIFO(order, currentUser);
-
-            // Save approval info
-            order.setApprovedBy(currentUser.getName());
-            order.setApprovedDate(java.time.LocalDateTime.now());
-
-            // Create request batch record
-            RequestBatch requestBatch = RequestBatch.builder()
-                    .request(order)
-                    .outlet(order.getOutlet())
-                    .batchNumber(nextBatch)
-                    .approvedBy(currentUser.getName())
-                    .approvedAt(java.time.LocalDateTime.now())
-                    .build();
-            requestBatchRepository.save(requestBatch);
+            // Deduct stock (FIFO) with partial allocation support
+            boolean allFullyAllocated = allocateStockFIFO(order, currentUser);
+            
+            if (allFullyAllocated) {
+                order.setStatus(Order.OrderStatus.APPROVED);
+            } else {
+                order.setStatus(Order.OrderStatus.PARTIALLY_APPROVED);
+            }
+        } else {
+            // For other statuses like COMPLETED, REJECTED, CANCELLED
+            order.setStatus(status);
         }
 
-        order.setStatus(status);
         Order updated = orderRepository.save(order);
 
         // Publish real-time status change event
-        webSocketEventPublisher.publishOrderStatusChange(updated.getId(), updated.getOrderNo(), status.name());
+        webSocketEventPublisher.publishOrderStatusChange(updated.getId(), updated.getOrderNo(), updated.getStatus().name());
 
         return updated;
     }
 
-    private void allocateStockFIFO(Order order, User currentUser) {
+    private boolean allocateStockFIFO(Order order, User currentUser) {
+        boolean allFullyAllocated = true;
+
         for (OrderItem item : order.getItems()) {
-            int remainingToAllocate = item.getQuantity();
+            int remainingToAllocate = item.getQuantity() - (item.getFulfilledQuantity() != null ? item.getFulfilledQuantity() : 0);
+            if (remainingToAllocate <= 0) continue;
 
             // FIFO: Oldest expiry first
             List<ProductBatch> batches = productBatchRepository
@@ -190,16 +204,21 @@ public class OrderServiceImpl implements OrderService {
                             item.getProduct().getId(), ProductBatch.Status.ACTIVE, 0);
 
             int totalAvailable = batches.stream().mapToInt(ProductBatch::getQuantity).sum();
-            if (totalAvailable < item.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product: " + item.getProduct().getName()
-                        + ". Available: " + totalAvailable + ", Required: " + item.getQuantity());
+            
+            int toAllocateNow = Math.min(remainingToAllocate, totalAvailable);
+            
+            if (toAllocateNow < remainingToAllocate) {
+                allFullyAllocated = false;
             }
 
-            for (ProductBatch batch : batches) {
-                if (remainingToAllocate <= 0)
-                    break;
+            if (toAllocateNow <= 0) continue;
 
-                int allocationFromThisBatch = Math.min(batch.getQuantity(), remainingToAllocate);
+            int allocatedThisTime = 0;
+
+            for (ProductBatch batch : batches) {
+                if (toAllocateNow <= 0) break;
+
+                int allocationFromThisBatch = Math.min(batch.getQuantity(), toAllocateNow);
 
                 batch.setQuantity(batch.getQuantity() - allocationFromThisBatch);
                 productBatchRepository.save(batch);
@@ -221,7 +240,6 @@ public class OrderServiceImpl implements OrderService {
                 // SET batch on the OrderItem so COMPLETE step can find it
                 if (item.getBatch() == null) {
                     item.setBatch(batch);
-                    orderItemRepository.save(item);
                 }
 
                 // Log Transactions
@@ -249,9 +267,15 @@ public class OrderServiceImpl implements OrderService {
                         .remarks("Stock Receipt from Order: " + order.getOrderNo())
                         .build());
 
-                remainingToAllocate -= allocationFromThisBatch;
+                toAllocateNow -= allocationFromThisBatch;
+                allocatedThisTime += allocationFromThisBatch;
             }
+
+            item.setFulfilledQuantity((item.getFulfilledQuantity() != null ? item.getFulfilledQuantity() : 0) + allocatedThisTime);
+            orderItemRepository.save(item);
         }
+
+        return allFullyAllocated;
     }
 
     @Override

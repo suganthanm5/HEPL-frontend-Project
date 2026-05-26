@@ -40,7 +40,7 @@ const SearchableSelect = ({
   );
 
   // Get selected option display text
-  const selectedOption = options.find(opt => opt.id === value);
+  const selectedOption = options.find(opt => String(opt.id) === String(value));
   const displayText = selectedOption ? selectedOption.name : '';
 
   // Handle option selection
@@ -123,14 +123,14 @@ const SearchableSelect = ({
                 filteredOptions.map((option) => (
                   <Box
                     key={option.id}
-                    className={`option-item ${option.id === value ? 'selected' : ''}`}
+                    className={`option-item ${String(option.id) === String(value) ? 'selected' : ''}`}
                     onClick={() => handleSelect(option)}
                     sx={{
                       p: '10px 16px',
                       cursor: 'pointer',
                       fontSize: '0.875rem',
                       '&:hover': { bgcolor: '#f1f5f9', color: '#6366f1' },
-                      ...(option.id === value && { bgcolor: '#eef2ff', color: '#6366f1', fontWeight: 600 })
+                      ...(String(option.id) === String(value) && { bgcolor: '#eef2ff', color: '#6366f1', fontWeight: 600 })
                     }}
                   >
                     {option.name}

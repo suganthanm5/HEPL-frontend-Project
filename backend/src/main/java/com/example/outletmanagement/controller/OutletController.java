@@ -23,7 +23,7 @@ import java.util.List;
 public class OutletController {
     private final OutletService outletService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse> createOutlet(@Valid @RequestBody OutletRequest request) {
         OutletResponse response = outletService.createOutlet(request);
@@ -34,7 +34,7 @@ public class OutletController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse> bulkCreateOutlets(@RequestBody List<OutletRequest> requests) {
         BulkUploadResult result = outletService.bulkCreateOutlets(requests);
@@ -45,7 +45,7 @@ public class OutletController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getOutletById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.builder()
@@ -55,7 +55,7 @@ public class OutletController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllOutlets(
             @RequestParam(required = false) String keyword,
@@ -77,7 +77,7 @@ public class OutletController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateOutlet(@PathVariable Long id, @Valid @RequestBody OutletRequest request) {
         return ResponseEntity.ok(ApiResponse.builder()

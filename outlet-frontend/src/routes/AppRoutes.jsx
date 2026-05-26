@@ -10,12 +10,12 @@ import Location from "../pages/Location/Location";
 import Division from "../pages/Division/Division";
 import Product from "../pages/Product/Product";
 import UserManagement from "../pages/UserManagement/UserManagement";
-import Batch from "../pages/Batch/Batch";
 import Stock from "../pages/Stock/Stock";
 import Orders from "../pages/Orders/Orders";
 import Unauthorized from "../pages/Unauthorized/Unauthorized";
 import NotificationPage from "../pages/NotificationPage/NotificationPage";
 import Settings from "../pages/Settings/Settings";
+import Reports from "../pages/Reports/Reports";
 
 import MainLayout from "../components/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -45,7 +45,7 @@ const AppRoutes = () => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: "100vh", 
           backgroundColor: "#f8fafc",
         }}
       >
@@ -65,13 +65,13 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={<Private title="Dashboard"><Dashboard /></Private>} />
       <Route path="/stock" element={<Private title="Stock Management"><Stock /></Private>} />
       <Route path="/orders" element={<Private title="Orders"><Orders /></Private>} />
+      <Route path="/reports" element={<Private title="Reports"><Reports /></Private>} />
       <Route path="/notifications" element={<Private title="Notification Centre"><NotificationPage /></Private>} />
       <Route path="/settings" element={<Private title="Settings"><Settings /></Private>} />
 
       {/* Admin + Manager */}
       <Route path="/outlet" element={<RoleRoute title="Outlet Management" roles={["ADMIN", "MANAGER"]}><Outlet /></RoleRoute>} />
       <Route path="/product" element={<RoleRoute title="Product Management" roles={["ADMIN", "MANAGER"]}><Product /></RoleRoute>} />
-      <Route path="/batch" element={<RoleRoute title="Batch Management" roles={["ADMIN", "MANAGER"]}><Batch /></RoleRoute>} />
 
       {/* Admin only */}
       <Route path="/division" element={<RoleRoute title="Division Management" roles={["ADMIN"]}><Division /></RoleRoute>} />

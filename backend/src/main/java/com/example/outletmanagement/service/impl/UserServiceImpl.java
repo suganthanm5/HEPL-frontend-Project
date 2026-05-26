@@ -58,6 +58,9 @@ public class UserServiceImpl implements UserService {
                 Outlet outlet = outletRepository.findById(request.getOutletId())
                         .orElseThrow(() -> new RuntimeException("Outlet not found"));
                 user.setOutlet(outlet);
+                if (user.getRole() == Role.USER) {
+                    user.setRole(Role.OUTLET_MANAGER);
+                }
             }
 
             return mapToResponse(userRepository.save(user));
@@ -104,6 +107,9 @@ public class UserServiceImpl implements UserService {
             Outlet outlet = outletRepository.findById(request.getOutletId())
                     .orElseThrow(() -> new RuntimeException("Outlet not found"));
             user.setOutlet(outlet);
+            if (user.getRole() == Role.USER) {
+                user.setRole(Role.OUTLET_MANAGER);
+            }
         } else {
             user.setOutlet(null);
         }

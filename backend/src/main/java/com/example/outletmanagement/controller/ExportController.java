@@ -34,7 +34,7 @@ public class ExportController {
 
     // ── Orders ──────────────────────────────────────────────────────────────
     @GetMapping("/orders")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<byte[]> exportOrders(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<Order> orders = orderRepository.findAll();
         String[][] data = orders.stream().map(o -> new String[]{
@@ -50,7 +50,7 @@ public class ExportController {
 
     // ── Batches ──────────────────────────────────────────────────────────────
     @GetMapping("/batches")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<byte[]> exportBatches(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<ProductBatch> batches = batchRepository.findAll();
         String[][] data = batches.stream().map(b -> new String[]{
@@ -69,7 +69,7 @@ public class ExportController {
 
     // ── Stock ────────────────────────────────────────────────────────────────
     @GetMapping("/stock")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<byte[]> exportStock(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<OutletStock> stock = stockRepository.findAll();
         String[][] data = stock.stream().map(s -> new String[]{
@@ -101,7 +101,7 @@ public class ExportController {
 
     // ── Outlets ──────────────────────────────────────────────────────────────
     @GetMapping("/outlets")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<byte[]> exportOutlets(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<Outlet> outlets = outletRepository.findAll();
         String[][] data = outlets.stream().map(o -> new String[]{
@@ -119,7 +119,7 @@ public class ExportController {
 
     // ── Products ─────────────────────────────────────────────────────────────
     @GetMapping("/products")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<byte[]> exportProducts(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<Product> products = productRepository.findAll();
         String[][] data = products.stream().map(p -> new String[]{
@@ -138,7 +138,7 @@ public class ExportController {
 
     // ── Divisions ────────────────────────────────────────────────────────────
     @GetMapping("/divisions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<byte[]> exportDivisions(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<Division> divisions = divisionRepository.findAll();
         String[][] data = divisions.stream().map(d -> new String[]{
@@ -153,7 +153,7 @@ public class ExportController {
 
     // ── Locations ────────────────────────────────────────────────────────────
     @GetMapping("/locations")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<byte[]> exportLocations(@RequestParam(defaultValue = "csv") String format) throws IOException {
         List<Location> locations = locationRepository.findAll();
         String[][] data = locations.stream().map(l -> new String[]{

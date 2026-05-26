@@ -33,7 +33,7 @@ const MainLayout = ({ children, title = 'Dashboard' }) => {
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
       <div className="main-content">
-        <Navbar title={title} />
+        {(title === 'Dashboard' || title === 'Dashboard ') && <Navbar title={title} />}
         <div className="page-container">
           {children}
         </div>

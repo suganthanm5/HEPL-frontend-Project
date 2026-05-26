@@ -12,12 +12,11 @@ import {
   AddRounded, SearchRounded, EditRounded,
   CheckRounded, ShoppingCartRounded, PendingRounded,
   ThumbUpRounded, ThumbDownRounded, LocalShippingRounded,
-  DeleteRounded, CloseRounded,
+  DeleteRounded, CloseRounded, VisibilityRounded
 } from "@mui/icons-material";
 import { orderService } from "../../services/orderService";
 import { outletService } from "../../services/outletService";
 import { productService } from "../../services/productService";
-import { batchService } from "../../services/batchService";
 import { useAuth } from "../../context/AuthContext";
 import { getCookie } from "../../utils/cookieUtils";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
@@ -30,30 +29,33 @@ import "../UserManagement/UserManagement.css";
 
 const STATUS_META = {
   PENDING: { label: "Pending", cls: "pending", Icon: PendingRounded },
+  PARTIALLY_APPROVED: { label: "Partially Approved", cls: "pending", Icon: PendingRounded },
   APPROVED: { label: "Approved", cls: "approved", Icon: ThumbUpRounded },
   COMPLETED: { label: "Completed", cls: "completed", Icon: LocalShippingRounded },
   REJECTED: { label: "Rejected", cls: "rejected", Icon: ThumbDownRounded },
   CANCELLED: { label: "Cancelled", cls: "cancelled", Icon: CloseRounded },
 };
 
-const TIMELINE = ["PENDING", "APPROVED", "COMPLETED"];
+const TIMELINE = ["PENDING", "PARTIALLY_APPROVED", "APPROVED", "COMPLETED"];
 
 const emptyOrder = { outletId: "", items: [] };
-const emptyItem = { productId: "", batchId: "", quantity: 1, price: 0 };
+const emptyItem = { productId: "", quantity: 1, price: 0 };
 
 /* ══════════════════════════════════════════
    Orders Page
 ══════════════════════════════════════════ */
 const Orders = () => {
   const { user, role } = useAuth();
-  const userOutletId = user?.outletId || "";
+  const userOutletId = user?.outletId || getCookie("outletId") || "";
   const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
+  const isOutletManager = role === "OUTLET_MANAGER";
 
   const [filters, setFilters] = useState({ status: "", outletId: isAdmin ? "" : userOutletId });
   const [detail, setDetail] = useState(null);
   const [isFormView, setIsFormView] = useState(false);
   const [create, setCreate] = useState({ open: false, data: emptyOrder });
+  const [delDialog, setDelDialog] = useState({ open: false, id: null, title: "" });
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
@@ -63,7 +65,6 @@ const Orders = () => {
   const [search, setSearch] = useState("");
   const [outlets, setOutlets] = useState([]);
   const [products, setProducts] = useState([]);
-  const [batches, setBatches] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
 
   /* ── Extract array from various response shapes ── */
@@ -112,10 +113,9 @@ const Orders = () => {
       return [];
     });
 
-    const [otData, pData, bData] = await Promise.all([
+    const [otData, pData] = await Promise.all([
       safe(outletService.getOutlets ? outletService.getOutlets(0, 1000) : Promise.resolve([])),
       safe(productService.getProducts ? productService.getProducts(0, 1000) : Promise.resolve([])),
-      safe(batchService.getAll ? batchService.getAll() : Promise.resolve([])),
     ]);
 
     const rawOutlets = extractArr(otData);
@@ -136,7 +136,6 @@ const Orders = () => {
 
     setOutlets(enrichedOutlets);
     setProducts(extractArr(pData));
-    setBatches(extractArr(bData));
   }, []);
 
   useEffect(() => { loadMetadata(); }, [loadMetadata]);
@@ -184,6 +183,18 @@ const Orders = () => {
     }
   };
 
+  /* ── Delete order ── */
+  const handleDelete = async () => {
+    try {
+      await orderService.delete(delDialog.id);
+      toast("Order deleted successfully");
+      setDelDialog({ open: false, id: null, title: "" });
+      loadOrders();
+    } catch (err) {
+      toast(err.response?.data?.message || "Delete failed", "error");
+    }
+  };
+
   /* ── Status update ── */
   const updateStatus = async (id, status) => {
     try {
@@ -213,10 +224,9 @@ const Orders = () => {
     const newItems = [...create.data.items];
     newItems[idx] = { ...newItems[idx], [key]: val };
 
-    /* Auto-fill price when batch is chosen */
-    if (key === "batchId") {
-      const batch = batches.find((b) => String(b.id) === String(val));
-      if (batch) newItems[idx].price = batch.sellingPrice ?? 0;
+    if (key === "productId") {
+      const p = products.find((prod) => String(prod.id) === String(val));
+      if (p) newItems[idx].price = p.sellingPrice ?? 0;
     }
 
     setCreate((prev) => ({
@@ -240,7 +250,7 @@ const Orders = () => {
           </Typography>
           <Typography className="page-subtitle">Track and manage batch orders</Typography>
         </Box>
-        {(isAdmin || isManager || role === "USER") && (
+        {(isAdmin || isManager || (role === "USER" || role === "OUTLET_MANAGER")) && (
           <ButtonBase
             onClick={() => {
               let initialOutletId = "";
@@ -273,7 +283,7 @@ const Orders = () => {
                     Create New Order
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
-                    {isAdmin ? "Select an outlet and add items to create a supply order" : "Request inventory for your assigned outlet"}
+                    Select an outlet and add items to create a supply order
                   </Typography>
                 </Box>
               </Box>
@@ -302,18 +312,20 @@ const Orders = () => {
             <Box sx={{ p: { xs: 2, md: 4 } }}>
               <Grid container spacing={4}>
                 <Grid item xs={12} md={8}>
-                  {isAdmin && (
                     <Box sx={{ mb: 4, p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff" }}>
                       <Typography className="dialog-field-label" sx={{ mb: 1.5 }}>Target Outlet *</Typography>
                       <SearchableSelect
-                        options={outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))}
+                        options={
+                          (isAdmin || isManager) 
+                            ? outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))
+                            : outlets.filter((ot) => String(ot.id) === String(userOutletId)).map((ot) => ({ id: ot.id, name: outletName(ot) }))
+                        }
                         value={create.data.outletId}
                         onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
-                        placeholder="— Select Outlet —"
+                        placeholder={userOutletId && !isAdmin && !isManager ? "Assigned Outlet" : "— Select Outlet —"}
                         searchPlaceholder="Search outlets..."
                       />
                     </Box>
-                  )}
 
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
                     <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>Order Items</Typography>
@@ -324,34 +336,22 @@ const Orders = () => {
                     {create.data.items.map((item, idx) => (
                       <Box key={idx} sx={{ position: "relative", p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff", transition: "all 0.2s", "&:hover": { borderColor: "#7d2ae8", boxShadow: "0 4px 12px rgba(125,42,232,0.05)" } }}>
                         <Grid container spacing={2} alignItems="center">
-                          <Grid item xs={12} sm={4}>
+                          <Grid item xs={12} sm={5}>
                             <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Product *</Typography>
                             <SearchableSelect
                               options={(() => {
-                                const selectedOutlet = outlets.find((ot) => String(ot.id) === String(create.data.outletId));
-                                const mapped = selectedOutlet?.allProducts || selectedOutlet?.products || [];
-                                const pool = mapped.length > 0 ? mapped : products;
-                                return pool.map((p) => ({ id: p.id, name: p.name || p.productName || `Product ${p.id}` }));
+                                const selectedOutlet = outlets.find(o => String(o.id) === String(create.data.outletId));
+                                if (selectedOutlet && selectedOutlet.allProducts && selectedOutlet.allProducts.length > 0) {
+                                  return selectedOutlet.allProducts.map((p) => ({ id: p.id, name: p.name || p.productName || `Product ${p.id}` }));
+                                }
+                                return products.map((p) => ({ id: p.id, name: p.name || p.productName || `Product ${p.id}` }));
                               })()}
                               value={item.productId}
                               onChange={(id) => updateItem(idx, "productId", id)}
                               placeholder="Select product"
                             />
                           </Grid>
-                          <Grid item xs={12} sm={3}>
-                            <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Batch (Optional)</Typography>
-                            <SearchableSelect
-                              options={
-                                batches
-                                  .filter((b) => String(b.product?.id ?? b.productId) === String(item.productId))
-                                  .map((b) => ({ id: b.id, name: `${b.batchNo} (Qty: ${b.quantity})` }))
-                              }
-                              value={item.batchId}
-                              onChange={(id) => updateItem(idx, "batchId", id)}
-                              placeholder="FIFO Allocation"
-                            />
-                          </Grid>
-                          <Grid item xs={6} sm={2}>
+                          <Grid item xs={6} sm={3}>
                             <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Qty *</Typography>
                             <TextField fullWidth size="small" type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} inputProps={{ min: 1 }} sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
                           </Grid>
@@ -410,7 +410,7 @@ const Orders = () => {
           <Box className="stat-cards-row">
             {Object.entries(STATUS_META).map(([key, meta]) => {
               const theme = 
-                key === "PENDING" ? "orange" :
+                key === "PENDING" || key === "PARTIALLY_APPROVED" ? "orange" :
                 key === "APPROVED" ? "green" :
                 key === "REJECTED" ? "rose" :
                 key === "COMPLETED" ? "blue" : "indigo";
@@ -418,13 +418,13 @@ const Orders = () => {
                 <Box className={`stat-card stat-${theme}`} key={key}>
                   <Box className="stat-card-icon" sx={{
                     background:
-                      key === "PENDING" ? "#fef9c3" :
+                      key === "PENDING" || key === "PARTIALLY_APPROVED" ? "#fef9c3" :
                         key === "APPROVED" ? "#dcfce7" :
                           key === "REJECTED" ? "#fee2e2" : "#e0f2fe",
                   }}>
                     <meta.Icon sx={{
                       color:
-                        key === "PENDING" ? "#ca8a04" :
+                        key === "PENDING" || key === "PARTIALLY_APPROVED" ? "#ca8a04" :
                           key === "APPROVED" ? "#16a34a" :
                             key === "REJECTED" ? "#ef4444" : "#0284c7",
                       fontSize: 22,
@@ -558,20 +558,55 @@ const Orders = () => {
                             {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}
                           </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
-                            {(isAdmin || isManager) && o.status === "PENDING" && (
-                              <Box sx={{ display: "flex", gap: 0.75 }}>
-                                <Tooltip title="Approve & Complete">
-                                  <IconButton size="small" className="action-btn edit" onClick={() => updateStatus(o.id, "APPROVED")}>
+                            <Box sx={{ display: "flex", gap: 0.75 }}>
+                              <Tooltip title="View Details">
+                                <IconButton size="small" className="action-btn edit" onClick={() => setDetail(o)}>
+                                  <VisibilityRounded sx={{ fontSize: 14 }} />
+                                </IconButton>
+                              </Tooltip>
+                              
+                              <Tooltip title={o.status === "PENDING" ? "Edit Order" : "Cannot edit processed orders"}>
+                                <span>
+                                  <IconButton size="small" className="action-btn edit" disabled={o.status !== "PENDING"} onClick={() => {
+                                    setCreate({ open: true, data: { ...o } });
+                                    setIsFormView(true);
+                                  }}>
+                                    <EditRounded sx={{ fontSize: 14 }} />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+
+                              {(isAdmin || isManager) && (o.status === "PENDING" || o.status === "PARTIALLY_APPROVED") && (
+                                <>
+                                  <Tooltip title="Approve & Complete">
+                                    <IconButton size="small" className="action-btn edit" onClick={() => updateStatus(o.id, "APPROVED")}>
+                                      <CheckRounded sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Reject">
+                                    <IconButton size="small" className="action-btn delete" onClick={() => updateStatus(o.id, "REJECTED")}>
+                                      <ThumbDownRounded sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </>
+                              )}
+                              
+                              {o.status === "APPROVED" && (isAdmin || isManager || isOutletManager) && (
+                                <Tooltip title="Mark Completed (Goods Received)">
+                                  <IconButton size="small" className="action-btn edit" onClick={() => updateStatus(o.id, "COMPLETED")}>
                                     <CheckRounded sx={{ fontSize: 14 }} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Reject">
-                                  <IconButton size="small" className="action-btn delete" onClick={() => updateStatus(o.id, "REJECTED")}>
-                                    <ThumbDownRounded sx={{ fontSize: 14 }} />
+                              )}
+                              
+                              <Tooltip title={o.status === "PENDING" || isAdmin ? "Delete Order" : "Cannot delete processed orders"}>
+                                <span>
+                                  <IconButton size="small" className="action-btn delete" disabled={!(o.status === "PENDING" || isAdmin)} onClick={() => setDelDialog({ open: true, id: o.id, title: o.orderNo || `ORD-${o.id}` })}>
+                                    <DeleteRounded sx={{ fontSize: 14 }} />
                                   </IconButton>
-                                </Tooltip>
-                              </Box>
-                            )}
+                                </span>
+                              </Tooltip>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       );
@@ -656,7 +691,7 @@ const Orders = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    {["Product", "Batch", "Qty", "Price"].map((h) => (
+                    {["Product", "Qty", "Price"].map((h) => (
                       <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontSize: "0.75rem" }}>{h}</TableCell>
                     ))}
                   </TableRow>
@@ -665,8 +700,7 @@ const Orders = () => {
                   {(detail.items || []).map((item, idx) => (
                     <TableRow key={idx}>
                       <TableCell>{item.product?.name || item.productName || item.productId || "—"}</TableCell>
-                      <TableCell sx={{ color: "#64748b" }}>{item.batch?.batchNo || item.batchNo || "FIFO"}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.quantity} (Fulfilled: {item.fulfilledQuantity || 0})</TableCell>
                       <TableCell>₹{item.price ?? "—"}</TableCell>
                     </TableRow>
                   ))}
@@ -681,37 +715,53 @@ const Orders = () => {
               >
                 Close
               </ButtonBase>
-              {(isAdmin || isManager) && (
+              {(isAdmin || isManager) && (detail.status === "PENDING" || detail.status === "PARTIALLY_APPROVED") && (
                 <>
-                  {detail.status === "PENDING" && (
-                    <>
-                      <ButtonBase
-                        onClick={() => updateStatus(detail.id, "REJECTED")}
-                        sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#fee2e2", color: "#ef4444", fontWeight: 600 }}
-                      >
-                        Reject
-                      </ButtonBase>
-                      <ButtonBase
-                        onClick={() => updateStatus(detail.id, "APPROVED")}
-                        sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600 }}
-                      >
-                        Approve
-                      </ButtonBase>
-                    </>
-                  )}
-                  {detail.status === "APPROVED" && (
-                    <ButtonBase
-                      onClick={() => updateStatus(detail.id, "COMPLETED")}
-                      sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600 }}
-                    >
-                      Mark Completed
-                    </ButtonBase>
-                  )}
+                  <ButtonBase
+                    onClick={() => updateStatus(detail.id, "REJECTED")}
+                    sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#fee2e2", color: "#ef4444", fontWeight: 600 }}
+                  >
+                    Reject
+                  </ButtonBase>
+                  <ButtonBase
+                    onClick={() => updateStatus(detail.id, "APPROVED")}
+                    sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600 }}
+                  >
+                    Approve
+                  </ButtonBase>
                 </>
+              )}
+              {detail.status === "APPROVED" && (isAdmin || isManager || isOutletManager) && (
+                <ButtonBase
+                  onClick={() => updateStatus(detail.id, "COMPLETED")}
+                  sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600 }}
+                >
+                  Mark Completed
+                </ButtonBase>
               )}
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      {/* Delete Confirm Dialog */}
+      <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null, title: "" })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontFamily: "Poppins, sans-serif", color: "#64748b", fontSize: "0.9rem" }}>
+            Are you sure you want to delete <strong>{delDialog.title}</strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <ButtonBase onClick={() => setDelDialog({ open: false, id: null, title: "" })} disableRipple
+            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>
+            Cancel
+          </ButtonBase>
+          <ButtonBase onClick={handleDelete} disableRipple
+            sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#ef4444", color: "#fff", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600, boxShadow: "0 4px 12px rgba(239,68,68,0.35)" }}>
+            Delete
+          </ButtonBase>
+        </DialogActions>
       </Dialog>
 
       <Snackbar

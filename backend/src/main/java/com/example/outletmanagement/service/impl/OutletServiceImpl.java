@@ -72,15 +72,7 @@ public class OutletServiceImpl implements OutletService {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        if (currentUser.getRole() != User.Role.ADMIN && currentUser.getRole() != User.Role.MANAGER) {
-            if (currentUser.getOutlet() == null) {
-                return Page.empty(pageable);
-            }
-            OutletResponse response = mapToResponse(
-                    outletRepository.findByIdWithMappings(currentUser.getOutlet().getId())
-                            .orElse(currentUser.getOutlet()));
-            return new PageImpl<>(Collections.singletonList(response), pageable, 1);
-        }
+        // Removed role-based restriction so all users can see available outlets in dropdowns
 
         org.springframework.data.jpa.domain.Specification<Outlet> spec = 
                 com.example.outletmanagement.specification.OutletSpecification.searchAndFilter(

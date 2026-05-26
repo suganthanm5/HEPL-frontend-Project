@@ -22,7 +22,7 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         ProductResponse response = productService.createProduct(request);
@@ -33,7 +33,7 @@ public class ProductController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse> bulkCreateProducts(@RequestBody List<ProductRequest> requests) {
         BulkUploadResult result = productService.bulkCreateProducts(requests);
@@ -44,7 +44,7 @@ public class ProductController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllProducts(
             @RequestParam(required = false) String keyword,
@@ -66,7 +66,7 @@ public class ProductController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable Long id) {
         ProductResponse response = productService.getProductById(id);
@@ -77,7 +77,7 @@ public class ProductController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
         ProductResponse response = productService.updateProduct(id, request);

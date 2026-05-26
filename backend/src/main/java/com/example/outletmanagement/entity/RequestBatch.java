@@ -20,7 +20,7 @@ public class RequestBatch {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order request;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,4 +35,14 @@ public class RequestBatch {
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
+
+    @Column(name = "request_id", nullable = false)
+    private Long requestId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.request != null && this.requestId == null) {
+            this.requestId = this.request.getId();
+        }
+    }
 }

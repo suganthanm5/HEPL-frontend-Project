@@ -25,6 +25,7 @@ import {
   InventoryRounded as BatchIcon,
   SwapHorizRounded,
   ShoppingCartRounded,
+  AssessmentRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../../context/AuthContext";
 import { getCookie } from "../../utils/cookieUtils";
@@ -32,7 +33,7 @@ import "./Sidebar.css";
 
 /* All nav items with role visibility */
 const ALL_NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: <DashboardRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
+  { to: "/dashboard", label: "Dashboard", icon: <DashboardRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
   { to: "/users", label: "User Management", icon: <PeopleRounded />, roles: ["ADMIN"] },
   {
     label: "Outlet",
@@ -46,9 +47,9 @@ const ALL_NAV = [
     ]
   },
   { to: "/product", label: "Product", icon: <InventoryRounded />, roles: ["ADMIN", "MANAGER"] },
-  { to: "/batch", label: "Batch", icon: <BatchIcon />, roles: ["ADMIN", "MANAGER"] },
-  { to: "/stock", label: "Stock", icon: <SwapHorizRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
-  { to: "/orders", label: "Orders", icon: <ShoppingCartRounded />, roles: ["ADMIN", "MANAGER", "USER"] },
+  { to: "/stock", label: "Stock", icon: <SwapHorizRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
+  { to: "/orders", label: "Orders", icon: <ShoppingCartRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
+  { to: "/reports", label: "Reports", icon: <AssessmentRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
 ];
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
@@ -130,7 +131,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     return items
       .map((item) => {
         let processed = { ...item };
-        if (userRoleStr === "USER") {
+        if (userRoleStr === "USER" || userRoleStr === "OUTLET_MANAGER") {
           if (processed.to === "/orders") processed.label = "My Requests";
           if (processed.to === "/stock") processed.label = "Available Stock";
         } else {

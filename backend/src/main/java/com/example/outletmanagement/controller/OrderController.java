@@ -20,7 +20,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getAllOrders(
             @RequestParam(required = false) Order.OrderStatus status,
             @RequestParam(required = false) Long outletId,
@@ -48,7 +48,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getOrderById(@PathVariable Long id) {
         OrderResponse response = OrderResponse.from(orderService.getOrderById(id));
         return ResponseEntity.ok(ApiResponse.builder()
@@ -59,7 +59,7 @@ public class OrderController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> createOrder(@jakarta.validation.Valid @RequestBody com.example.outletmanagement.payload.dto.request.OrderRequest request) {
         OrderResponse response = OrderResponse.from(orderService.createOrder(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
@@ -70,7 +70,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<ApiResponse> updateOrderStatus(
             @PathVariable Long id,
             @RequestParam Order.OrderStatus status) {
@@ -83,7 +83,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.ok(ApiResponse.builder()

@@ -23,7 +23,7 @@ public class OutletStockController {
     private final OutletStockService outletStockService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getAllStock(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String search,
@@ -40,7 +40,7 @@ public class OutletStockController {
     }
 
     @GetMapping("/outlet/{outletId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getStockByOutlet(@PathVariable Long outletId, @ParameterObject Pageable pageable) {
         Page<OutletStockResponse> response = outletStockService.getStockByOutlet(outletId, pageable);
         return ResponseEntity.ok(ApiResponse.builder()
@@ -51,7 +51,7 @@ public class OutletStockController {
     }
 
     @PostMapping("/transfer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     public ResponseEntity<ApiResponse> transferStock(@jakarta.validation.Valid @RequestBody StockTransferRequest request) {
         OutletStockResponse response = outletStockService.transferStock(
                 request.getFromOutletId(),
@@ -69,7 +69,7 @@ public class OutletStockController {
     }
 
     @GetMapping("/transactions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     public ResponseEntity<ApiResponse> getTransactions(
             @RequestParam(required = false) Long outletId,
             @RequestParam(required = false) Long productId,

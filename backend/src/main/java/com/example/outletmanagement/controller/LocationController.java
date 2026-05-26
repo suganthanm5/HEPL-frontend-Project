@@ -21,7 +21,7 @@ import java.util.List;
 public class LocationController {
     private final LocationService locationService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse> createLocation(@Valid @RequestBody LocationRequest request) {
         LocationResponse response = locationService.createLocation(request);
@@ -32,7 +32,7 @@ public class LocationController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @PostMapping("/bulk")
     public ResponseEntity<ApiResponse> bulkCreateLocations(@RequestBody List<LocationRequest> requests) {
         BulkUploadResult result = locationService.bulkCreateLocations(requests);
@@ -43,7 +43,7 @@ public class LocationController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllLocations(
             @RequestParam(required = false) String keyword,
@@ -60,7 +60,7 @@ public class LocationController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getLocationById(@PathVariable Long id) {
         LocationResponse response = locationService.getLocationById(id);

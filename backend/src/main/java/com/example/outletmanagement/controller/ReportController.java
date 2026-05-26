@@ -26,7 +26,7 @@ public class ReportController {
     private final com.example.outletmanagement.repository.UserRepository userRepository;
     private final com.example.outletmanagement.repository.DivisionRepository divisionRepository;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping("/stock-summary")
     public ResponseEntity<ApiResponse> getStockSummary() {
         Map<String, Object> report = new HashMap<>();
@@ -40,7 +40,7 @@ public class ReportController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
     @GetMapping("/dashboard-summary")
     public ResponseEntity<ApiResponse> getDashboardSummary() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -92,7 +92,7 @@ public class ReportController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping("/expiring-batches")
     public ResponseEntity<ApiResponse> getExpiringBatches() {
         LocalDate nextMonth = LocalDate.now().plusMonths(1);
@@ -106,7 +106,7 @@ public class ReportController {
 
     private final com.example.outletmanagement.repository.StockTransactionRepository stockTransactionRepository;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER')")
     @GetMapping("/transactions")
     public ResponseEntity<ApiResponse> getTransactions(
             @RequestParam(required = false) com.example.outletmanagement.entity.StockTransaction.TransactionType type,

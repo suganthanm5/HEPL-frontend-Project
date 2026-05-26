@@ -159,7 +159,6 @@ export const formatStockData = (stock) =>
   stock.map(s => ({
     'Outlet': s.outletName || s.outletId,
     'Product': s.productName || s.productId,
-    'Batch': s.batchNo || s.batchId,
     'Available Qty': s.availableQty,
     'Reserved Qty': s.reservedQty || 0,
   }));

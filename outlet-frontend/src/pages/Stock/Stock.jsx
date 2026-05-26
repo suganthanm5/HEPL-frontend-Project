@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Typography, Button, ButtonBase, InputBase,
@@ -12,9 +12,10 @@ import {
 import {
   SearchRounded, SwapHorizRounded, WarehouseRounded,
   TrendingUpRounded, TrendingDownRounded, CheckRounded,
-  CloseRounded,
+  CloseRounded, AddRounded, VisibilityRounded, EditRounded, DeleteRounded
 } from "@mui/icons-material";
 import { stockService } from "../../services/stockService";
+import API from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
@@ -31,7 +32,7 @@ const stockLevel = (qty, max = 200) => {
   return           { cls: "high",     label: "Healthy",     color: "#10b981" };
 };
 
-const emptyTransfer = { fromOutletId: "", outletId: "", productId: "", batchId: "", quantity: "" };
+
 
 /* helper — extract flat outletId/productId from stock entry regardless of shape */
 const stockOutletId = (s) => s.outletId ?? s.outlet?.id ?? "";
@@ -47,6 +48,7 @@ const stockOutletName = (s) => s.outletName ?? s.outlet?.outletName ?? s.outletI
 const Stock = () => {
   const navigate = useNavigate();
   const [stock,    setStock]    = useState([]);
+  const [mainStock, setMainStock] = useState([]);
   const [txns,     setTxns]     = useState([]);
   const [outlets,  setOutlets]  = useState([]);
   const [products, setProducts] = useState([]);
@@ -55,22 +57,23 @@ const Stock = () => {
   const { user, role } = useAuth();
   const userOutletId = user?.outletId || "";
   const isAdmin = role === "ADMIN";
-  const isOutletUser = role === "USER";
+  const isOutletUser = (role === "USER" || role === "OUTLET_MANAGER");
 
   const [filters,  setFilters]  = useState({ productId: "", outletId: userOutletId, type: "" });
   const [tab,      setTab]      = useState("stock");
   const [isFormView, setIsFormView] = useState(false);
-  const [transfer, setTransfer] = useState({ open: false, data: emptyTransfer });
+  const [detailDialog, setDetailDialog] = useState({ open: false, data: null });
+  const [addStockData, setAddStockData] = useState({ id: null, productId: "", quantity: "", purchasePrice: "", sellingPrice: "", expiryDate: "", batchNo: "" });
   const [snack,    setSnack]    = useState({ open: false, msg: "", severity: "success" });
   
   // Pagination state
   const [stockPage, setStockPage] = useState(0);
+  const [mainStockPage, setMainStockPage] = useState(0);
   const [txnPage,   setTxnPage]   = useState(0);
   const [pageSize,  setPageSize]  = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
   const [totalStockPages, setTotalStockPages] = useState(0);
+  const [totalMainStockPages, setTotalMainStockPages] = useState(0);
   const [totalTxnPages,   setTotalTxnPages]   = useState(0);
-
-  const canTransfer = role === "ADMIN" || role === "MANAGER";
 
   // Ensure filters are updated if user changes (rare)
   useEffect(() => {
@@ -101,6 +104,17 @@ const Stock = () => {
         } else {
           setStock(Array.isArray(sData) ? sData : []);
         }
+      } else if (tab === "main") {
+        if (search) activeFilters.search = search;
+        if (filters.productId) activeFilters.productId = filters.productId;
+        
+        const bData = await API.get("/api/batches", { params: { ...activeFilters, page: mainStockPage } }).then(res => res.data.data);
+        if (bData && bData.content) {
+          setMainStock(bData.content);
+          setTotalMainStockPages(bData.totalPages);
+        } else {
+          setMainStock(Array.isArray(bData) ? bData : []);
+        }
       } else {
         if (filters.productId) activeFilters.productId = filters.productId;
         if (filters.outletId)  activeFilters.outletId  = filters.outletId;
@@ -119,7 +133,7 @@ const Stock = () => {
     } finally {
       setLoading(false);
     }
-  }, [tab, filters, search, stockPage, txnPage, pageSize]);
+  }, [tab, filters, search, stockPage, mainStockPage, txnPage, pageSize]);
 
   /* ── Load Metadata (Initial Only) ── */
   const loadMetadata = useCallback(async () => {
@@ -154,31 +168,54 @@ const Stock = () => {
 
   const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
-  const filteredStock = stock; // Backend handles filtering
+  const aggregatedStock = useMemo(() => {
+    if (!stock || stock.length === 0) return [];
+    const map = {};
+    stock.forEach(s => {
+      const key = `${s.outletId || 'system'}-${s.productId || 'unknown'}`;
+      if (!map[key]) {
+        map[key] = { ...s, availableQty: 0, reservedQty: 0 };
+      }
+      map[key].availableQty += (s.availableQty || 0);
+      map[key].reservedQty += (s.reservedQty || 0);
+    });
+    return Object.values(map);
+  }, [stock]);
 
-  const handleTransfer = async () => {
-    const { fromOutletId, outletId, productId, batchId, quantity } = transfer.data;
-    if (!fromOutletId) return toast("Please select a source outlet", "error");
-    if (!outletId)     return toast("Please select a destination outlet", "error");
-    if (!productId)    return toast("Please select a product", "error");
-    if (!batchId)      return toast("Please select a batch", "error");
+  const filteredStock = aggregatedStock; // Backend handles filtering, frontend aggregates batches
+
+  const handleFillStock = async () => {
+    const { productId, quantity, purchasePrice, sellingPrice, expiryDate } = addStockData;
+    if (!productId) return toast("Please select a product", "error");
     if (!quantity || Number(quantity) < 1) return toast("Please enter a valid quantity", "error");
-    if (String(fromOutletId) === String(outletId)) return toast("Source and destination outlets must be different", "error");
+    if (!purchasePrice) return toast("Please enter purchase price", "error");
+    if (!sellingPrice) return toast("Please enter selling price", "error");
+    if (!expiryDate) return toast("Please select an expiry date", "error");
 
     try {
-      await stockService.transfer({
-        fromOutletId: Number(fromOutletId),
-        outletId:     Number(outletId),
-        productId:    Number(productId),
-        batchId:      Number(batchId),
-        quantity:     Number(quantity),
-      });
-      toast("Stock transferred successfully");
-      setTransfer({ open: false, data: emptyTransfer });
+      const payload = {
+        productId: Number(productId),
+        batchNo: addStockData.batchNo || `STK-${Date.now()}`,
+        manufactureDate: new Date().toISOString().split("T")[0],
+        expiryDate,
+        quantity: Number(quantity),
+        purchasePrice: Number(purchasePrice),
+        sellingPrice: Number(sellingPrice)
+      };
+      
+      if (addStockData.id) {
+          await API.put(`/api/batches/${addStockData.id}`, payload);
+          toast("Main stock updated successfully");
+      } else {
+          await API.post("/api/batches", payload);
+          toast("Stock filled successfully");
+      }
+      
       setIsFormView(false);
+      setAddStockData({ id: null, productId: "", quantity: "", purchasePrice: "", sellingPrice: "", expiryDate: "", batchNo: "" });
       loadDynamicData();
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Transfer failed";
+      const msg = err.response?.data?.message || err.message || "Failed to fill stock";
       toast(msg, "error");
     }
   };
@@ -195,15 +232,17 @@ const Stock = () => {
             <TypingText text={isOutletUser ? "Available Stock" : "Stock Management"} />
           </Typography>
           <Typography className="page-subtitle">
-            {isOutletUser ? "View available inventory and request stock additions" : "Monitor and transfer outlet stock"}
+            {isOutletUser ? "View available inventory and request stock additions" : "Monitor outlet stock"}
           </Typography>
         </Box>
-        {canTransfer && (
-        <ButtonBase onClick={() => { setTransfer({ open: true, data: emptyTransfer }); setIsFormView(true); }} disableRipple
-          sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}>
-          <SwapHorizRounded sx={{ fontSize: 18 }} /> Transfer Stock
-        </ButtonBase>
-        )}
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          {isAdmin && (
+            <ButtonBase onClick={() => { setAddStockData({ id: null, productId: "", quantity: "", purchasePrice: "", sellingPrice: "", expiryDate: "", batchNo: "" }); setIsFormView(true); }} disableRipple
+              sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(16,185,129,0.35)" }}>
+              <AddRounded sx={{ fontSize: 18 }} /> Fill Stock
+            </ButtonBase>
+          )}
+        </Box>
       </Box>
 
       {isFormView ? (
@@ -212,136 +251,86 @@ const Stock = () => {
           <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
             <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <IconButton onClick={() => { setIsFormView(false); setTransfer({ open: false, data: emptyTransfer }); }} sx={{ color: "#64748b" }}>
+                <IconButton onClick={() => setIsFormView(false)} sx={{ color: "#64748b" }}>
                   <CloseRounded />
                 </IconButton>
                 <Box>
                   <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>
-                    Transfer Stock
+                    {addStockData.id ? "Edit Main Stock" : "Fill Main Stock"}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
-                    Move inventory between different outlet locations
+                    Add or update inventory in the main warehouse
                   </Typography>
                 </Box>
               </Box>
               <Box sx={{ display: "flex", gap: 1.5 }}>
                 <Button variant="outlined" color="inherit" 
-                  onClick={() => { setIsFormView(false); setTransfer({ open: false, data: emptyTransfer }); }}
+                  onClick={() => setIsFormView(false)}
                   sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
                   Cancel
                 </Button>
-                <Button variant="contained" startIcon={<SwapHorizRounded />} 
-                  onClick={handleTransfer}
+                <Button variant="contained" startIcon={<AddRounded />} 
+                  onClick={handleFillStock}
                   sx={{ 
                     borderRadius: "50px", 
-                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)", 
+                    background: "linear-gradient(135deg, #10b981, #059669)", 
                     color: "#fff", 
                     textTransform: "none",
                     px: 4,
-                    boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
-                    "&:hover": { background: "linear-gradient(135deg, #6b21c1, #9333ea)" }
+                    boxShadow: "0 4px 12px rgba(16,185,129,0.35)",
+                    "&:hover": { background: "linear-gradient(135deg, #059669, #047857)" }
                   }}>
-                  Initiate Transfer
+                  Confirm
                 </Button>
               </Box>
             </Box>
 
             <Box sx={{ p: { xs: 2, md: 4 } }}>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={7}>
+              <Grid container spacing={4} justifyContent="center">
+                <Grid item xs={12} md={8}>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                      <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>From Outlet *</Typography>
-                        <SearchableSelect
-                          options={outlets.map(o => ({ id: o.id, name: o.outletName }))}
-                          value={transfer.data.fromOutletId}
-                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, fromOutletId: id, batchId: "", productId: "" } }))}
-                          placeholder="— Source —"
-                        />
-                      </Box>
-                      <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>To Outlet *</Typography>
-                        <SearchableSelect
-                          options={outlets.filter(o => String(o.id) !== String(transfer.data.fromOutletId)).map(o => ({ id: o.id, name: o.outletName }))}
-                          value={transfer.data.outletId}
-                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, outletId: id } }))}
-                          placeholder="— Destination —"
-                        />
-                      </Box>
-                    </Box>
-
-                    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                      <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Product *</Typography>
-                        <SearchableSelect
-                          options={[...new Map(
-                            stock
-                              .filter(s => String(s.outletId) === String(transfer.data.fromOutletId))
-                              .map(s => [s.productId, { id: s.productId, name: s.productName }])
-                          ).values()]}
-                          value={transfer.data.productId}
-                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, productId: id, batchId: "" } }))}
-                          placeholder="— Select Product —"
-                        />
-                      </Box>
-                      <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Batch *</Typography>
-                        <SearchableSelect
-                          options={stock
-                            .filter(s => String(s.productId) === String(transfer.data.productId)
-                              && String(s.outletId) === String(transfer.data.fromOutletId))
-                            .map(s => ({ id: s.batchId, name: `${s.batchNo} (Avail: ${s.availableQty})` }))}
-                          value={transfer.data.batchId}
-                          onChange={(id) => setTransfer(t => ({ ...t, data: { ...t.data, batchId: id } }))}
-                          placeholder="— Select Batch —"
-                        />
-                      </Box>
-                    </Box>
-
                     <Box>
-                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Quantity to Transfer *</Typography>
-                      <TextField fullWidth size="small" type="number" placeholder="Enter Quantity"
-                        value={transfer.data.quantity}
-                        onChange={(e) => setTransfer((t) => ({ ...t, data: { ...t.data, quantity: e.target.value } }))}
-                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={5}>
-                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "100%", display: "flex", flexDirection: "column", gap: 2.5 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif", display: "flex", alignItems: "center", gap: 1 }}>
-                      <WarehouseRounded sx={{ color: "#7d2ae8" }} /> Transfer Summary
-                    </Typography>
-                    
-                    <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
-                      <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 0.5 }}>Moving From</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                        {outlets.find(o => String(o.id) === String(transfer.data.fromOutletId))?.outletName || "Not selected"}
-                      </Typography>
+                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Product *</Typography>
+                      <SearchableSelect
+                        options={products.map(p => ({ id: p.id, name: p.name }))}
+                        value={addStockData.productId}
+                        onChange={(id) => {
+                          const p = products.find(x => String(x.id) === String(id));
+                          setAddStockData(t => ({ ...t, productId: id, purchasePrice: p?.purchasePrice || "", sellingPrice: p?.sellingPrice || "" }));
+                        }}
+                        placeholder="— Select Product —"
+                      />
                     </Box>
 
-                    <Box sx={{ display: "flex", justifyContent: "center", my: -1 }}>
-                      <SwapHorizRounded sx={{ color: "#94a3b8", transform: "rotate(90deg)" }} />
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 3 }}>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Purchase Price *</Typography>
+                        <TextField fullWidth size="small" type="number" placeholder="0"
+                          value={addStockData.purchasePrice} onChange={(e) => setAddStockData(t => ({ ...t, purchasePrice: e.target.value }))}
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                      </Box>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Selling Price *</Typography>
+                        <TextField fullWidth size="small" type="number" placeholder="0"
+                          value={addStockData.sellingPrice} onChange={(e) => setAddStockData(t => ({ ...t, sellingPrice: e.target.value }))}
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                      </Box>
                     </Box>
 
-                    <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
-                      <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 0.5 }}>Moving To</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                        {outlets.find(o => String(o.id) === String(transfer.data.outletId))?.outletName || "Not selected"}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mt: "auto", p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
-                      <Typography variant="caption" sx={{ color: "#64748b" }}>Selected Product</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {products.find(p => String(p.id) === String(transfer.data.productId))?.name || "None"}
-                      </Typography>
-                      {transfer.data.quantity && (
-                        <Typography variant="h6" sx={{ color: "#7d2ae8", fontWeight: 800, mt: 1 }}>
-                          {transfer.data.quantity} Units
-                        </Typography>
-                      )}
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 3 }}>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Quantity *</Typography>
+                        <TextField fullWidth size="small" type="number" placeholder="Enter Quantity"
+                          value={addStockData.quantity} onChange={(e) => setAddStockData(t => ({ ...t, quantity: e.target.value }))}
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                      </Box>
+                      <Box>
+                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Expiry Date *</Typography>
+                        <TextField fullWidth size="small" type="date"
+                          value={addStockData.expiryDate} onChange={(e) => setAddStockData(t => ({ ...t, expiryDate: e.target.value }))}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                      </Box>
                     </Box>
                   </Box>
                 </Grid>
@@ -372,26 +361,24 @@ const Stock = () => {
       )}
 
       {/* Tab Row */}
-      {!isOutletUser && (
       <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-        {["stock", "history"].map((t) => (
+        {["stock", "main", "history"].map((t) => (
           <ButtonBase key={t} onClick={() => setTab(t)} disableRipple
             sx={{ px: 2.5, py: 1, borderRadius: "50px", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, transition: "all 0.2s", background: tab === t ? "linear-gradient(135deg,#7d2ae8,#a855f7)" : "#f5f0ff", color: tab === t ? "#fff" : "#7d2ae8", boxShadow: tab === t ? "0 4px 12px rgba(125,42,232,0.3)" : "none" }}>
-            {t === "stock" ? "Outlet Stock" : "Transaction History"}
+            {t === "stock" ? "Outlet Stock" : t === "main" ? "Main Warehouse Stock" : "Transaction History"}
           </ButtonBase>
         ))}
       </Box>
-      )}
 
       {/* Table */}
       <Box className="table-card">
         <Box className="table-toolbar">
           <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
             <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
-              {tab === "stock" ? "Current Stock" : "Transaction History"}
+              {tab === "stock" ? "Current Stock" : tab === "main" ? "Main Warehouse Stock" : "Transaction History"}
             </Typography>
             <ExportMenu
-              getData={() => tab === "stock" ? formatStockData(filteredStock) : txns.map(t => ({ Type: t.transactionType, Product: t.productName || t.productId, Batch: t.batchNo || t.batchId, Outlet: t.outletName || t.outletId, Qty: t.quantity, By: t.createdBy, Date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—' }))}
+              getData={() => tab === "stock" ? formatStockData(filteredStock) : txns.map(t => ({ Type: t.transactionType, Product: t.productName || t.productId, Outlet: t.outletName || t.outletId, Qty: t.quantity, By: t.createdBy, Date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—' }))}
               filename={tab === "stock" ? "stock" : "transactions"}
               title={tab === "stock" ? "Stock Report" : "Transaction History"}
               backendType={tab === "stock" ? "stock" : undefined}
@@ -449,7 +436,7 @@ const Stock = () => {
                     ? ["Product Name", "Available Stock", "Action"].map((h) => (
                         <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                       ))
-                    : ["Outlet", "Product", "Batch", "Available", "Reserved", "Level"].map((h) => (
+                    : ["Outlet", "Product", "Available", "Reserved", "Level"].map((h) => (
                         <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                       ))
                   }
@@ -478,32 +465,36 @@ const Stock = () => {
                             <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
                             <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
                             <TableCell>
-                              <Button
-                                variant="contained"
-                                size="small"
-                                onClick={() => navigate("/orders", { state: { prefillProduct: { id: s.productId, name: s.productName || s.productId } } })}
-                                sx={{
-                                  background: "linear-gradient(135deg,#7d2ae8,#a855f7)",
-                                  textTransform: "none",
-                                  fontWeight: 600,
-                                  fontFamily: "Poppins",
-                                  fontSize: "0.75rem",
-                                  borderRadius: "20px",
-                                  boxShadow: "0 2px 8px rgba(125,42,232,0.25)",
-                                  "&:hover": {
-                                    background: "linear-gradient(135deg,#6b21a8,#9333ea)"
-                                  }
-                                }}
-                              >
-                                Request Product
-                              </Button>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Tooltip title="View Stock Detail">
+                                  <IconButton size="small" sx={{ color: "#3b82f6", background: "#eff6ff" }} onClick={() => setDetailDialog({ open: true, data: s })}>
+                                    <VisibilityRounded sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                </Tooltip>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() => navigate("/orders", { state: { prefillProduct: { id: s.productId, name: s.productName || s.productId } } })}
+                                  sx={{
+                                    background: "linear-gradient(135deg,#7d2ae8,#a855f7)",
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    fontFamily: "Poppins",
+                                    fontSize: "0.75rem",
+                                    borderRadius: "20px",
+                                    boxShadow: "0 2px 8px rgba(125,42,232,0.25)",
+                                    "&:hover": { background: "linear-gradient(135deg,#6b21a8,#9333ea)" }
+                                  }}
+                                >
+                                  Request Product
+                                </Button>
+                              </Box>
                             </TableCell>
                           </>
                         ) : (
                           <>
                             <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.outletName || s.outletId}</TableCell>
                             <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
-                            <TableCell sx={{ color: "#7d2ae8", fontWeight: 600, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo || s.batchId}</TableCell>
                             <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
                             <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.reservedQty || 0}</TableCell>
                             <TableCell>
@@ -522,11 +513,100 @@ const Stock = () => {
                 )}
               </TableBody>
             </Table>
+          ) : tab === "main" ? (
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ background: "#fafafa" }}>
+                  {["Ref No", "Product", "Available", "Purchase Price", "Selling Price", "Expiry", "Actions"].map((h) => (
+                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
+                ) : mainStock.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No main stock found</TableCell></TableRow>
+                ) : (
+                  mainStock.map((s) => {
+                    return (
+                      <TableRow 
+                        key={s.id} hover 
+                        sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}
+                      >
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.product?.name || s.productId}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.quantity}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>${s.purchasePrice}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>${s.sellingPrice}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.expiryDate}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: "flex", gap: 0.75 }}>
+                            <Tooltip title="View Batch Details">
+                              <IconButton size="small" sx={{ color: "#3b82f6", background: "#eff6ff" }} onClick={() => setDetailDialog({ open: true, data: s })}>
+                                <VisibilityRounded sx={{ fontSize: 14 }} />
+                              </IconButton>
+                            </Tooltip>
+                            {!isOutletUser && (
+                              <>
+                                <Tooltip title="Edit Stock Batch">
+                                  <IconButton size="small" sx={{ color: "#f59e0b", background: "#fef3c7" }} onClick={() => {
+                                    setAddStockData({ id: s.id, productId: s.product?.id || s.productId, quantity: s.quantity, purchasePrice: s.purchasePrice, sellingPrice: s.sellingPrice, expiryDate: s.expiryDate, batchNo: s.batchNo });
+                                    setIsFormView(true);
+                                  }}>
+                                    <EditRounded sx={{ fontSize: 14 }} />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete Batch">
+                                  <IconButton size="small" sx={{ color: "#ef4444", background: "#fee2e2" }} onClick={async () => {
+                                    if(window.confirm(`Are you sure you want to delete batch ${s.batchNo}?`)){
+                                      try {
+                                        await API.delete(`/api/batches/${s.id}`);
+                                        toast("Batch deleted successfully");
+                                        loadDynamicData();
+                                      } catch (err) {
+                                        toast("Failed to delete batch", "error");
+                                      }
+                                    }
+                                  }}>
+                                    <DeleteRounded sx={{ fontSize: 14 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            )}
+                            {isOutletUser && (
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() => navigate("/orders", { state: { prefillProduct: { id: s.product?.id || s.productId, name: s.productName || s.product?.name || s.productId } } })}
+                                  sx={{
+                                    ml: 1,
+                                    background: "linear-gradient(135deg,#7d2ae8,#a855f7)",
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    fontFamily: "Poppins",
+                                    fontSize: "0.75rem",
+                                    borderRadius: "20px",
+                                    boxShadow: "0 2px 8px rgba(125,42,232,0.25)",
+                                    "&:hover": { background: "linear-gradient(135deg,#6b21a8,#9333ea)" }
+                                  }}
+                                >
+                                  Request Product
+                                </Button>
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
           ) : (
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ background: "#fafafa" }}>
-                  {["Type", "Product", "Batch", "Outlet", "Qty", "By", "Date"].map((h) => (
+                  {["Type", "Product", "Outlet", "Qty", "By", "Date"].map((h) => (
                     <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                   ))}
                 </TableRow>
@@ -549,7 +629,6 @@ const Stock = () => {
                         </Box>
                       </TableCell>
                       <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.productName || t.productId}</TableCell>
-                      <TableCell sx={{ color: "#7d2ae8", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.batchNo || t.batchId}</TableCell>
                       <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.outletName || t.outletId}</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.quantity}</TableCell>
                       <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.createdBy}</TableCell>
@@ -563,22 +642,22 @@ const Stock = () => {
         </TableContainer>
 
         {/* Pagination */}
-        {((tab === "stock" && totalStockPages > 1) || (tab === "history" && totalTxnPages > 1)) && (
+        {((tab === "stock" && totalStockPages > 1) || (tab === "main" && totalMainStockPages > 1) || (tab === "history" && totalTxnPages > 1)) && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 3, gap: 1 }}>
             <ButtonBase
-              disabled={tab === "stock" ? stockPage === 0 : txnPage === 0}
-              onClick={() => tab === "stock" ? setStockPage(p => p - 1) : setTxnPage(p => p - 1)}
-              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage === 0 : txnPage === 0) ? 0.5 : 1 }}
+              disabled={tab === "stock" ? stockPage === 0 : tab === "main" ? mainStockPage === 0 : txnPage === 0}
+              onClick={() => tab === "stock" ? setStockPage(p => p - 1) : tab === "main" ? setMainStockPage(p => p - 1) : setTxnPage(p => p - 1)}
+              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage === 0 : tab === "main" ? mainStockPage === 0 : txnPage === 0) ? 0.5 : 1 }}
             >
               Previous
             </ButtonBase>
             <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600 }}>
-              Page {(tab === "stock" ? stockPage : txnPage) + 1} of {tab === "stock" ? totalStockPages : totalTxnPages}
+              Page {(tab === "stock" ? stockPage : tab === "main" ? mainStockPage : txnPage) + 1} of {tab === "stock" ? totalStockPages : tab === "main" ? totalMainStockPages : totalTxnPages}
             </Typography>
             <ButtonBase
-              disabled={tab === "stock" ? stockPage >= totalStockPages - 1 : txnPage >= totalTxnPages - 1}
-              onClick={() => tab === "stock" ? setStockPage(p => p + 1) : setTxnPage(p => p + 1)}
-              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage >= totalStockPages - 1 : txnPage >= totalTxnPages - 1) ? 0.5 : 1 }}
+              disabled={tab === "stock" ? stockPage >= totalStockPages - 1 : tab === "main" ? mainStockPage >= totalMainStockPages - 1 : txnPage >= totalTxnPages - 1}
+              onClick={() => tab === "stock" ? setStockPage(p => p + 1) : tab === "main" ? setMainStockPage(p => p + 1) : setTxnPage(p => p + 1)}
+              sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage >= totalStockPages - 1 : tab === "main" ? mainStockPage >= totalMainStockPages - 1 : txnPage >= totalTxnPages - 1) ? 0.5 : 1 }}
             >
               Next
             </ButtonBase>
@@ -588,8 +667,46 @@ const Stock = () => {
     </>
   )}
 
-  {/* Transfer Dialog (REPLACED) */}
-      {/* Transfer Dialog (REPLACED) */}
+      <Dialog open={detailDialog.open} onClose={() => setDetailDialog({ open: false, data: null })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b" }}>Stock Details</DialogTitle>
+        <DialogContent>
+          {detailDialog.data && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+              <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2 }}>
+                <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Product</Typography>
+                <Typography sx={{ fontWeight: 600, color: "#1e293b" }}>{detailDialog.data.productName || detailDialog.data.product?.name || detailDialog.data.productId}</Typography>
+              </Box>
+              {detailDialog.data.batchNo && (
+                <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2 }}>
+                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Batch No</Typography>
+                  <Typography sx={{ fontWeight: 600, color: "#1e293b" }}>{detailDialog.data.batchNo}</Typography>
+                </Box>
+              )}
+              {detailDialog.data.outletName && (
+                <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2 }}>
+                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Outlet</Typography>
+                  <Typography sx={{ fontWeight: 600, color: "#1e293b" }}>{detailDialog.data.outletName}</Typography>
+                </Box>
+              )}
+              <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2, display: "flex", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Available Quantity</Typography>
+                  <Typography sx={{ fontWeight: 700, color: "#10b981", fontSize: "1.2rem" }}>{detailDialog.data.quantity ?? detailDialog.data.availableQty}</Typography>
+                </Box>
+                {detailDialog.data.reservedQty !== undefined && (
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Reserved Quantity</Typography>
+                    <Typography sx={{ fontWeight: 700, color: "#f59e0b", fontSize: "1.2rem" }}>{detailDialog.data.reservedQty}</Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={() => setDetailDialog({ open: false, data: null })} sx={{ fontFamily: "Poppins", fontWeight: 600, color: "#64748b", background: "#f1f5f9", borderRadius: "50px", px: 3 }}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
         <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "Poppins, sans-serif" }}>{snack.msg}</Alert>

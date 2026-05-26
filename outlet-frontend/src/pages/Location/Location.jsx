@@ -56,12 +56,12 @@ import BulkUploadModal from "../../components/BulkUploadModal";
 /* ── MUI Theme ── */
 const theme = createTheme({
   palette: {
-    primary: { main: "#10b981" },
-    secondary: { main: "#6366f1" },
+    primary: { main: "#7d2ae8" },
+    secondary: { main: "#a855f7" },
     error: { main: "#ef4444" },
     warning: { main: "#f59e0b" },
   },
-  typography: { fontFamily: "inherit" },
+  typography: { fontFamily: "Poppins, sans-serif" },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -77,11 +77,11 @@ const theme = createTheme({
       styleOverrides: {
         head: {
           fontWeight: 700,
-          background: "#fafafa",
+          background: "#faf5ff",
           fontSize: "0.78rem",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          color: "#64748b",
+          color: "#7d2ae8",
         },
       },
     },
@@ -481,23 +481,23 @@ const Location = () => {
                             <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(safePage - 1) * pageSize + i + 1}</TableCell>
                             <TableCell>
                               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Avatar sx={{ width: 30, height: 30, fontSize: "0.75rem", fontWeight: 700, bgcolor: "#d1fae5", color: "#10b981" }}>
+                                <Avatar sx={{ width: 30, height: 30, fontSize: "0.75rem", fontWeight: 700, bgcolor: "#f3e8ff", color: "#7d2ae8" }}>
                                   {loc.name?.charAt(0).toUpperCase()}
                                 </Avatar>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>{loc.name}</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e1b4b" }}>{loc.name}</Typography>
                               </Box>
                             </TableCell>
                             <TableCell>
                               <Stack direction="row" spacing={0.5}>
                                 <Tooltip title="Edit">
                                   <IconButton size="small" onClick={() => openEdit(loc)}
-                                    sx={{ color: "#6366f1", bgcolor: "#eef2ff", borderRadius: 1.5, "&:hover": { bgcolor: "#e0e7ff" } }}>
+                                    sx={{ color: "#f59e0b", bgcolor: "#fef3c7", borderRadius: 1.5, "&:hover": { bgcolor: "#fde68a" } }}>
                                     <EditIcon sx={{ fontSize: 16 }} />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
                                   <IconButton size="small" onClick={() => setDeleteModal(loc)}
-                                    sx={{ color: "#ef4444", bgcolor: "#fef2f2", borderRadius: 1.5, "&:hover": { bgcolor: "#fee2e2" } }}>
+                                    sx={{ color: "#ef4444", bgcolor: "#fee2e2", borderRadius: 1.5, "&:hover": { bgcolor: "#fecaca" } }}>
                                     <DeleteIcon sx={{ fontSize: 16 }} />
                                   </IconButton>
                                 </Tooltip>
@@ -569,7 +569,7 @@ const Location = () => {
                   shape="rounded" size="small"
                   sx={{
                     "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600 },
-                    "& .Mui-selected": { bgcolor: "#10b981 !important", color: "#fff" },
+                    "& .Mui-selected": { bgcolor: "#7d2ae8 !important", color: "#fff" },
                   }}
                 />
               </Box>

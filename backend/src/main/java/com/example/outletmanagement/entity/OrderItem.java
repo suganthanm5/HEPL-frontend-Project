@@ -42,6 +42,10 @@ public class OrderItem extends BaseAuditEntity {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(name = "fulfilled_quantity", nullable = false, columnDefinition = "int default 0")
+    @Builder.Default
+    private Integer fulfilledQuantity = 0;
+
     @Column(name = "remarks")
     private String remarks;
 }

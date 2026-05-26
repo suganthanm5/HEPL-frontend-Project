@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { reportService } from "../../services/reportService";
 import { getCookie } from "../../utils/cookieUtils";
+import API from "../../api/apiClient";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart,
@@ -358,7 +359,6 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
           <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{ mr: 1, fontSize: 20 }} /> View Stock</button>
           <button className="db-quick-btn orange" onClick={() => navigate("/outlet")}><StoreRounded sx={{ mr: 1, fontSize: 20 }} /> Outlets</button>
           <button className="db-quick-btn blue" onClick={() => navigate("/product")}><ShoppingCartRounded sx={{ mr: 1, fontSize: 20 }} /> Products</button>
-          <button className="db-quick-btn purple" onClick={() => navigate("/batch")}><LayersRounded sx={{ mr: 1, fontSize: 20 }} /> Batches</button>
         </div>
       </SectionCard>
 
@@ -436,19 +436,13 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
       <div className="db-grid-2-1">
         <SectionCard title="Order Trend" subtitle="Your order activity this week" delay={220} action={filters}>
           <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="userOrdGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <BarChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="orders" name="Orders" stroke="#f59e0b" strokeWidth={2.5} fill="url(#userOrdGrad)" dot={{ fill: "#f59e0b", r: 4, stroke: "#fff", strokeWidth: 2 }} />
-            </AreaChart>
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f1f5f9" }} />
+              <Bar dataKey="orders" name="Orders" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={32} />
+            </BarChart>
           </ResponsiveContainer>
         </SectionCard>
 
@@ -460,30 +454,35 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
         </SectionCard>
       </div>
 
-      <SectionCard title="Recent Transactions" subtitle="Your latest activity" delay={340}>
+      <SectionCard title="Recent Orders" subtitle="Your latest order activity" delay={340}>
         <table className="db-table">
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Type</th>
-              <th>Quantity</th>
-              <th>Outlet</th>
+              <th>Order No</th>
+              <th>Status</th>
+              <th>Items</th>
+              <th>Date</th>
             </tr>
           </thead>
           <tbody>
             {transactions.length === 0 ? (
-              <tr><td colSpan={4} className="db-empty">No recent transactions</td></tr>
-            ) : transactions.slice(0, 8).map((tx, i) => {
-              const isOut = tx.type?.toLowerCase().includes("sale") || tx.type?.toLowerCase().includes("out");
-              return (
+              <tr><td colSpan={4} className="db-empty">No recent orders found</td></tr>
+            ) : transactions.slice(0, 8).map((ord, i) => (
                 <tr key={i}>
-                  <td><strong>{tx.productName || "—"}</strong></td>
-                  <td><span className={`db-badge ${isOut ? "green" : "indigo"}`}>{tx.type || "—"}</span></td>
-                  <td>{tx.quantity ?? "—"}</td>
-                  <td>{tx.outletName || "—"}</td>
+                  <td><strong>{ord.orderNo || "—"}</strong></td>
+                  <td>
+                    <span className={`db-badge ${
+                      ord.status === "APPROVED" || ord.status === "COMPLETED" ? "green" 
+                      : ord.status === "REJECTED" || ord.status === "CANCELLED" ? "rose" 
+                      : "orange"
+                    }`}>
+                      {ord.status || "—"}
+                    </span>
+                  </td>
+                  <td>{ord.items?.length || 0}</td>
+                  <td>{ord.requestDate ? new Date(ord.requestDate).toLocaleDateString() : "—"}</td>
                 </tr>
-              );
-            })}
+            ))}
           </tbody>
         </table>
       </SectionCard>
@@ -519,9 +518,16 @@ export default function Dashboard() {
     (async () => {
       if (loading) {
         try {
+          const transParams = { page: 0, size: 8 };
+          if (user?.outletId || user?.outlet?.id) {
+             transParams.outletId = user?.outletId || user?.outlet?.id;
+          }
+          
+          const isOutletManager = user?.role === "OUTLET_MANAGER" || user?.role === "USER";
+          
           const [data, trans] = await Promise.all([
             reportService.getDashboardSummary(),
-            reportService.getTransactions({ page: 0, size: 8 }),
+            isOutletManager ? API.get('/api/orders?size=8').then(r => r.data.data) : reportService.getTransactions(transParams),
           ]);
           setSummary(data);
           setTransactions(trans?.content || trans || []);
@@ -536,7 +542,10 @@ export default function Dashboard() {
           if (selectedOutletId) {
             params.outletId = selectedOutletId;
           }
-          const trans = await reportService.getTransactions(params);
+          const isOutletManager = user?.role === "OUTLET_MANAGER" || user?.role === "USER";
+          const trans = isOutletManager 
+            ? await API.get('/api/orders?size=8').then(r => r.data.data)
+            : await reportService.getTransactions(params);
           setTransactions(trans?.content || trans || []);
         } catch (e) {
           console.error("Dashboard transactions fetch error", e);
@@ -610,7 +619,7 @@ export default function Dashboard() {
     !selectedDivisionId || String(d.id) === String(selectedDivisionId)
   );
 
-  const roleLabel = { ADMIN: "Administrator", MANAGER: "Manager", USER: "Staff" }[role] || role;
+  const roleLabel = { ADMIN: "Administrator", MANAGER: "Outlet Manager", USER: "User" }[role] || role;
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
   const dashboardFilters = (
@@ -688,25 +697,7 @@ export default function Dashboard() {
       <div className="db-bg-orb db-bg-orb-1" />
       <div className="db-bg-orb db-bg-orb-2" />
 
-      {/* Page Header */}
-      <div className="db-page-header">
-        <div className="db-header-text">
-          <p className="db-greeting-eyebrow">
-            <TypingText text={`${greeting} ☀️`} delay={55} startDelay={100} />
-          </p>
-          <h1 className="db-page-title">
-            <TypingText text={username} delay={65} startDelay={900} />{" "}
-            <span className="db-wave" style={{ animationDelay: "1500ms" }}>👋</span>
-          </h1>
-          <p className="db-page-sub">
-            <span className={`db-role-badge role-${role.toLowerCase()}`} style={{ animation: "db-fade-up 0.5s ease both", animationDelay: "1600ms" }}>
-              {roleLabel}
-            </span>
-            <span style={{ display: "inline-block", minWidth: "5px" }} />
-            <TypingText text="Here's your overview for today." delay={35} startDelay={2000} />
-          </p>
-        </div>
-      </div>
+
 
       {loading ? (
         <div className="db-loading">
@@ -723,7 +714,7 @@ export default function Dashboard() {
           {role === "MANAGER" && (
             <ManagerDashboard summary={filteredSummary} outlets={filteredOutlets} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
           )}
-          {(role === "USER" || (role !== "ADMIN" && role !== "MANAGER")) && (
+          {((role === "USER" || role === "OUTLET_MANAGER") || (role !== "ADMIN" && role !== "MANAGER")) && (
             <UserDashboard summary={filteredSummary} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
           )}
         </div>

@@ -31,6 +31,7 @@ import {
   WarningAmberRounded,
 } from "@mui/icons-material";
 import ModernProfileDrawer from "../ProfileDrawer/ModernProfileDrawer";
+import TypingText from "../TypingText";
 import { getCookie, deleteCookie } from "../../utils/cookieUtils";
 import { reportService } from "../../services/reportService";
 import { getLocations } from "../../services/locationService";
@@ -324,42 +325,29 @@ const Navbar = ({ title = "Dashboard" }) => {
     <>
       <Box component="header" className="navbar">
 
-        {/* LEFT — Placeholder to maintain center alignment */}
-        <Box className="navbar-left" />
-
-        {/* CENTER — Animated search */}
-        <Box className="navbar-center">
-          <Box className="navbar-search">
-            <Box className="search-icon-nb">
-              <SearchRounded sx={{ fontSize: 20, color: "inherit" }} />
-            </Box>
-            <InputBase
-              inputRef={searchRef}
-              placeholder="Search outlets, locations…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{
-                flex: 1,
-                fontSize: "0.875rem",
-                fontFamily: "Poppins, sans-serif",
-                color: "#0f172a",
-                "& input::placeholder": { color: "#94a3b8", fontSize: "0.85rem" },
-              }}
-            />
-            <Typography component="span" className="search-kbd">⌘K</Typography>
-          </Box>
+        {/* LEFT — Greeting or Page Title */}
+        <Box className="navbar-left" sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {title === 'Dashboard' || title === 'Dashboard ' ? (
+            <>
+              <Typography sx={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.2, minHeight: '1.5rem' }}>
+                <TypingText text={`Hi, ${user.name || "User"}`} delay={40} startDelay={100} />
+              </Typography>
+              <Typography sx={{ fontSize: '0.9rem', color: '#8b5cf6', fontWeight: 500, mt: 0.3, minHeight: '1.35rem' }}>
+                <TypingText text="Let's finish your task today!" delay={30} startDelay={700} />
+              </Typography>
+            </>
+          ) : (
+            <Typography className="nb-page" sx={{ fontSize: '1.3rem', fontWeight: 700, color: '#1e293b' }}>
+              {title}
+            </Typography>
+          )}
         </Box>
+
+        {/* CENTER — Empty space to push right elements */}
+        <Box className="navbar-center" sx={{ flex: 1 }} />
 
         {/* RIGHT */}
         <Box className="navbar-right">
-
-          {/* Clock */}
-          <Box className="navbar-clock" sx={{ display: { xs: "none", sm: "flex" } }}>
-            <Typography className="clock-time">{formatTime(time)}</Typography>
-            <Typography className="clock-date">{formatDate(time)}</Typography>
-          </Box>
-
-          <Box className="navbar-divider" sx={{ display: { xs: "none", sm: "block" } }} />
 
           {/* Notification bell */}
           <Box className="navbar-notif-wrap">

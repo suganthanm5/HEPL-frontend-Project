@@ -20,14 +20,15 @@ import TypingText from "../../components/TypingText";
 import { formatUserData } from "../../utils/exportUtils";
 import "./UserManagement.css";
 
-/* ── Static stat colours ───────────────────────── */
+
 const ROLE_META = {
   ADMIN: { label: "Admin", cls: "admin", color: "#7d2ae8", bg: "#f3e8ff", Icon: AdminPanelSettingsRounded },
   MANAGER: { label: "Manager", cls: "manager", color: "#0284c7", bg: "#e0f2fe", Icon: ManageAccountsRounded },
+  OUTLET_MANAGER: { label: "Outlet Manager", cls: "manager", color: "#0ea5e9", bg: "#e0f2fe", Icon: ManageAccountsRounded },
   USER: { label: "User", cls: "user", color: "#16a34a", bg: "#dcfce7", Icon: PersonRounded },
 };
 
-const ROLES = ["ADMIN", "MANAGER", "USER"];
+const ROLES = ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"];
 
 
 const initials = (name = "") =>
@@ -136,6 +137,36 @@ const UserManagement = () => {
 
   return (
     <Box className="user-mgmt-page">
+      {/* Header */}
+      <Box className="page-header">
+        <Box className="page-header-left">
+          <Typography className="page-title">
+            <TypingText text="User Management" />
+          </Typography>
+          <Typography className="page-subtitle">Manage users and their roles</Typography>
+        </Box>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          {!isFormView && (
+            <ButtonBase
+              onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }}
+              sx={{
+                display: "flex", alignItems: "center", gap: 1,
+                px: 2.5, py: 1.2, borderRadius: "50px",
+                background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
+                color: "#fff", fontFamily: "Poppins, sans-serif",
+                fontSize: "0.875rem", fontWeight: 600,
+                boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
+                transition: "all 0.25s ease",
+                "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
+              }}
+              disableRipple
+            >
+              <PersonAddRounded sx={{ fontSize: 18 }} />
+              Add User
+            </ButtonBase>
+          )}
+        </Box>
+      </Box>
 
       {isFormView ? (
         /* ── Full Page Form View ── */
@@ -155,61 +186,47 @@ const UserManagement = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Button variant="outlined" color="inherit"
-                  onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }}
-                  sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
+              <Stack direction="row" spacing={1.5}>
+                <Button variant="outlined" color="inherit" onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }}
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0" }}>
                   Cancel
                 </Button>
-                <Button variant="contained" startIcon={<CheckRounded />}
+                <Button variant="contained" startIcon={dialog.mode === "add" ? <PersonAddRounded /> : <CheckRounded />}
                   onClick={handleSave}
-                  sx={{
-                    borderRadius: "50px",
-                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
-                    color: "#fff",
-                    textTransform: "none",
-                    px: 4,
-                    boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
-                    "&:hover": { background: "linear-gradient(135deg, #6b21c1, #9333ea)" }
-                  }}>
+                  sx={{ bgcolor: dialog.mode === "add" ? "#10b981" : "#7d2ae8", "&:hover": { bgcolor: dialog.mode === "add" ? "#059669" : "#6b21c1" }, color: "#fff", boxShadow: "none" }}>
                   {dialog.mode === "add" ? "Create User" : "Save Changes"}
                 </Button>
-              </Box>
+              </Stack>
             </Box>
 
             <Box sx={{ p: { xs: 2, md: 4 } }}>
               <Grid container spacing={4}>
                 <Grid item xs={12} md={7}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    <Box>
-                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Full Name</Typography>
-                      <TextField fullWidth size="small" placeholder="Enter full name" value={dialog.data.name}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, display: "flex", alignItems: "center", gap: 1, fontFamily: "Poppins, sans-serif" }}>
+                      <Box sx={{ width: 4, height: 16, bgcolor: dialog.mode === "add" ? "#10b981" : "#7d2ae8", borderRadius: 1 }} />
+                      User Details
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                      <TextField fullWidth label="Full Name" placeholder="Enter full name" value={dialog.data.name}
                         onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, name: e.target.value } }))}
-                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                    </Box>
-                    <Box>
-                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Username</Typography>
-                      <TextField fullWidth size="small" placeholder="Enter username" value={dialog.data.username}
+                        variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+
+                      <TextField fullWidth label="Username" placeholder="Enter username" value={dialog.data.username}
                         onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, username: e.target.value } }))}
-                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                    </Box>
-                    <Box>
-                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Email</Typography>
-                      <TextField fullWidth size="small" type="email" placeholder="Enter email" value={dialog.data.email}
+                        variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+
+                      <TextField fullWidth label="Email" type="email" placeholder="Enter email" value={dialog.data.email}
                         onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, email: e.target.value } }))}
-                        sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                    </Box>
-                    {dialog.mode === "add" && (
-                      <Box>
-                        <Typography className="dialog-field-label" sx={{ mb: 1 }}>Password</Typography>
-                        <TextField fullWidth size="small" type="password" placeholder="Enter password" value={dialog.data.password}
+                        variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+
+                      {dialog.mode === "add" && (
+                        <TextField fullWidth label="Password" type="password" placeholder="Enter password" value={dialog.data.password}
                           onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, password: e.target.value } }))}
-                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
-                      </Box>
-                    )}
-                    <Box>
-                      <Typography className="dialog-field-label" sx={{ mb: 1 }}>Role</Typography>
-                      <FormControl fullWidth size="small">
+                          variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                      )}
+
+                      <FormControl fullWidth variant="outlined">
                         <Select
                           value={dialog.data.role || "USER"}
                           onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, role: e.target.value } }))}
@@ -222,12 +239,37 @@ const UserManagement = () => {
                           ))}
                         </Select>
                       </FormControl>
+                      <FormControl fullWidth variant="outlined">
+                        <Select
+                          value={dialog.data.outletId || ""}
+                          onChange={(e) => {
+                            const newOutletId = e.target.value;
+                            setDialog((d) => ({
+                              ...d,
+                              data: {
+                                ...d.data,
+                                outletId: newOutletId,
+                                role: newOutletId && (d.data.role === "USER" || d.data.role === "OUTLET_MANAGER") ? "OUTLET_MANAGER" : (d.data.role || "USER")
+                              }
+                            }));
+                          }}
+                          sx={{ borderRadius: 2, fontFamily: "Poppins, sans-serif" }}
+                          displayEmpty
+                        >
+                          <MenuItem value="" sx={{ fontFamily: "Poppins, sans-serif", fontStyle: "italic", color: "#94a3b8" }}>No Outlet Assigned</MenuItem>
+                          {outlets.map((ot) => (
+                            <MenuItem key={ot.id} value={ot.id} sx={{ fontFamily: "Poppins, sans-serif" }}>
+                              {ot.outletName || ot.name || ot.id}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} md={5}>
-                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                    <Avatar sx={{ width: 120, height: 120, mb: 2, background: "linear-gradient(135deg, #7d2ae8, #a855f7)", fontSize: "3rem", fontWeight: 700 }}>
+                <Grid item xs={12} md={5} sx={{ display: "flex" }}>
+                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+                    <Avatar sx={{ width: 120, height: 120, mb: 2, background: "linear-gradient(135deg, #7d2ae8, #a855f7)", fontSize: "3rem", fontWeight: 700, boxShadow: "0 8px 16px rgba(125,42,232,0.2)" }}>
                       {initials(dialog.data.name || dialog.data.username)}
                     </Avatar>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
@@ -253,36 +295,6 @@ const UserManagement = () => {
         </Box>
       ) : (
         <>
-          {/* Header */}
-          <Box className="page-header">
-            <Box className="page-header-left">
-              <Typography className="page-title">
-                <TypingText text="User Management" />
-              </Typography>
-              <Typography className="page-subtitle">Manage users and their roles</Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-              <ButtonBase
-                onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }}
-                sx={{
-                  display: "flex", alignItems: "center", gap: 1,
-                  px: 2.5, py: 1.2, borderRadius: "50px",
-                  background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
-                  color: "#fff", fontFamily: "Poppins, sans-serif",
-                  fontSize: "0.875rem", fontWeight: 600,
-                  boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
-                  transition: "all 0.25s ease",
-                  "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
-                }}
-                disableRipple
-              >
-                <PersonAddRounded sx={{ fontSize: 18 }} />
-                Add User
-              </ButtonBase>
-            </Box>
-          </Box>
-
-
           {/* Stat Cards */}
           <Box className="stat-cards-row">
             <Box className="stat-card stat-indigo">
@@ -372,34 +384,46 @@ const UserManagement = () => {
                           <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{u.email}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                              <Typography className={`role-chip ${meta.cls}`}>{meta.label}</Typography>
+                              <Chip 
+                                size="small" 
+                                label={meta.label} 
+                                sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 600, fontFamily: "Poppins, sans-serif", borderRadius: "8px" }} 
+                              />
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Box className={`status-chip ${u.status?.toLowerCase() === "active" ? "active" : "inactive"}`}>
-                              <Box className="status-dot" sx={{ background: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444" }} />
-                              {u.status || "Active"}
-                            </Box>
+                            <Chip 
+                              size="small" 
+                              label={u.status || "Active"} 
+                              sx={{ 
+                                bgcolor: u.status?.toLowerCase() === "active" ? "#dcfce7" : "#fee2e2", 
+                                color: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444", 
+                                fontWeight: 600, 
+                                fontFamily: "Poppins, sans-serif",
+                                borderRadius: "8px",
+                                "& .MuiChip-label": { px: 1.5 }
+                              }} 
+                            />
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: "flex", gap: 0.75 }}>
                               <Tooltip title="Edit user">
-                                <ButtonBase
-                                  className="action-btn edit"
+                                <IconButton
+                                  size="small"
                                   onClick={() => { setDialog({ open: true, mode: "edit", data: { ...u } }); setIsFormView(true); }}
-                                  disableRipple
+                                  sx={{ color: "#f59e0b", background: "#fef3c7", "&:hover": { background: "#fde68a" } }}
                                 >
                                   <EditRounded sx={{ fontSize: 16 }} />
-                                </ButtonBase>
+                                </IconButton>
                               </Tooltip>
                               <Tooltip title="Delete user">
-                                <ButtonBase
-                                  className="action-btn delete"
+                                <IconButton
+                                  size="small"
                                   onClick={() => setDelDialog({ open: true, id: u.id, name: u.name || u.username })}
-                                  disableRipple
+                                  sx={{ color: "#ef4444", background: "#fee2e2", "&:hover": { background: "#fecaca" } }}
                                 >
                                   <DeleteRounded sx={{ fontSize: 16 }} />
-                                </ButtonBase>
+                                </IconButton>
                               </Tooltip>
                             </Box>
                           </TableCell>

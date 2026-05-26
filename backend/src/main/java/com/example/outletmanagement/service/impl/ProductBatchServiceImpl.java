@@ -7,6 +7,7 @@ import com.example.outletmanagement.service.ProductBatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Lazy;
 import java.util.List;
 
 @Service
@@ -16,6 +17,12 @@ public class ProductBatchServiceImpl implements ProductBatchService {
     private final com.example.outletmanagement.repository.ProductRepository productRepository;
     private final com.example.outletmanagement.repository.StockTransactionRepository stockTransactionRepository;
     private final com.example.outletmanagement.repository.UserRepository userRepository;
+    
+    @Lazy
+    private final com.example.outletmanagement.service.OrderService orderService;
+    
+    @Lazy
+    private final com.example.outletmanagement.repository.OrderRepository orderRepository;
 
     @Override
     public List<ProductBatch> getAllBatches() {
@@ -63,7 +70,27 @@ public class ProductBatchServiceImpl implements ProductBatchService {
                 .status(ProductBatch.Status.ACTIVE)
                 .build();
 
-        return productBatchRepository.save(batch);
+        ProductBatch savedBatch = productBatchRepository.save(batch);
+
+        // Auto-allocate to pending or partially approved orders
+        List<com.example.outletmanagement.entity.Order> pendingOrders = orderRepository
+            .findByStatusIn(java.util.Arrays.asList(com.example.outletmanagement.entity.Order.OrderStatus.PENDING, com.example.outletmanagement.entity.Order.OrderStatus.PARTIALLY_APPROVED));
+        
+        for (com.example.outletmanagement.entity.Order order : pendingOrders) {
+            // Check if this order needs this product
+            boolean needsProduct = order.getItems().stream()
+                .anyMatch(item -> item.getProduct().getId().equals(request.getProductId()) 
+                               && (item.getQuantity() - (item.getFulfilledQuantity() != null ? item.getFulfilledQuantity() : 0)) > 0);
+            if (needsProduct) {
+                try {
+                    orderService.updateOrderStatus(order.getId(), com.example.outletmanagement.entity.Order.OrderStatus.APPROVED);
+                } catch (Exception e) {
+                    System.err.println("Failed to auto-allocate order " + order.getId() + ": " + e.getMessage());
+                }
+            }
+        }
+
+        return savedBatch;
     }
 
     @Override
