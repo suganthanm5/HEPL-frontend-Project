@@ -5,6 +5,7 @@ import TypingText from "../../components/TypingText";
 import { formatLocationData } from "../../utils/exportUtils";
 import BulkUploadModal from "../../components/BulkUploadModal";
 import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
+import "../UserManagement/UserManagement.css";
 
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -50,42 +51,7 @@ const getGradient = (name = "") => {
   return AVATAR_GRADIENTS[idx];
 };
 
-/* ── Stat Card ── */
-const StatCard = ({ label, value, icon: Icon, color, bg, border, loading }) => (
-  <Grow in timeout={400}>
-    <Box sx={{
-      background: "#fff",
-      borderRadius: "14px",
-      padding: "18px 20px",
-      display: "flex",
-      alignItems: "center",
-      gap: 2,
-      flex: 1,
-      minWidth: 160,
-      border: "1px solid #f1f5f9",
-      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04)",
-      transition: "transform 0.2s",
-      "&:hover": { transform: "translateY(-3px)" },
-      position: "relative",
-      overflow: "hidden"
-    }}>
-      <Box sx={{
-        width: 46, height: 46, borderRadius: "12px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: bg, color, flexShrink: 0,
-      }}>
-        <Icon sx={{ fontSize: 22 }} />
-      </Box>
-      <Box>
-        {loading
-          ? <Skeleton width={48} height={28} />
-          : <Typography sx={{ fontSize: "28px", fontWeight: 800, color: "#1e1b4b", lineHeight: 1, letterSpacing: "-0.5px", fontFamily: "inherit" }}>{value}</Typography>
-        }
-        <Typography sx={{ fontSize: "12.5px", color: "#64748b", fontWeight: 500, mt: 0.5, fontFamily: "inherit" }}>{label}</Typography>
-      </Box>
-    </Box>
-  </Grow>
-);
+
 
 /* ── Location Avatar ── */
 const LocAvatar = ({ name, size = 36 }) => {
@@ -216,15 +182,15 @@ const Location = () => {
   };
 
   return (
-    <Box sx={{ fontFamily: "inherit" }}>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
 
       {/* ── Page Header ── */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 1.5 }}>
         <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: "1.35rem", color: "#1e1b4b", fontFamily: "inherit", mb: 0.25 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b", mb: 0.25 }}>
             <TypingText text="Location Management" />
           </Typography>
-          <Typography sx={{ fontSize: "0.8rem", color: "#7d2ae8", fontFamily: "inherit", fontWeight: 500 }}>
+          <Typography sx={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>
             Manage geographic locations for your outlets
           </Typography>
         </Box>
@@ -334,12 +300,24 @@ const Location = () => {
         </Fade>
       ) : (
         <>
-          {/* ── Stats Row ── */}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-            <StatCard label="Total Locations" value={loading ? "—" : totalElements} icon={LocationOnRoundedIcon} color="#7d2ae8" bg="#f3e8ff" border="#e9d5ff" loading={loading} />
-            <StatCard label="This Page" value={loading ? "—" : locations.length} icon={LayersRoundedIcon} color="#0284c7" bg="#e0f2fe" border="#bae6fd" loading={loading} />
-            <StatCard label="Total Pages" value={loading ? "—" : totalPages} icon={TravelExploreRoundedIcon} color="#10b981" bg="#dcfce7" border="#bbf7d0" loading={loading} />
-          </Stack>
+          {/* ── Stat Cards ── */}
+          <Box className="stat-cards-row">
+            {[
+              { label: "Total Locations", value: totalElements, icon: LocationOnRoundedIcon, theme: "purple", color: "#7d2ae8", bg: "#f3e8ff" },
+              { label: "This Page", value: locations.length, icon: LayersRoundedIcon, theme: "blue", color: "#0284c7", bg: "#e0f2fe" },
+              { label: "Total Pages", value: totalPages, icon: TravelExploreRoundedIcon, theme: "green", color: "#10b981", bg: "#dcfce7" },
+            ].map((s, i) => (
+              <Box className={`stat-card stat-${s.theme}`} key={i}>
+                <Box className="stat-card-icon" sx={{ background: s.bg }}>
+                  <s.icon sx={{ fontSize: 22, color: s.color }} />
+                </Box>
+                <Box>
+                  <Typography className="stat-card-value">{loading ? "—" : s.value}</Typography>
+                  <Typography className="stat-card-label">{s.label}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
 
           {/* ── Error ── */}
           {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2, fontFamily: "inherit" }}>{error}</Alert>}
@@ -491,33 +469,88 @@ const Location = () => {
                     locations.map((loc, i) => {
                       const [c1, c2] = getGradient(loc.name);
                       return (
-                        <Grid item xs={12} sm={6} md={4} key={loc.id}>
-                          <Paper elevation={0} sx={{
-                            border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5,
-                            display: "flex", flexDirection: "column",
-                            transition: "all 0.2s",
-                            "&:hover": { boxShadow: `0 8px 28px ${c1}25`, borderColor: c1, transform: "translateY(-3px)" },
-                            position: "relative", overflow: "hidden",
-                            "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${c1}, ${c2})` },
-                          }}>
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-                              <LocAvatar name={loc.name} size={44} />
-                              <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, px: 1.2, py: 0.4, fontFamily: "inherit" }}>
+                        <Grid item xs={12} sm={6} md={6} lg={4} key={loc.id}>
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 2,
+                              borderRadius: 4,
+                              border: "1px solid #f1f5f9",
+                              height: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                transform: "translateY(-6px)",
+                                boxShadow: "0 15px 30px rgba(0,0,0,0.08)",
+                                borderColor: "#e2e8f0"
+                              }
+                            }}
+                          >
+                            <Box sx={{ position: "relative", mb: 2 }}>
+                              <Avatar
+                                variant="rounded"
+                                sx={{
+                                  width: "100%",
+                                  height: 160,
+                                  background: `linear-gradient(135deg, ${c1}15, ${c2}25)`,
+                                  borderRadius: 3,
+                                  border: "1px solid #f1f5f9",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center"
+                                }}
+                              >
+                                <LocAvatar name={loc.name} size={64} />
+                              </Avatar>
+                              <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "#94a3b8", fontWeight: 600, backdropFilter: "blur(4px)" }}>
                                 #{(safePage - 1) * pageSize + i + 1}
                               </Typography>
                             </Box>
-                            <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", fontFamily: "inherit", mb: 0.25 }}>
+                            
+                            <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b", mb: 0.5 }}>
                               {loc.name}
                             </Typography>
-                            <Typography sx={{ fontSize: "0.72rem", color: "#94a3b8", fontFamily: "inherit", mb: 2 }}>Location Node</Typography>
+                            <Typography sx={{ fontSize: "0.72rem", color: "#94a3b8", mb: 2 }}>Location Node</Typography>
+                            
                             <Divider sx={{ mb: 1.5 }} />
-                            <Stack direction="row" spacing={1}>
-                              <Button size="small" fullWidth startIcon={<EditRoundedIcon />} onClick={() => openEdit(loc)}
-                                sx={{ justifyContent: "flex-start", color: "#0ea5e9", bgcolor: "#f0f9ff", borderRadius: 1.5, "&:hover": { bgcolor: "#e0f2fe" } }}>
+                            
+                            <Stack direction="row" spacing={1} sx={{ mt: "auto" }}>
+                              <Button
+                                size="small"
+                                fullWidth
+                                variant="outlined"
+                                startIcon={<EditRoundedIcon />}
+                                onClick={() => openEdit(loc)}
+                                sx={{
+                                  borderRadius: 2,
+                                  color: "#6366f1",
+                                  borderColor: "#eef2ff",
+                                  bgcolor: "#fefefe",
+                                  "&:hover": { bgcolor: "#eef2ff", borderColor: "#6366f1" },
+                                  textTransform: "none",
+                                  fontWeight: 600
+                                }}
+                              >
                                 Edit
                               </Button>
-                              <Button size="small" fullWidth startIcon={<DeleteRoundedIcon />} onClick={() => setDeleteModal(loc)}
-                                sx={{ justifyContent: "flex-start", color: "#ef4444", bgcolor: "#fef2f2", borderRadius: 1.5, "&:hover": { bgcolor: "#fee2e2" } }}>
+                              <Button
+                                size="small"
+                                fullWidth
+                                variant="contained"
+                                color="error"
+                                startIcon={<DeleteRoundedIcon />}
+                                onClick={() => setDeleteModal(loc)}
+                                sx={{
+                                  borderRadius: 2,
+                                  boxShadow: "none",
+                                  bgcolor: "#fef2f2",
+                                  color: "#ef4444",
+                                  "&:hover": { bgcolor: "#fee2e2", boxShadow: "none" },
+                                  textTransform: "none",
+                                  fontWeight: 600
+                                }}
+                              >
                                 Delete
                               </Button>
                             </Stack>
