@@ -19,13 +19,17 @@ import {
   DarkModeRounded,
   LightModeRounded,
   SearchRounded,
+  MenuOpenRounded,
   MenuRounded,
+  KeyboardDoubleArrowLeftRounded,
+  KeyboardDoubleArrowRightRounded,
   ExpandMoreRounded,
   PeopleRounded,
   InventoryRounded as BatchIcon,
   SwapHorizRounded,
   ShoppingCartRounded,
   AssessmentRounded,
+  AllInclusiveRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../../context/AuthContext";
 import { getCookie } from "../../utils/cookieUtils";
@@ -180,19 +184,30 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
       {/* ── Header ─────────────────────────────────────── */}
       <Box className="sidebar-header">
         <Box className="header-logo">
-          <StorefrontRounded sx={{ fontSize: 22, color: "#fff" }} />
+          <svg width={0} height={0} style={{ position: "absolute" }}>
+            <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#7d2ae8" />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+          </svg>
+          <AllInclusiveRounded sx={{ fontSize: 20, fill: "url(#logo-gradient)" }} />
         </Box>
 
-        <Typography component="span" className="header-brand-name">
-          OutletMS
-        </Typography>
+        <Box className="header-brand-name">
+          <span className="brand-title">OUTLET</span>
+          <span className="brand-subtitle">MANAGEMENT SYSTEM</span>
+        </Box>
 
         <ButtonBase
           className="sidebar-toggle-btn"
           onClick={handleToggle}
           title={collapsed ? "Expand" : "Collapse"}
         >
-          <MenuRounded className="toggle-icon" sx={{ fontSize: "1.5rem" }} />
+          {collapsed ? (
+            <KeyboardDoubleArrowRightRounded className="toggle-icon" />
+          ) : (
+            <KeyboardDoubleArrowLeftRounded className="toggle-icon" />
+          )}
         </ButtonBase>
       </Box>
 
@@ -233,7 +248,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             sx={{
               flex: 1,
               fontSize: "1rem",
-              fontFamily: "Poppins, sans-serif",
+              fontFamily: "inherit",
               color: "var(--color-text-primary)",
               "& input::placeholder": { color: "var(--color-text-placeholder)" },
             }}
@@ -347,3 +362,4 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 };
 
 export default Sidebar;
+

@@ -48,9 +48,9 @@ public class DivisionServiceImpl implements DivisionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DivisionResponse> getAllDivisions(String search, Boolean hasProducts, Pageable pageable) {
+    public Page<DivisionResponse> getAllDivisions(String search, Integer minProducts, Integer maxProducts, Integer daysAgo, Pageable pageable) {
         org.springframework.data.jpa.domain.Specification<com.example.outletmanagement.entity.Division> spec = 
-                com.example.outletmanagement.specification.DivisionSpecification.searchAndFilter(search, hasProducts);
+                com.example.outletmanagement.specification.DivisionSpecification.searchAndFilter(search, minProducts, maxProducts, daysAgo);
         Page<com.example.outletmanagement.entity.Division> divisions = divisionRepository.findAll(spec, pageable);
         return divisions.map(this::mapToResponse);
     }

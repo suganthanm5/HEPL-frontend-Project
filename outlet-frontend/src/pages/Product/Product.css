@@ -25,7 +25,7 @@
 }
 
 .prod-hero-title {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
@@ -36,13 +36,13 @@
 .prod-btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 6px;
+  padding: 8px 16px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
   border: none;
-  border-radius: 11px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
@@ -70,17 +70,17 @@
 .prod-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .prod-stat-card {
   background: #fff;
-  border-radius: 14px;
-  padding: 18px 20px;
+  border-radius: 12px;
+  padding: 14px 14px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   border: 1px solid #f1f5f9;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
   transition: transform 0.2s;
@@ -91,9 +91,9 @@
 }
 
 .prod-stat-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,22 +101,22 @@
 }
 
 .prod-stat-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .prod-stat-value {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.5px;
 }
 
 .prod-stat-label {
-  font-size: 12.5px;
+  font-size: 11px;
   color: #64748b;
-  font-weight: 500;
-  margin-top: 3px;
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 /* ── Error ── */
@@ -226,10 +226,10 @@
 
 .prod-search-wrap input {
   width: 100%;
-  padding: 10px 36px 10px 38px;
+  padding: 8px 36px 8px 38px;
   border: 1.5px solid #e2e8f0;
-  border-radius: 11px;
-  font-size: 13.5px;
+  border-radius: 8px;
+  font-size: 13px;
   outline: none;
   background: #fff;
   color: #0f172a;
@@ -336,12 +336,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: 1.5px solid #e2e8f0;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #fff;
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -435,7 +435,7 @@
 /* ── Table ── */
 .prod-table-wrap {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid #f1f5f9;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -446,7 +446,7 @@
 .prod-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
   min-width: 700px;
 }
 
@@ -455,17 +455,17 @@
 }
 
 .prod-table th {
-  padding: 14px 16px;
+  padding: 10px 14px;
   text-align: left;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.65);
 }
 
 .prod-table td {
-  padding: 13px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f8fafc;
   vertical-align: middle;
 }
@@ -492,16 +492,16 @@
 .prod-td-name-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .prod-td-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -553,17 +553,17 @@
 /* ── Action Buttons ── */
 .prod-action-btns {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .prod-act-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 4px;
+  padding: 5px 10px;
   border: none;
-  border-radius: 8px;
-  font-size: 12.5px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s;
@@ -675,20 +675,20 @@
 .prod-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 18px;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
 .prod-card {
   background: #fff;
-  border-radius: 16px;
-  padding: 20px 18px 16px;
+  border-radius: 12px;
+  padding: 14px 14px 12px;
   border: 1px solid #f1f5f9;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .prod-card:hover {
@@ -704,12 +704,12 @@
 }
 
 .prod-card-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 800;
   display: flex;
   align-items: center;

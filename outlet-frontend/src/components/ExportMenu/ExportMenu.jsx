@@ -34,7 +34,7 @@ const ExportMenu = ({ getData, filename = "export", title = "Export", backendTyp
           display: "flex", alignItems: "center", gap: 0.75,
           px: 2, py: 1, borderRadius: "50px",
           border: "1.5px solid #7d2ae8", color: "#7d2ae8",
-          fontFamily: "Poppins, sans-serif", fontSize: "0.8rem", fontWeight: 600,
+          fontFamily: "inherit", fontSize: "0.8rem", fontWeight: 600,
           opacity: loading ? 0.7 : 1,
           "&.Mui-disabled": { opacity: 0.7 }
         }}
@@ -56,9 +56,9 @@ const ExportMenu = ({ getData, filename = "export", title = "Export", backendTyp
           { label: "Export as Excel", color: "#16a34a", format: "excel", fn: (d, f) => exportToExcel(d, `${f}.xlsx`) },
           { label: "Export as CSV",   color: "#0284c7", format: "csv",   fn: (d, f) => exportToCSV(d, `${f}.csv`) },
         ].map(({ label, color, format, fn }) => (
-          <MenuItem key={label} onClick={() => handle(fn, format)} sx={{ gap: 1, fontSize: "0.85rem", fontFamily: "Poppins, sans-serif" }}>
+          <MenuItem key={label} onClick={() => handle(fn, format)} sx={{ gap: 1, fontSize: "0.85rem", fontFamily: "inherit" }}>
             <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
-            <Typography sx={{ fontSize: "0.85rem", fontFamily: "Poppins, sans-serif" }}>{label}</Typography>
+            <Typography sx={{ fontSize: "0.85rem", fontFamily: "inherit" }}>{label}</Typography>
           </MenuItem>
         ))}
       </Menu>
@@ -67,3 +67,4 @@ const ExportMenu = ({ getData, filename = "export", title = "Export", backendTyp
 };
 
 export default ExportMenu;
+

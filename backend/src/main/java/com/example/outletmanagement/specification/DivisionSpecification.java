@@ -6,9 +6,11 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDateTime;
+
 public class DivisionSpecification {
 
-    public static Specification<Division> searchAndFilter(String keyword, Boolean hasProducts) {
+    public static Specification<Division> searchAndFilter(String keyword, Integer minProducts, Integer maxProducts, Integer daysAgo) {
         return (root, query, cb) -> {
             Predicate predicate = cb.conjunction();
 
@@ -17,17 +19,23 @@ public class DivisionSpecification {
                         cb.like(cb.lower(root.get("name")), "%" + keyword.toLowerCase() + "%"));
             }
 
-            if (hasProducts != null) {
+            if (minProducts != null || maxProducts != null) {
                 Subquery<Long> sub = query.subquery(Long.class);
                 var productRoot = sub.from(Product.class);
                 sub.select(cb.count(productRoot))
                    .where(cb.equal(productRoot.get("division"), root));
 
-                if (hasProducts) {
-                    predicate = cb.and(predicate, cb.greaterThan(sub, 0L));
-                } else {
-                    predicate = cb.and(predicate, cb.equal(sub, 0L));
+                if (minProducts != null) {
+                    predicate = cb.and(predicate, cb.greaterThanOrEqualTo(sub, minProducts.longValue()));
                 }
+                if (maxProducts != null) {
+                    predicate = cb.and(predicate, cb.lessThanOrEqualTo(sub, maxProducts.longValue()));
+                }
+            }
+
+            if (daysAgo != null) {
+                LocalDateTime startDate = LocalDateTime.now().minusDays(daysAgo);
+                predicate = cb.and(predicate, cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
             }
 
             return predicate;

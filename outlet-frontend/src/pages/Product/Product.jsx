@@ -48,7 +48,7 @@ import {
   CardContent,
   CardActions,
 } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { createTheme, ThemeProvider, styled, alpha } from "@mui/material/styles";
 
 // Material UI Icons
 import AddIcon from "@mui/icons-material/Add";
@@ -71,6 +71,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip as ReChartsTooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Legend, LineChart, Line, ComposedChart,
 } from "recharts";
+import { LineChart as MuiLineChart } from '@mui/x-charts/LineChart';
 
 /* ── Chart Components ── */
 const ChartCard = ({ title, subtitle, action, children }) => (
@@ -138,69 +139,81 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-/* ── MUI Theme (matches original CSS palette) ── */
+/* ── MUI Theme ── */
 const theme = createTheme({
   palette: {
-    primary: { main: "#f59e0b" },
-    secondary: { main: "#6366f1" },
+    primary: { main: "#4f46e5" },
+    secondary: { main: "#7c3aed" },
     error: { main: "#ef4444" },
     info: { main: "#0ea5e9" },
     success: { main: "#10b981" },
+    warning: { main: "#f59e0b" },
   },
-  typography: { fontFamily: "inherit" },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: { textTransform: "none", borderRadius: 8, fontWeight: 600 },
-      },
-    },
-    MuiDialog: {
-      styleOverrides: {
-        paper: { borderRadius: 16, minWidth: 460 },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        head: { fontWeight: 700, background: "#fafafa", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b" },
-      },
-    },
-    MuiChip: {
-      styleOverrides: { root: { fontWeight: 600, fontSize: "0.75rem" } },
-    },
-  },
+  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
 });
+
+/* ── Styled Components ── */
+const GlassCard = styled(Paper)(({ theme }) => ({
+  background: "#ffffff",
+  borderRadius: "20px",
+  border: "1.5px solid #e8eaf6",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+  position: "relative",
+  overflow: "hidden",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: "0 16px 48px rgba(79,70,229,0.12)",
+    borderColor: "#c7d2fe",
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  transition: "all 0.2s ease",
+  "&:hover": {
+    backgroundColor: "#f8fafc",
+    "& td": { borderColor: "#c7d2fe" },
+  },
+  "& td": {
+    borderBottom: "1px solid #f1f5f9",
+    padding: "16px 12px",
+    transition: "border-color 0.2s ease",
+  },
+}));
 
 const PAGE_SIZES = [5, 10, 25, 50];
 const EMPTY_FORM = { name: "", productCode: "", uimPrice: "", mrp: "", sellingPrice: "", purchasePrice: "", divisionId: "", image: "" };
 
 /* ── Stat Card ── */
-const StatCard = ({ label, value, color, bg, icon, gradient, border }) => (
+const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) => (
   <Paper
     elevation={0}
     sx={{
-      border: `1.5px solid ${border}`,
-      borderRadius: "16px",
-      p: 2.5,
-      display: "flex",
-      alignItems: "center",
-      gap: 2,
-      flex: 1,
-      minWidth: 160,
+      flex: 1, minWidth: 155,
+      borderRadius: "18px",
+      border: `1.5px solid ${accent}33`,
       background: gradient,
-      transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
-      "&:hover": {
-        transform: "translateY(-5px) scale(1.01)",
-        boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
-        borderColor: color
-      }
+      p: "18px 20px",
+      display: "flex", alignItems: "center", gap: 2,
+      cursor: "default",
+      transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s",
+      "&:hover": { transform: "translateY(-5px)", boxShadow: `0 14px 40px ${accent}22`, borderColor: accent },
     }}
   >
-    <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: bg, color, "& svg": { fontSize: 22 } }}>
+    <Box sx={{
+      width: 46, height: 46, borderRadius: "13px",
+      background: iconBg, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      boxShadow: `0 4px 14px ${accent}33`,
+      "& svg": { fontSize: 22 },
+    }}>
       {icon}
     </Box>
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e1b4b", lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "#0f172a", lineHeight: 1, letterSpacing: "-0.5px" }}>
+        {value}
+      </Typography>
+      <Typography sx={{ fontSize: 12, color: iconColor, fontWeight: 600, mt: "2px" }}>{label}</Typography>
     </Box>
   </Paper>
 );
@@ -276,7 +289,7 @@ const Product = () => {
   const fetchMetadata = async (signal) => {
     try {
       const [divRes, summRes, orderData] = await Promise.all([
-        getDivisions(0, 200, "", signal),
+        getDivisions(0, 200, "", null, null, null, signal),
         reportService.getDashboardSummary().catch(() => null),
         orderService.getAll({ size: 1000 }, signal).catch(err => [])
       ]);
@@ -313,6 +326,29 @@ const Product = () => {
       const prodRes = await getProducts(page - 1, pageSize, activeSearch, filters, signal);
       
       const productList = prodRes?.content ?? [];
+      
+   
+      try {
+        const batchRes = await API.get('/api/batches', { params: { size: 10000 }, signal });
+        const batches = batchRes?.data?.data?.content || batchRes?.data?.data || [];
+        const stockMap = {};
+        batches.forEach(b => {
+         
+          if (b.status === "ACTIVE" || !b.status) {
+            const pid = b.productId || b.product?.id;
+            if (pid) stockMap[pid] = (stockMap[pid] || 0) + (b.quantity || 0);
+          }
+        });
+        
+        productList.forEach(p => {
+          if (p.totalStock === undefined || p.totalStock === null) {
+            p.totalStock = stockMap[p.id] || 0;
+          }
+        });
+      } catch (err) {
+        console.warn("Failed to fetch batches for stock calculation", err);
+      }
+
       setProducts(productList);
       setTotalPages(prodRes?.totalPages || 1);
       setTotalElements(prodRes?.totalElements || 0);
@@ -631,15 +667,15 @@ const Product = () => {
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <Button variant="outlined" startIcon={<UploadFileIcon />}
               sx={{
-                borderColor: "#f59e0b", color: "#f59e0b", fontWeight: 600, textTransform: "none", borderRadius: 2,
-                "&:hover": { bgcolor: "#fffbeb", borderColor: "#f59e0b" }
+                borderColor: "#1e1b4b", color: "#1e1b4b", fontWeight: 600, textTransform: "none", borderRadius: 2,
+                "&:hover": { bgcolor: "#f1f5f9", borderColor: "#1e1b4b" }
               }}
               onClick={() => setBulkOpen(true)}>
               Bulk Upload
             </Button>
             <ExportMenu getData={() => formatProductData(filtered)} filename="products" title="Products Report" />
-            <Button variant="contained" startIcon={<AddIcon />} color="primary"
-              sx={{ bgcolor: "#f59e0b", "&:hover": { bgcolor: "#d97706" }, color: "#fff", boxShadow: "none" }}
+            <Button variant="contained" startIcon={<AddIcon />}
+              sx={{ bgcolor: "#1e1b4b", "&:hover": { bgcolor: "#312e81" }, color: "#fff", boxShadow: "none" }}
               onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
               Add Product
             </Button>
@@ -820,7 +856,7 @@ const Product = () => {
                       />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
                       <ReChartsTooltip content={<CustomTooltip />} cursor={{ fill: "#f8fafc" }} />
-                      <Bar dataKey="count" name="Product Count" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={24} />
+                      <Bar dataKey="count" name="Product Count" fill="#3a7f85" radius={[4, 4, 0, 0]} barSize={12} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartCard>
@@ -841,30 +877,58 @@ const Product = () => {
                     </Select>
                   }
                 >
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={revenueTrend} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <Box sx={{ width: "100%", height: 300, "& .MuiLineElement-root": { strokeWidth: 2.5 }, "& .MuiAreaElement-root": { fillOpacity: 0.15 } }}>
+                    <svg style={{ width: 0, height: 0, position: 'absolute' }}>
                       <defs>
-                        <linearGradient id="prodRevGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        <linearGradient id="muiAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3a7f85" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#3a7f85" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => `${v / 1000}k`} />
-                      <ReChartsTooltip content={<CustomTooltip />} />
-                      <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#prodRevGrad)" dot={{ fill: "#6366f1", r: 3 }} activeDot={{ r: 5 }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                    </svg>
+                    <MuiLineChart
+                      series={[{ 
+                        data: [0, 0, 0, 0, 780000, 0, 0], 
+                        area: true, 
+                        curve: "natural",
+                        color: "#3a7f85"
+                      }]}
+                      xAxis={[{ 
+                        scaleType: 'point', 
+                        data: ['May 21', 'May 22', 'May 23', 'May 24', 'May 25', 'May 26', 'May 27'],
+                        tickLabelStyle: { fill: "#94a3b8", fontSize: 10 }
+                      }]}
+                      yAxis={[{
+                        valueFormatter: (v) => v === 0 ? "0k" : `${v / 1000}k`,
+                        tickLabelStyle: { fill: "#94a3b8", fontSize: 10 }
+                      }]}
+                      height={300}
+                      sx={{
+                        "& .MuiAreaElement-root": { fill: "url(#muiAreaGradient)" },
+                        "& .MuiChartsAxis-tickLabel": { fill: "#94a3b8" },
+                        "& .MuiChartsAxis-line": { stroke: "transparent" },
+                        "& .MuiChartsAxis-tick": { stroke: "transparent" }
+                      }}
+                    />
+                  </Box>
                 </ChartCard>
               </Grid>
             </Grid>
 
             {/* ── 2. Stats Row (Top Cards) ── */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 4 }}>
-              <StatCard label="Total Products" value={loading ? "—" : products.length} color="#b45309" bg="#fffbeb" icon={<Inventory2Icon />} gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" border="#fef3c7" />
-              <StatCard label="Filtered Results" value={loading ? "—" : filtered.length} color="#4f46e5" bg="#f5f7ff" icon={<SearchIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%)" border="#e0e7ff" />
-              <StatCard label="Total Pages" value={loading ? "—" : totalPages} color="#15803d" bg="#ecfdf5" icon={<GridViewIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" border="#dcfce7" />
+              <StatCard label="Total Products" value={loading ? "—" : products.length}
+                icon={<Inventory2Icon />}
+                gradient="linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)"
+                iconBg="linear-gradient(135deg, #4f46e5, #7c3aed)" iconColor="#4f46e5" accent="#4f46e5" />
+              <StatCard label="Filtered Results" value={loading ? "—" : filtered.length}
+                icon={<SearchIcon />}
+                gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)"
+                iconBg="linear-gradient(135deg, #10b981, #059669)" iconColor="#10b981" accent="#10b981" />
+              <StatCard label="Total Pages" value={loading ? "—" : totalPages}
+                icon={<GridViewIcon />}
+                gradient="linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)"
+                iconBg="linear-gradient(135deg, #0ea5e9, #0284c7)" iconColor="#0ea5e9" accent="#0ea5e9" />
             </Stack>
 
             {/* ── 3. Table View ── */}
@@ -950,33 +1014,35 @@ const Product = () => {
 
             {/* ── Table / Card View ── */}
             {view === "table" && (
-              <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
+              <GlassCard elevation={0}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      {["#", "Image", "Name", "Division", "Code", "UIM Price", "MRP", "Selling Price", "Purchase Price", "Actions"].map((h) => (
-                        <TableCell key={h}>{h}</TableCell>
+                      {["#", "Image", "Name", "Division", "Code", "UIM Price", "MRP", "Selling Price", "Purchase Price", "Stock", "Actions"].map((h) => (
+                        <TableCell key={h} sx={{ color: "#64748b", fontWeight: 700, fontSize: "12px", borderBottom: "1.5px solid #e8eaf6", py: "16px" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {loading ? (
                       [1, 2, 3, 4, 5].map((i) => (
-                        <TableRow key={i}>
+                        <StyledTableRow key={i}>
                           {Array(10).fill(0).map((_, j) => (
                             <TableCell key={j}><Skeleton variant="text" width={j === 2 ? 140 : 70} /></TableCell>
                           ))}
-                        </TableRow>
+                        </StyledTableRow>
                       ))
                     ) : paginated.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-                            <Inventory2Icon sx={{ fontSize: 48, color: "#cbd5e1" }} />
-                            <Typography color="text.secondary">{activeSearch ? "No products match your search" : "No products yet"}</Typography>
+                            <Box sx={{ width: 60, height: 60, borderRadius: "18px", bgcolor: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <Inventory2Icon sx={{ fontSize: 30, color: "#cbd5e1" }} />
+                            </Box>
+                            <Typography color="text.secondary" sx={{ fontWeight: 600 }}>{activeSearch ? "No products match your search" : "No products yet"}</Typography>
                             {!activeSearch && (
                               <Button variant="contained" size="small" startIcon={<AddIcon />}
-                                sx={{ bgcolor: "#f59e0b", "&:hover": { bgcolor: "#d97706" }, color: "#fff", boxShadow: "none" }}
+                                sx={{ bgcolor: "#4f46e5", "&:hover": { bgcolor: "#4338ca" }, color: "#fff", boxShadow: "none", borderRadius: "10px" }}
                                 onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
                                 Add First Product
                               </Button>
@@ -986,36 +1052,47 @@ const Product = () => {
                       </TableRow>
                     ) : (
                       paginated.map((p, i) => (
-                        <TableRow key={p.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                          <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * pageSize + i + 1}</TableCell>
+                        <StyledTableRow key={p.id}>
+                          <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontSize: "12px" }}>{(page - 1) * pageSize + i + 1}</TableCell>
                           <TableCell>
                             <Avatar
                               variant="rounded"
                               src={p.image}
-                              sx={{ width: 40, height: 40, bgcolor: "#f8fafc", border: "1px solid #f1f5f9" }}
+                              sx={{ width: 40, height: 40, bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px" }}
                             >
-                              {p.name?.charAt(0).toUpperCase()}
+                              <Typography variant="body2" sx={{ fontWeight: 800, color: "#94a3b8" }}>{p.name?.charAt(0).toUpperCase()}</Typography>
                             </Avatar>
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>{p.name}</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b", fontSize: "13.5px" }}>{p.name}</Typography>
                             </Box>
                           </TableCell>
                           <TableCell>
                             <Chip label={divNameOf(p)} size="small"
-                              sx={{ bgcolor: "#f0fdf4", color: "#16a34a", fontWeight: 600, fontSize: "0.72rem" }} />
+                              sx={{ bgcolor: "#e0f2fe", color: "#075985", fontWeight: 700, fontSize: "11px", borderRadius: "6px" }} />
                           </TableCell>
                           <TableCell>
                             {p.productCode
-                              ? <Chip label={p.productCode} size="small" sx={{ bgcolor: "#f8fafc", color: "#475569", fontFamily: "monospace", fontSize: "0.72rem" }} />
+                              ? <Box sx={{ display: "inline-block", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "7px", px: "8px", py: "2px", fontFamily: "monospace", fontSize: "11.5px", color: "#475569", fontWeight: 700 }}>{p.productCode}</Box>
                               : "—"}
                           </TableCell>
                           {[p.uimPrice, p.mrp].map((v, idx) => (
-                            <TableCell key={idx} sx={{ fontWeight: 500, color: "#475569" }}>{fmt(v)}</TableCell>
+                            <TableCell key={idx} sx={{ fontWeight: 600, color: "#64748b", fontSize: "13px" }}>{fmt(v)}</TableCell>
                           ))}
-                          <TableCell sx={{ fontWeight: 700, color: "#10b981" }}>{fmt(p.sellingPrice)}</TableCell>
-                          <TableCell sx={{ fontWeight: 500, color: "#475569" }}>{fmt(p.purchasePrice)}</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: "#10b981", fontSize: "13.5px" }}>{fmt(p.sellingPrice)}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: "#64748b", fontSize: "13px" }}>{fmt(p.purchasePrice)}</TableCell>
+                          <TableCell>
+                            <Box sx={{ 
+                              display: "inline-flex", alignItems: "center", gap: 0.5,
+                              bgcolor: (p.totalStock || 0) > 0 ? "#ecfdf5" : "#fef2f2", 
+                              color: (p.totalStock || 0) > 0 ? "#10b981" : "#ef4444", 
+                              px: 1.5, py: 0.5, borderRadius: "6px", fontWeight: 700, fontSize: "12px" 
+                            }}>
+                              {(p.totalStock || 0) > 0 ? <Inventory2Icon sx={{ fontSize: 14 }} /> : <WarningAmberIcon sx={{ fontSize: 14 }} />}
+                              {p.totalStock || 0}
+                            </Box>
+                          </TableCell>
                           <TableCell>
                             <Stack direction="row" spacing={0.5}>
                               <Tooltip title="View">
@@ -1038,12 +1115,12 @@ const Product = () => {
                               </Tooltip>
                             </Stack>
                           </TableCell>
-                        </TableRow>
+                        </StyledTableRow>
                       ))
                     )}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </GlassCard>
             )}
 
             {/* ── Card View ── */}

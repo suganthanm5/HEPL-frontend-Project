@@ -39,6 +39,7 @@ public class OrderResponse {
         private Integer quantity;
         private java.math.BigDecimal price;
         private String remarks;
+        private String image;
     }
 
     public static OrderResponse from(Order o) {
@@ -66,6 +67,7 @@ public class OrderResponse {
                                 .quantity(item.getQuantity())
                                 .price(item.getPrice())
                                 .remarks(item.getRemarks())
+                                .image(item.getProduct() != null ? item.getProduct().getImage() : null)
                                 .build()
                 ).toList() : List.of())
                 .build();

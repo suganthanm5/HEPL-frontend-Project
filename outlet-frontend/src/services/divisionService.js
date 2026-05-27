@@ -15,14 +15,16 @@ const mapDivisionResponse = (division) => {
 };
 
 
-const getDivisions = async (page = 0, size = 10, keyword = "", signal) => {
+const getDivisions = async (page = 0, size = 10, keyword = "", minProducts = null, maxProducts = null, daysAgo = null, signal) => {
   try {
+    const params = { page, size };
+    if (keyword) params.keyword = keyword;
+    if (minProducts !== null && minProducts !== undefined && minProducts !== "") params.minProducts = minProducts;
+    if (maxProducts !== null && maxProducts !== undefined && maxProducts !== "") params.maxProducts = maxProducts;
+    if (daysAgo !== null && daysAgo !== undefined && daysAgo !== "") params.daysAgo = daysAgo;
+    
     const res = await API.get(ENDPOINTS.divisions, { 
-      params: { 
-        page, 
-        size, 
-        ...(keyword ? { keyword } : {}) 
-      }, 
+      params, 
       signal 
     });
     

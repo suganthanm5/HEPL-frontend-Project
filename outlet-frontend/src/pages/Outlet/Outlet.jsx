@@ -1,11 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
-import { getOutlets, createOutlet, updateOutlet, deleteOutlet, bulkCreateOutlets } from "../../services/outletService";
+import {
+  getOutlets, createOutlet, updateOutlet, deleteOutlet, bulkCreateOutlets,
+} from "../../services/outletService";
 import { getLocations } from "../../services/locationService";
 import { getDivisions, getDivisionById } from "../../services/divisionService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatOutletData } from "../../utils/exportUtils";
+import BulkUploadModal from "../../components/BulkUploadModal";
 
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -13,7 +16,8 @@ import {
   Snackbar, Alert, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Typography, Grid, Chip, Avatar,
   Tooltip, FormControl, InputLabel, ToggleButton, ToggleButtonGroup,
-  Pagination, Stack, Divider,
+  Pagination, Stack, Divider, Collapse, Badge, LinearProgress,
+  alpha,
 } from "@mui/material";
 import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
 
@@ -34,79 +38,108 @@ import SaveIcon from "@mui/icons-material/Save";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import CategoryIcon from "@mui/icons-material/Category";
 import MapIcon from "@mui/icons-material/Map";
-import BulkUploadModal from "../../components/BulkUploadModal";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import TuneIcon from "@mui/icons-material/Tune";
+import DomainIcon from "@mui/icons-material/Domain";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import LanguageIcon from "@mui/icons-material/Language";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
+import BusinessIcon from "@mui/icons-material/Business";
 
-/* ── MUI Theme ── */
+/* ─── Theme ─── */
 const theme = createTheme({
   palette: {
-    primary: { main: "#6366f1" },
-    secondary: { main: "#8b5cf6" },
+    primary: { main: "#4f46e5" },
+    secondary: { main: "#7c3aed" },
     error: { main: "#ef4444" },
-    info: { main: "#06b6d4" },
+    info: { main: "#0ea5e9" },
     success: { main: "#10b981" },
     warning: { main: "#f59e0b" },
   },
-  typography: { fontFamily: "inherit" },
+  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: { textTransform: "none", borderRadius: 8, fontWeight: 600 },
+        root: { textTransform: "none", borderRadius: 10, fontWeight: 600, letterSpacing: 0 },
       },
     },
     MuiDialog: {
-      styleOverrides: {
-        paper: { borderRadius: 16, minWidth: 520 },
-      },
+      styleOverrides: { paper: { borderRadius: 20, minWidth: 520 } },
     },
     MuiTableCell: {
       styleOverrides: {
         head: {
-          background: "linear-gradient(90deg, #0f172a, #1e1b4b)",
-          color: "rgba(255,255,255,0.6)",
+          background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
+          color: "rgba(255,255,255,0.55)",
           fontSize: "11px",
           fontWeight: 700,
-          letterSpacing: "0.8px",
+          letterSpacing: "0.9px",
           textTransform: "uppercase",
-          padding: "14px 18px",
+          padding: "15px 16px",
+          borderBottom: "none",
+          "&:first-of-type": { borderRadius: "0" },
         },
         body: {
-          padding: "13px 18px",
-          borderBottom: "1px solid #f8fafc",
+          padding: "13px 16px",
+          borderBottom: "1px solid #f1f5f9",
           verticalAlign: "middle",
-          fontSize: "14px",
+          fontSize: "13.5px",
         },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: { borderRadius: 8, fontWeight: 600, fontSize: "11.5px" },
       },
     },
   },
 });
 
-/* ── Styled Table Components ── */
+/* ─── Styled components ─── */
 const StyledTableRow = styled(TableRow)(() => ({
-  "&:hover": { backgroundColor: "#fafbff" },
+  transition: "background 0.15s",
+  "&:hover": { background: "#fafbff" },
   "&:last-child td": { borderBottom: "none" },
 }));
 
-const StyledTableContainer = styled(TableContainer)(() => ({
-  background: "#fff",
-  borderRadius: "16px",
-  border: "1px solid #f1f5f9",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05)",
-  overflow: "hidden",
-  marginBottom: "20px",
+const ExpandedRow = styled(TableRow)(() => ({
+  background: "linear-gradient(135deg, #fafbff 0%, #f5f3ff 100%)",
+  "& td": { borderBottom: "1px solid #e8eaf6 !important" },
 }));
 
-/* ── Constants ── */
-const OUTLET_TYPES = ["Retail", "Wholesale", "Franchise", "Online", "Distribution", "Warehouse", "Corporate", "Branch Office"];
+const GlassCard = styled(Paper)(() => ({
+  background: "linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)",
+  border: "1.5px solid #e8eaf6",
+  borderRadius: 18,
+  transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+  overflow: "hidden",
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: "0 16px 48px rgba(79,70,229,0.12)",
+    borderColor: "#c7d2fe",
+  },
+}));
 
-const TYPE_COLOR = {
-  Retail: { bg: "#eef2ff", color: "#6366f1" },
-  Wholesale: { bg: "#ecfdf5", color: "#10b981" },
-  Franchise: { bg: "#fffbeb", color: "#f59e0b" },
-  Online: { bg: "#ecfeff", color: "#06b6d4" },
-  Distribution: { bg: "#fdf4ff", color: "#a855f7" },
-  Warehouse: { bg: "#fff7ed", color: "#f97316" },
-  Corporate: { bg: "#f0fdf4", color: "#22c55e" },
-  "Branch Office": { bg: "#fef2f2", color: "#ef4444" },
+/* ─── Constants ─── */
+const OUTLET_TYPES = [
+  "Retail", "Wholesale", "Franchise", "Online",
+  "Distribution", "Warehouse", "Corporate", "Branch Office",
+];
+
+const TYPE_META = {
+  Retail:        { bg: "#ede9fe", color: "#6d28d9", dot: "#7c3aed", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #7c3aed, #4f46e5)", shadow: "rgba(124,58,237,0.3)" },
+  Wholesale:     { bg: "#d1fae5", color: "#065f46", dot: "#10b981", icon: Inventory2Icon, iconBg: "linear-gradient(135deg, #10b981, #0ea5e9)", shadow: "rgba(16,185,129,0.3)" },
+  Franchise:     { bg: "#fef3c7", color: "#92400e", dot: "#f59e0b", icon: HomeWorkIcon, iconBg: "linear-gradient(135deg, #f59e0b, #ea580c)", shadow: "rgba(245,158,11,0.3)" },
+  Online:        { bg: "#e0f2fe", color: "#075985", dot: "#0ea5e9", icon: LanguageIcon, iconBg: "linear-gradient(135deg, #0ea5e9, #2563eb)", shadow: "rgba(14,165,233,0.3)" },
+  Distribution:  { bg: "#fae8ff", color: "#6b21a8", dot: "#a855f7", icon: LocalShippingIcon, iconBg: "linear-gradient(135deg, #a855f7, #d946ef)", shadow: "rgba(168,85,247,0.3)" },
+  Warehouse:     { bg: "#ffedd5", color: "#9a3412", dot: "#f97316", icon: WarehouseIcon, iconBg: "linear-gradient(135deg, #f97316, #ef4444)", shadow: "rgba(249,115,22,0.3)" },
+  Corporate:     { bg: "#dcfce7", color: "#166534", dot: "#22c55e", icon: DomainIcon, iconBg: "linear-gradient(135deg, #22c55e, #16a34a)", shadow: "rgba(34,197,94,0.3)" },
+  "Branch Office":{ bg: "#fee2e2", color: "#991b1b", dot: "#ef4444", icon: BusinessIcon, iconBg: "linear-gradient(135deg, #ef4444, #b91c1c)", shadow: "rgba(239,68,68,0.3)" },
 };
 
 const EMPTY_FORM = {
@@ -116,54 +149,182 @@ const EMPTY_FORM = {
 
 const PAGE_SIZES = [5, 10, 25, 50];
 
-/* ── Stat Card ── */
-const StatCard = ({ label, value, color, bg, icon, gradient, border }) => (
+/* ─── Stat Card ─── */
+const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) => (
   <Paper
     elevation={0}
     sx={{
-      border: `1.5px solid ${border}`,
-      borderRadius: "16px",
-      p: 2.5,
-      display: "flex",
-      alignItems: "center",
-      gap: 2,
-      flex: 1,
-      minWidth: 160,
+      flex: 1, minWidth: 155,
+      borderRadius: "18px",
+      border: `1.5px solid ${accent}33`,
       background: gradient,
-      transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
-      "&:hover": {
-        transform: "translateY(-5px) scale(1.01)",
-        boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
-        borderColor: color
-      }
+      p: "18px 20px",
+      display: "flex", alignItems: "center", gap: 2,
+      cursor: "default",
+      transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s",
+      "&:hover": { transform: "translateY(-5px)", boxShadow: `0 14px 40px ${accent}22`, borderColor: accent },
     }}
   >
-    <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: bg, color, "& svg": { fontSize: 22 } }}>
+    <Box sx={{
+      width: 46, height: 46, borderRadius: "13px",
+      background: iconBg, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      boxShadow: `0 4px 14px ${accent}33`,
+      "& svg": { fontSize: 22 },
+    }}>
       {icon}
     </Box>
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e1b4b", lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "#0f172a", lineHeight: 1, letterSpacing: "-0.5px" }}>
+        {value}
+      </Typography>
+      <Typography sx={{ fontSize: 12, color: iconColor, fontWeight: 600, mt: "2px" }}>{label}</Typography>
     </Box>
   </Paper>
 );
 
-/* ── Delete Modal Header ── */
+/* ─── Type Badge ─── */
+const TypeBadge = ({ type }) => {
+  const m = TYPE_META[type] ?? { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8" };
+  return (
+    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px",
+      bgcolor: m.bg, color: m.color,
+      px: "10px", py: "3px", borderRadius: "20px",
+      fontSize: "11.5px", fontWeight: 700, whiteSpace: "nowrap" }}>
+      <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: m.dot, flexShrink: 0 }} />
+      {type}
+    </Box>
+  );
+};
+
+/* ─── Delete Modal Header ─── */
 const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
   <DialogTitle sx={{ p: 0 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px 24px 16px", borderBottom: "1px solid #f1f5f9" }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: `${accent}20`, color: accent, "& svg": { fontSize: 20 } }}>
+    <Box sx={{
+      display: "flex", alignItems: "center", gap: 2,
+      p: "20px 24px 16px",
+      borderBottom: "1px solid #f1f5f9",
+    }}>
+      <Box sx={{
+        width: 40, height: 40, borderRadius: "12px",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: `${accent}18`, color: accent, "& svg": { fontSize: 20 },
+      }}>
         {icon}
       </Box>
       <Box sx={{ flex: 1 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b" }}>{title}</Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b" }}>{title}</Typography>
         {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
       </Box>
-      <IconButton size="small" onClick={onClose} sx={{ color: "#94a3b8" }}><CloseIcon fontSize="small" /></IconButton>
+      <IconButton size="small" onClick={onClose} sx={{ color: "#94a3b8", bgcolor: "#f8fafc", borderRadius: "9px" }}>
+        <CloseIcon fontSize="small" />
+      </IconButton>
     </Box>
   </DialogTitle>
 );
 
+/* ─── Expandable Row Details (Redesigned) ─── */
+const OutletDetailRow = ({ outlet, colSpan }) => (
+  <ExpandedRow>
+    <TableCell colSpan={colSpan} sx={{ py: 0, px: 0, borderBottom: "none !important" }}>
+      <Collapse in timeout="auto" unmountOnExit>
+        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "#fafbff", borderBottom: "1px solid #e8eaf6" }}>
+          <Paper elevation={0} sx={{ 
+            display: "flex", flexDirection: { xs: "column", md: "row" }, 
+            border: "1px solid #e2e8f0", borderRadius: "16px", overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(15,23,42,0.03)", bgcolor: "#fff" 
+          }}>
+            
+            {/* Column 1: Division Breakdown */}
+            <Box sx={{ flex: 1, p: 3, borderRight: { md: "1px solid #f1f5f9" }, borderBottom: { xs: "1px solid #f1f5f9", md: "none" } }}>
+              <Typography variant="subtitle2" sx={{ color: "#1e293b", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <DomainIcon sx={{ fontSize: 16 }} />
+                </Box>
+                Division Breakdown
+              </Typography>
+              <Stack spacing={1.5}>
+                {(outlet.divisions ?? []).map((d) => (
+                  <Box key={d.id} sx={{ p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px", border: "1px solid #f1f5f9" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: "#334155", mb: 0.75 }}>{d.name}</Typography>
+                    {d.products?.length > 0 ? (
+                      <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                        {d.products.map((p) => (
+                          <Chip key={p.id} label={p.name} size="small" 
+                            icon={<Inventory2Icon sx={{ fontSize: "12px !important", color: "#64748b" }} />} 
+                            sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", color: "#475569", fontWeight: 600, fontSize: "11px", height: 22 }} />
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products</Typography>
+                    )}
+                  </Box>
+                ))}
+                {(!outlet.divisions || outlet.divisions.length === 0) && (
+                  <Typography variant="body2" sx={{ color: "#94a3b8", fontStyle: "italic", textAlign: "center", py: 2 }}>No divisions linked to this outlet.</Typography>
+                )}
+              </Stack>
+            </Box>
+
+            {/* Column 2: Contact & Address */}
+            <Box sx={{ flex: 1, p: 3, borderRight: { md: "1px solid #f1f5f9" }, borderBottom: { xs: "1px solid #f1f5f9", md: "none" }, bgcolor: "#fcfdff" }}>
+              <Typography variant="subtitle2" sx={{ color: "#1e293b", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#ede9fe", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <PersonIcon sx={{ fontSize: 16 }} />
+                </Box>
+                Contact Details
+              </Typography>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Outlet Owner</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: "#1e293b", mt: 0.25 }}>{outlet.ownerName || "—"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Full Address</Typography>
+                  <Typography variant="body2" sx={{ color: "#475569", mt: 0.5, lineHeight: 1.5, display: "flex", gap: 1, alignItems: "flex-start" }}>
+                    <LocationOnIcon sx={{ fontSize: 16, color: "#ef4444", mt: "2px", flexShrink: 0 }} />
+                    {outlet.address || "—"}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+
+            {/* Column 3: Quick Stats */}
+            <Box sx={{ flex: 1, p: 3 }}>
+              <Typography variant="subtitle2" sx={{ color: "#1e293b", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#e0f2fe", color: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <StorefrontIcon sx={{ fontSize: 16 }} />
+                </Box>
+                Outlet Profile
+              </Typography>
+              <Stack spacing={1.5}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#64748b" }}>System Code</Typography>
+                  <Typography sx={{ fontWeight: 700, color: "#0f172a", fontFamily: "monospace", bgcolor: "#e2e8f0", px: 1, py: 0.25, borderRadius: "6px" }}>
+                    {outlet.outletCode || "N/A"}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#64748b" }}>Total Divisions</Typography>
+                  <Typography sx={{ fontWeight: 800, color: "#16a34a", fontSize: "1rem" }}>{outlet.divisions?.length ?? 0}</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#64748b" }}>Total Products</Typography>
+                  <Typography sx={{ fontWeight: 800, color: "#7c3aed", fontSize: "1rem" }}>{outlet.productNames?.length ?? 0}</Typography>
+                </Box>
+              </Stack>
+            </Box>
+            
+          </Paper>
+        </Box>
+      </Collapse>
+    </TableCell>
+  </ExpandedRow>
+);
+
+/* ═══════════════════════════════════════════════
+   MAIN COMPONENT
+═══════════════════════════════════════════════ */
 export default function Outlet() {
   const [outlets, setOutlets] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -171,7 +332,8 @@ export default function Outlet() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
+  const [searchInput, setSearchInput] = useState("");
+  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem("itemsPerPage") || "10", 10));
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
@@ -189,30 +351,32 @@ export default function Outlet() {
   const [productFilter, setProductFilter] = useState("");
   const [editModal, setEditModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const showToast = (message, type = "error") => setToast({ message, type });
 
-  /* ── Validation helpers ── */
+  /* ── Validation ── */
   const handleOutletNameChange = (e) => {
-    const value = e.target.value;
-    if (value.startsWith(" ")) { showToast("Outlet name cannot start with a space.", "warning"); return; }
-    if (/\d/.test(value)) { showToast("Outlet name cannot contain numbers.", "warning"); return; }
-    if (/[\u0900-\u097F]/.test(value)) { showToast("Please enter outlet name in English only.", "warning"); return; }
-    setForm((f) => ({ ...f, outletName: value }));
+    const v = e.target.value;
+    if (v.startsWith(" ")) { showToast("Outlet name cannot start with a space.", "warning"); return; }
+    if (/\d/.test(v)) { showToast("Outlet name cannot contain numbers.", "warning"); return; }
+    if (/[\u0900-\u097F]/.test(v)) { showToast("Please enter outlet name in English only.", "warning"); return; }
+    setForm((f) => ({ ...f, outletName: v }));
   };
 
   const handleOwnerNameChange = (e) => {
-    const value = e.target.value;
-    if (value.startsWith(" ")) { showToast("Owner name cannot start with a space.", "warning"); return; }
-    if (/\d/.test(value)) { showToast("Owner name cannot contain numbers.", "warning"); return; }
-    if (/[\u0900-\u097F]/.test(value)) { showToast("Please enter owner name in English only.", "warning"); return; }
-    setForm((f) => ({ ...f, ownerName: value }));
+    const v = e.target.value;
+    if (v.startsWith(" ")) { showToast("Owner name cannot start with a space.", "warning"); return; }
+    if (/\d/.test(v)) { showToast("Owner name cannot contain numbers.", "warning"); return; }
+    if (/[\u0900-\u097F]/.test(v)) { showToast("Please enter owner name in English only.", "warning"); return; }
+    setForm((f) => ({ ...f, ownerName: v }));
   };
 
   const handleAddressChange = (e) => {
-    const value = e.target.value;
-    if (value.startsWith(" ")) { showToast("Address cannot start with a space.", "warning"); return; }
-    setForm((f) => ({ ...f, address: value }));
+    const v = e.target.value;
+    if (v.startsWith(" ")) { showToast("Address cannot start with a space.", "warning"); return; }
+    setForm((f) => ({ ...f, address: v }));
   };
 
   const validateForm = () => {
@@ -221,24 +385,22 @@ export default function Outlet() {
     if (!form.outletType) { showToast("Outlet type is required.", "error"); return false; }
     if (!form.ownerName.trim()) { showToast("Owner name is required.", "error"); return false; }
     if (!form.address.trim()) { showToast("Address is required.", "error"); return false; }
-    if (!Object.values(form.mappings).some((pids) => pids.length > 0)) {
+    if (!Object.values(form.mappings).some((p) => p.length > 0)) {
       showToast("At least one division and product must be selected.", "error"); return false;
     }
     return true;
   };
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetchMetadata(controller.signal);
-    return () => controller.abort();
+    const c = new AbortController();
+    fetchMetadata(c.signal);
+    return () => c.abort();
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const delay = setTimeout(() => {
-      fetchOutletsData(false, controller.signal);
-    }, 800);
-    return () => { clearTimeout(delay); controller.abort(); };
+    const c = new AbortController();
+    const t = setTimeout(() => fetchOutletsData(false, c.signal), 600);
+    return () => { clearTimeout(t); c.abort(); };
   }, [page, pageSize, search, locationFilter, typeFilter, divisionFilter, productFilter]);
 
   const extractList = (val) => {
@@ -251,14 +413,12 @@ export default function Outlet() {
   };
 
   const fetchMetadata = async (signal) => {
-    try {
-      const [lRes, dRes] = await Promise.allSettled([
-        getLocations(0, 1000, "", signal),
-        getDivisions(0, 1000, "", signal),
-      ]);
-      if (lRes.status === "fulfilled") setLocations(extractList(lRes.value).map(l => ({ ...l, name: l.name || l.locationName })));
-      if (dRes.status === "fulfilled") setDivisions(extractList(dRes.value).map(d => ({ ...d, name: d.name || d.divisionName })));
-    } catch(e) {}
+    const [lRes, dRes] = await Promise.allSettled([
+      getLocations(0, 1000, "", signal),
+      getDivisions(0, 1000, "", null, null, null, signal),
+    ]);
+    if (lRes.status === "fulfilled") setLocations(extractList(lRes.value).map((l) => ({ ...l, name: l.name || l.locationName })));
+    if (dRes.status === "fulfilled") setDivisions(extractList(dRes.value).map((d) => ({ ...d, name: d.name || d.divisionName })));
   };
 
   const fetchOutletsData = async (silent = false, signal) => {
@@ -270,55 +430,52 @@ export default function Outlet() {
         outletType: typeFilter || undefined,
         divisionId: divisionFilter || undefined,
       };
-      
       const oRes = await getOutlets(page - 1, pageSize, search, filters, signal);
-      
       setTotalPages(oRes.totalPages || 1);
       setTotalElements(oRes.totalElements || 0);
 
       const raw = extractList(oRes);
-
       const enriched = raw.map((o) => {
-          let divObjs = [];
-          if (Array.isArray(o.divisions)) {
-            divObjs = o.divisions;
-          } else if (Array.isArray(o.mappings) && o.mappings.length > 0) {
-            const divisionMap = new Map();
-            o.mappings.forEach((mapping) => {
-              const divId = mapping.divisionId || mapping.division?.id;
-              const divName = mapping.divisionName || mapping.division?.name;
-              if (divId) {
-                if (!divisionMap.has(divId)) divisionMap.set(divId, { id: divId, name: divName, products: [] });
-                const prodId = mapping.productId || mapping.product?.id;
-                const prodName = mapping.productName || mapping.product?.name;
-                const prodCode = mapping.productCode || mapping.product?.productCode;
-                if (prodId) divisionMap.get(divId).products.push({ id: prodId, name: prodName, productCode: prodCode });
-              }
-            });
-            divObjs = Array.from(divisionMap.values());
-          } else if (o.division) {
-            divObjs = [o.division];
-          }
-
-          let allProducts = [];
-          divObjs.forEach((d) => {
-            if (Array.isArray(d.products))
-              allProducts = allProducts.concat(d.products.map((p) => ({ ...p, divisionName: d.name })));
+        let divObjs = [];
+        if (Array.isArray(o.divisions)) {
+          divObjs = o.divisions;
+        } else if (Array.isArray(o.mappings) && o.mappings.length > 0) {
+          const dm = new Map();
+          o.mappings.forEach((m) => {
+            const divId = m.divisionId || m.division?.id;
+            const divName = m.divisionName || m.division?.name;
+            if (divId) {
+              if (!dm.has(divId)) dm.set(divId, { id: divId, name: divName, products: [] });
+              const pId = m.productId || m.product?.id;
+              const pName = m.productName || m.product?.name;
+              const pCode = m.productCode || m.product?.productCode;
+              if (pId) dm.get(divId).products.push({ id: pId, name: pName, productCode: pCode });
+            }
           });
+          divObjs = Array.from(dm.values());
+        } else if (o.division) {
+          divObjs = [o.division];
+        }
 
-          return {
-            ...o,
-            locationName: o.locationName || o.location?.name || null,
-            divisions: divObjs,
-            divisionIds: divObjs.map((d) => d.id).filter(Boolean),
-            divisionNames: divObjs.map((d) => d.name).filter(Boolean),
-            productNames: allProducts.map((p) => p.name).filter(Boolean),
-            allProducts,
-            ownerName: o.ownerName ?? null,
-            address: o.address ?? null,
-          };
+        let allProducts = [];
+        divObjs.forEach((d) => {
+          if (Array.isArray(d.products))
+            allProducts = allProducts.concat(d.products.map((p) => ({ ...p, divisionName: d.name })));
         });
-        setOutlets(enriched);
+
+        return {
+          ...o,
+          locationName: o.locationName || o.location?.name || null,
+          divisions: divObjs,
+          divisionIds: divObjs.map((d) => d.id).filter(Boolean),
+          divisionNames: divObjs.map((d) => d.name).filter(Boolean),
+          productNames: allProducts.map((p) => p.name).filter(Boolean),
+          allProducts,
+          ownerName: o.ownerName ?? null,
+          address: o.address ?? null,
+        };
+      });
+      setOutlets(enriched);
     } catch (e) {
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
     } finally {
@@ -326,23 +483,17 @@ export default function Outlet() {
     }
   };
 
-  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
-  // Call when an edit/add happens
-  const fetchAll = async (silent = false) => {
-    await fetchOutletsData(silent);
-  };
+  const fetchAll = (silent = false) => fetchOutletsData(silent);
 
   const handleDivisionSelect = async (divisionId) => {
     if (!divisionId) return;
     let division = divisions.find((d) => d.id == divisionId);
     if (!division || selectedDivisions.find((d) => d.id == divisionId)) return;
-    // Fetch products for this division if not already loaded
     if (!division.products || division.products.length === 0) {
       try {
         const full = await getDivisionById(divisionId);
         if (full) division = { ...division, products: full.products || [] };
-      } catch { /* use empty products */ }
+      } catch { /* empty */ }
     }
     const next = [...selectedDivisions, division];
     setSelectedDivisions(next);
@@ -357,12 +508,10 @@ export default function Outlet() {
     updateAvailableProducts(next);
   };
 
-  const updateAvailableProducts = (divisionList) => {
-    setAvailableProducts(
-      divisionList.flatMap((d) =>
-        (d.products || []).map((p) => ({ ...p, divisionId: d.id, divisionName: d.name, displayName: `${p.name} (${d.name})` }))
-      )
-    );
+  const updateAvailableProducts = (list) => {
+    setAvailableProducts(list.flatMap((d) =>
+      (d.products || []).map((p) => ({ ...p, divisionId: d.id, divisionName: d.name, displayName: `${p.name} (${d.name})` }))
+    ));
   };
 
   const handleProductSelect = (productId) => {
@@ -372,9 +521,8 @@ export default function Outlet() {
     const divisionId = product.divisionId;
     setForm((f) => {
       const curr = f.mappings[divisionId] || [];
-      if (!curr.includes(Number(productId))) {
+      if (!curr.includes(Number(productId)))
         return { ...f, mappings: { ...f.mappings, [divisionId]: [...curr, Number(productId)] } };
-      }
       return f;
     });
   };
@@ -393,7 +541,11 @@ export default function Outlet() {
     const mappings = Object.entries(form.mappings).flatMap(([divId, prodIds]) =>
       prodIds.map((pid) => ({ divisionId: Number(divId), productId: Number(pid) }))
     );
-    const payload = { outletName: form.outletName.trim(), address: form.address.trim(), locationId: locId, outletType: form.outletType, ownerName: form.ownerName.trim(), mappings };
+    const payload = {
+      outletName: form.outletName.trim(), address: form.address.trim(),
+      locationId: locId, outletType: form.outletType,
+      ownerName: form.ownerName.trim(), mappings,
+    };
     if (id) payload.id = id;
     return payload;
   };
@@ -414,10 +566,11 @@ export default function Outlet() {
 
   const openEditModal = async (o) => {
     const locs = await refreshLocations();
-    const locId = o.locationId ? String(o.locationId) : String(locs.find((l) => l.name === (o.locationName || ""))?.id ?? "");
+    const locId = o.locationId
+      ? String(o.locationId)
+      : String(locs.find((l) => l.name === (o.locationName || ""))?.id ?? "");
     const mappings = {};
     const selectedDivs = [];
-    // Fetch full division data (with all products) for each division in the outlet
     for (const d of (o.divisions ?? [])) {
       mappings[d.id] = (d.products ?? []).map((p) => p.id);
       try {
@@ -427,7 +580,11 @@ export default function Outlet() {
     }
     setSelectedDivisions(selectedDivs);
     updateAvailableProducts(selectedDivs);
-    setForm({ outletName: o.outletName ?? "", address: o.address ?? "", locationId: locId, locationName: o.locationName ?? "", mappings, outletType: o.outletType ?? "", ownerName: o.ownerName ?? "" });
+    setForm({
+      outletName: o.outletName ?? "", address: o.address ?? "", locationId: locId,
+      locationName: o.locationName ?? "", mappings, outletType: o.outletType ?? "",
+      ownerName: o.ownerName ?? "",
+    });
     setEditModal(o);
     setIsFormView(true);
   };
@@ -458,22 +615,6 @@ export default function Outlet() {
     } finally { setSaving(false); }
   };
 
-  const allFilterProducts = useMemo(() => {
-    const list = divisions.flatMap((d) =>
-      (d.products || []).map((p) => ({ ...p, name: `${p.name} (${d.name})` }))
-    );
-    // Remove duplicates by id
-    const unique = [];
-    const seen = new Set();
-    list.forEach(p => {
-      if (!seen.has(p.id)) {
-        seen.add(p.id);
-        unique.push(p);
-      }
-    });
-    return unique;
-  }, [divisions]);
-
   const handleDelete = async () => {
     setSaving(true);
     try {
@@ -486,168 +627,120 @@ export default function Outlet() {
     } finally { setSaving(false); }
   };
 
-  const filtered = outlets; // backend already filtered
+  const allFilterProducts = useMemo(() => {
+    const list = divisions.flatMap((d) =>
+      (d.products || []).map((p) => ({ ...p, name: `${p.name} (${d.name})` }))
+    );
+    const unique = [];
+    const seen = new Set();
+    list.forEach((p) => { if (!seen.has(p.id)) { seen.add(p.id); unique.push(p); } });
+    return unique;
+  }, [divisions]);
 
-  const paginated = outlets; // backend already paginated
+  const filtered = outlets;
+  const paginated = outlets;
   const start = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalElements);
+  const hasActiveFilters = !!(locationFilter || typeFilter || divisionFilter || productFilter || search);
+  const isEdit = !!editModal;
 
-  /* ── Form Fields ── */
-  const renderFormFields = () => (
-    <Stack spacing={3}>
-      {/* Row 1 */}
-      <Grid container spacing={3}>
+  /* ─── Form Fields (shared) ─── */
+  const renderDivisionSection = () => (
+    <Box>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth size="small" label="Outlet Name" required
-            name="outletName" value={form.outletName} onChange={handleOutletNameChange}
-            placeholder="e.g. Main Branch" />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField fullWidth size="small" label="Owner Name" required
-            name="ownerName" value={form.ownerName} onChange={handleOwnerNameChange}
-            placeholder="e.g. John Doe" />
-        </Grid>
-      </Grid>
-
-      {/* Row 2 */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>
-            Location <span style={{ color: "#ef4444" }}>*</span>
-          </Typography>
+          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
           <SearchableSelect
-            options={locations}
-            value={form.locationId}
-            onChange={(id, name) => setForm((f) => ({ ...f, locationId: id, locationName: name }))}
-            placeholder="— Select location —"
-            searchPlaceholder="Search locations..."
+            options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
+            value="" onChange={handleDivisionSelect}
+            placeholder="— Select division —" searchPlaceholder="Search divisions..."
           />
-          {locations.length === 0 && (
-            <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>
-              ⚠️ No locations loaded.
-            </Typography>
-          )}
         </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>
-            Outlet Type <span style={{ color: "#ef4444" }}>*</span>
-          </Typography>
+          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
           <SearchableSelect
-            options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
-            value={form.outletType}
-            onChange={(id) => setForm((f) => ({ ...f, outletType: id }))}
-            placeholder="— Select type —"
-            searchPlaceholder="Search types..."
+            options={availableProducts.filter((p) => !(form.mappings[p.divisionId] || []).includes(p.id))}
+            value="" onChange={handleProductSelect}
+            placeholder="— Select product —" searchPlaceholder="Search products..."
+            disabled={selectedDivisions.length === 0}
           />
         </Grid>
       </Grid>
 
-      {/* Row 3 */}
-      <TextField fullWidth size="small" label="Address" required multiline rows={3}
-        name="address" value={form.address} onChange={handleAddressChange}
-        placeholder="e.g. 123 Main St, City" />
-
-      {/* Row 4 — Divisions & Products */}
-      <Box>
-        <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 700, mb: 1 }}>
-          Divisions & Products <span style={{ color: "#ef4444" }}>*</span>
-          <Typography component="span" variant="caption" sx={{ color: "#94a3b8", fontWeight: 400, ml: 1 }}>
-            (select a division, then pick its products)
-          </Typography>
-        </Typography>
-
-        <Grid container spacing={3} sx={{ mb: 2 }}>
-          <Grid item xs={12} md={6}>
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
-            <SearchableSelect
-              options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
-              value=""
-              onChange={handleDivisionSelect}
-              placeholder="— Select division —"
-              searchPlaceholder="Search divisions..."
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
-            <SearchableSelect
-              options={availableProducts.filter((p) => !(form.mappings[p.divisionId] || []).includes(p.id))}
-              value=""
-              onChange={handleProductSelect}
-              placeholder="— Select product —"
-              searchPlaceholder="Search products..."
-              disabled={selectedDivisions.length === 0}
-            />
-          </Grid>
-        </Grid>
-
-        {selectedDivisions.length > 0 && (
-          <Stack spacing={1.5}>
-            {selectedDivisions.map((division) => {
-              const selectedProducts = (form.mappings[division.id] || [])
-                .map((pid) => availableProducts.find((p) => p.id === pid))
-                .filter(Boolean);
-              return (
-                <Paper key={division.id} elevation={0}
-                  sx={{ border: "1px solid #e2e8f0", borderRadius: 2, overflow: "hidden" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-                    px: 2, py: 1, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: "#1e293b" }}>{division.name}</Typography>
-                    <IconButton size="small" onClick={() => removeDivision(division.id)}
-                      sx={{ color: "#ef4444", p: 0.3 }}>
-                      <CloseIcon sx={{ fontSize: 14 }} />
-                    </IconButton>
+      {selectedDivisions.length === 0 ? (
+        <Box sx={{ py: 4, textAlign: "center", border: "2px dashed #e2e8f0", borderRadius: 3, bgcolor: "#fafbff" }}>
+          <GridViewIcon sx={{ fontSize: 36, color: "#c7d2fe", mb: 1 }} />
+          <Typography variant="body2" sx={{ color: "#94a3b8" }}>No divisions added. Select one above.</Typography>
+        </Box>
+      ) : (
+        <Stack spacing={1.5}>
+          {selectedDivisions.map((div) => {
+            const selProds = (form.mappings[div.id] || [])
+              .map((pid) => availableProducts.find((p) => p.id === pid))
+              .filter(Boolean);
+            return (
+              <Paper key={div.id} elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                  px: 2, py: 1.25, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#4f46e5" }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>{div.name}</Typography>
+                    <Chip label={`${selProds.length} product${selProds.length !== 1 ? "s" : ""}`} size="small"
+                      sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontWeight: 700, height: 20, fontSize: "0.7rem" }} />
                   </Box>
-                  <Box sx={{ p: 1.5 }}>
-                    {selectedProducts.length === 0 ? (
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products selected</Typography>
-                    ) : (
+                  <IconButton size="small" onClick={() => removeDivision(div.id)}
+                    sx={{ color: "#ef4444", "&:hover": { bgcolor: "#fef2f2" }, borderRadius: "8px" }}>
+                    <CloseIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Box>
+                <Box sx={{ p: 2 }}>
+                  {selProds.length === 0
+                    ? <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products selected for this division</Typography>
+                    : (
                       <Stack direction="row" flexWrap="wrap" gap={0.75}>
-                        {selectedProducts.map((product) => (
-                          <Chip key={product.id} label={product.name} size="small"
-                            onDelete={() => removeProduct(division.id, product.id)}
-                            sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 600, fontSize: "0.72rem" }} />
+                        {selProds.map((p) => (
+                          <Chip key={p.id} label={p.name} size="small"
+                            onDelete={() => removeProduct(div.id, p.id)}
+                            sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontWeight: 600, fontSize: "0.74rem" }} />
                         ))}
                       </Stack>
                     )}
-                  </Box>
-                </Paper>
-              );
-            })}
-          </Stack>
-        )}
-      </Box>
-    </Stack>
+                </Box>
+              </Paper>
+            );
+          })}
+        </Stack>
+      )}
+    </Box>
   );
 
-  /* ── Full-page form panel ── */
-  const isFormOpen = isFormView;
-  const isEdit = !!editModal;
-
+  /* ─── Full-page Form ─── */
   const renderFormPage = () => (
-    <Box className="animate-fade-in" sx={{ mt: 2 }}>
-      {/* ── Top bar ── */}
+    <Box>
+      {/* Top bar */}
       <Box sx={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        px: 4, py: 2.5,
-        bgcolor: "#fff",
+        px: 4, py: 2.5, bgcolor: "#fff",
         borderBottom: "1px solid #e2e8f0",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-        flexShrink: 0,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
       }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <IconButton
             onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}
-            sx={{ bgcolor: "#f1f5f9", "&:hover": { bgcolor: "#e2e8f0" }, borderRadius: 2 }}>
+            sx={{ bgcolor: "#f1f5f9", "&:hover": { bgcolor: "#e2e8f0" }, borderRadius: "10px" }}>
             <ArrowBackIcon sx={{ fontSize: 20, color: "#475569" }} />
           </IconButton>
-          <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: "flex", alignItems: "center", justifyContent: "center",
-            background: isEdit ? "linear-gradient(135deg,#8b5cf6,#6366f1)" : "linear-gradient(135deg,#6366f1,#06b6d4)",
-            boxShadow: isEdit ? "0 4px 14px rgba(139,92,246,0.35)" : "0 4px 14px rgba(99,102,241,0.35)" }}>
+          <Box sx={{
+            width: 44, height: 44, borderRadius: "13px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: isEdit ? "linear-gradient(135deg, #7c3aed, #4f46e5)" : "linear-gradient(135deg, #4f46e5, #0ea5e9)",
+            boxShadow: isEdit ? "0 4px 14px rgba(124,58,237,0.35)" : "0 4px 14px rgba(79,70,229,0.35)",
+          }}>
             {isEdit ? <EditIcon sx={{ fontSize: 20, color: "#fff" }} /> : <StorefrontIcon sx={{ fontSize: 20, color: "#fff" }} />}
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>
-              {isEdit ? `Edit Outlet — ${editModal.outletName}` : "Add New Outlet"}
+              {isEdit ? `Edit — ${editModal.outletName}` : "Add New Outlet"}
             </Typography>
             <Typography variant="caption" sx={{ color: "#64748b" }}>
               {isEdit ? "Update the outlet details below" : "Fill in the details to register a new outlet"}
@@ -656,86 +749,74 @@ export default function Outlet() {
         </Box>
         <Box sx={{ display: "flex", gap: 1.5 }}>
           <Button variant="outlined" color="inherit"
-            sx={{ color: "#64748b", borderColor: "#e2e8f0", fontWeight: 600, borderRadius: 2 }}
+            sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "10px" }}
             onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            startIcon={saving ? null : (isEdit ? <SaveIcon /> : <AddIcon />)}
-            disabled={saving}
-            onClick={isEdit ? handleUpdate : handleAdd}
-            sx={{
-              bgcolor: isEdit ? "#8b5cf6" : "#6366f1",
-              "&:hover": { bgcolor: isEdit ? "#7c3aed" : "#4f46e5" },
-              color: "#fff", fontWeight: 600, borderRadius: 2, boxShadow: "none",
-              minWidth: 140,
-            }}>
+          <Button variant="contained" startIcon={saving ? null : (isEdit ? <SaveIcon /> : <AddIcon />)}
+            disabled={saving} onClick={isEdit ? handleUpdate : handleAdd}
+            sx={{ bgcolor: isEdit ? "#7c3aed" : "#4f46e5", "&:hover": { bgcolor: isEdit ? "#6d28d9" : "#4338ca" },
+              color: "#fff", borderRadius: "10px", boxShadow: "none", minWidth: 140 }}>
             {saving ? "Saving…" : (isEdit ? "Save Changes" : "Add Outlet")}
           </Button>
         </Box>
       </Box>
 
-      {/* ── Scrollable content ── */}
-      <Box sx={{ flex: 1, overflowY: "auto", px: { xs: 3, md: 6 }, py: 4 }}>
+      {/* Scrollable Content */}
+      <Box sx={{ px: { xs: 3, md: 6 }, py: 4 }}>
         <Box sx={{ maxWidth: 900, mx: "auto" }}>
-          {/* Section: Basic Info */}
-          <Box className="form-section-1" sx={{ mb: 4 }}>
+
+          {/* Section 1 */}
+          <Box sx={{ mb: 4 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: 2, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex",
-                alignItems: "center", justifyContent: "center", boxShadow: "0 3px 10px rgba(99,102,241,0.3)" }}>
+              <Box sx={{ width: 34, height: 34, borderRadius: "10px",
+                background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 3px 10px rgba(79,70,229,0.3)" }}>
                 <HomeWorkIcon sx={{ fontSize: 18, color: "#fff" }} />
               </Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e293b", lineHeight: 1.1 }}>Basic Information</Typography>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.1 }}>Basic Information</Typography>
                 <Typography variant="caption" sx={{ color: "#94a3b8" }}>Outlet identity and contact details</Typography>
               </Box>
             </Box>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid #e2e8f0", bgcolor: "#fff",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid #e8eaf6", bgcolor: "#fff" }}>
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                   <TextField fullWidth size="small" label="Outlet Name" required
-                    name="outletName" value={form.outletName} onChange={handleOutletNameChange}
+                    value={form.outletName} onChange={handleOutletNameChange}
                     placeholder="e.g. Main Branch"
-                    InputProps={{ startAdornment: <InputAdornment position="start"><StorefrontIcon sx={{ fontSize: 16, color: "#6366f1" }} /></InputAdornment> }} />
+                    InputProps={{ startAdornment: <InputAdornment position="start"><StorefrontIcon sx={{ fontSize: 16, color: "#4f46e5" }} /></InputAdornment> }} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField fullWidth size="small" label="Owner Name" required
-                    name="ownerName" value={form.ownerName} onChange={handleOwnerNameChange}
+                    value={form.ownerName} onChange={handleOwnerNameChange}
                     placeholder="e.g. John Doe"
-                    InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 16, color: "#8b5cf6" }} /></InputAdornment> }} />
+                    InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 16, color: "#7c3aed" }} /></InputAdornment> }} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
                     <MapIcon sx={{ fontSize: 14, color: "#10b981" }} /> Location <span style={{ color: "#ef4444" }}>*</span>
                   </Typography>
                   <SearchableSelect
-                    options={locations}
-                    value={form.locationId}
+                    options={locations} value={form.locationId}
                     onChange={(id, name) => setForm((f) => ({ ...f, locationId: id, locationName: name }))}
-                    placeholder="— Select location —"
-                    searchPlaceholder="Search locations..."
+                    placeholder="— Select location —" searchPlaceholder="Search locations..."
                   />
-                  {locations.length === 0 && (
-                    <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>⚠️ No locations loaded.</Typography>
-                  )}
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
                     <CategoryIcon sx={{ fontSize: 14, color: "#f59e0b" }} /> Outlet Type <span style={{ color: "#ef4444" }}>*</span>
                   </Typography>
                   <SearchableSelect
-                    options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
-                    value={form.outletType}
+                    options={OUTLET_TYPES.map((t) => ({ id: t, name: t }))} value={form.outletType}
                     onChange={(id) => setForm((f) => ({ ...f, outletType: id }))}
-                    placeholder="— Select type —"
-                    searchPlaceholder="Search types..."
+                    placeholder="— Select type —" searchPlaceholder="Search types..."
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField fullWidth size="small" label="Address" required multiline rows={3}
-                    name="address" value={form.address} onChange={handleAddressChange}
+                    value={form.address} onChange={handleAddressChange}
                     placeholder="e.g. 123 Main St, City"
                     InputProps={{ startAdornment: <InputAdornment position="start" sx={{ mt: "-44px", alignSelf: "flex-start", pt: "10px" }}><LocationOnIcon sx={{ fontSize: 16, color: "#ef4444" }} /></InputAdornment> }} />
                 </Grid>
@@ -743,215 +824,250 @@ export default function Outlet() {
             </Paper>
           </Box>
 
-          {/* Section: Divisions & Products */}
-          <Box className="form-section-2">
+          {/* Section 2 */}
+          <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: 2, background: "linear-gradient(135deg,#10b981,#06b6d4)", display: "flex",
-                alignItems: "center", justifyContent: "center", boxShadow: "0 3px 10px rgba(16,185,129,0.3)" }}>
+              <Box sx={{ width: 34, height: 34, borderRadius: "10px",
+                background: "linear-gradient(135deg, #10b981, #0ea5e9)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 3px 10px rgba(16,185,129,0.3)" }}>
                 <GridViewIcon sx={{ fontSize: 18, color: "#fff" }} />
               </Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e293b", lineHeight: 1.1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.1 }}>
                   Divisions & Products <span style={{ color: "#ef4444" }}>*</span>
                 </Typography>
                 <Typography variant="caption" sx={{ color: "#94a3b8" }}>Select a division, then pick its products</Typography>
               </Box>
             </Box>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid #e2e8f0", bgcolor: "#fff" }}>
-              <Grid container spacing={3} sx={{ mb: 2 }}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
-                  <SearchableSelect
-                    options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
-                    value=""
-                    onChange={handleDivisionSelect}
-                    placeholder="— Select division —"
-                    searchPlaceholder="Search divisions..."
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
-                  <SearchableSelect
-                    options={availableProducts.filter((p) => !(form.mappings[p.divisionId] || []).includes(p.id))}
-                    value=""
-                    onChange={handleProductSelect}
-                    placeholder="— Select product —"
-                    searchPlaceholder="Search products..."
-                    disabled={selectedDivisions.length === 0}
-                  />
-                </Grid>
-              </Grid>
-
-              {selectedDivisions.length === 0 ? (
-                <Box sx={{ py: 4, textAlign: "center", border: "2px dashed #e2e8f0", borderRadius: 2 }}>
-                  <GridViewIcon sx={{ fontSize: 36, color: "#cbd5e1", mb: 1 }} />
-                  <Typography variant="body2" sx={{ color: "#94a3b8" }}>No divisions added yet. Select a division above to get started.</Typography>
-                </Box>
-              ) : (
-                <Stack spacing={1.5}>
-                  {selectedDivisions.map((division) => {
-                    const selectedProducts = (form.mappings[division.id] || [])
-                      .map((pid) => availableProducts.find((p) => p.id === pid))
-                      .filter(Boolean);
-                    return (
-                      <Paper key={division.id} elevation={0}
-                        sx={{ border: "1px solid #e2e8f0", borderRadius: 2, overflow: "hidden" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-                          px: 2, py: 1.25, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#6366f1" }} />
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>{division.name}</Typography>
-                            <Chip label={`${selectedProducts.length} product${selectedProducts.length !== 1 ? "s" : ""}`}
-                              size="small" sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 700, height: 20, fontSize: "0.7rem" }} />
-                          </Box>
-                          <IconButton size="small" onClick={() => removeDivision(division.id)}
-                            sx={{ color: "#ef4444", "&:hover": { bgcolor: "#fef2f2" } }}>
-                            <CloseIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
-                        </Box>
-                        <Box sx={{ p: 2 }}>
-                          {selectedProducts.length === 0 ? (
-                            <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products selected for this division</Typography>
-                          ) : (
-                            <Stack direction="row" flexWrap="wrap" gap={0.75}>
-                              {selectedProducts.map((product) => (
-                                <Chip key={product.id} label={product.name} size="small"
-                                  onDelete={() => removeProduct(division.id, product.id)}
-                                  sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontWeight: 600, fontSize: "0.75rem" }} />
-                              ))}
-                            </Stack>
-                          )}
-                        </Box>
-                      </Paper>
-                    );
-                  })}
-                </Stack>
-              )}
+            <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid #e8eaf6", bgcolor: "#fff" }}>
+              {renderDivisionSection()}
             </Paper>
           </Box>
+
         </Box>
       </Box>
     </Box>
   );
 
-  return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
+  /* ─── Card component ─── */
+  const OutletCard = ({ o, i }) => {
+    const tc = TYPE_META[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #94a3b8, #64748b)", shadow: "rgba(100,116,139,0.3)" };
+    const IconComponent = tc.icon;
 
-        {/* ── Hero ── */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>
-            <TypingText text="Outlet Management" />
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button variant="outlined" startIcon={<UploadFileIcon />}
-              sx={{ borderColor: "#6366f1", color: "#6366f1", fontWeight: 600, textTransform: "none", borderRadius: 2,
-                "&:hover": { bgcolor: "#eef2ff", borderColor: "#6366f1" } }}
-              onClick={() => setBulkOpen(true)}>
-              Bulk Upload
-            </Button>
-            <ExportMenu getData={() => formatOutletData(filtered)} filename="outlets" title="Outlets Report" backendType="outlets" />
-            <Button variant="contained" startIcon={<AddIcon />} color="primary"
-              sx={{ boxShadow: "none", "&:hover": { boxShadow: "none" } }}
-              onClick={openAddModal}>
-              Add Outlet
-            </Button>
+    return (
+      <GlassCard elevation={0} sx={{ p: "22px 20px 18px" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
+          <Box sx={{
+            width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center",
+            background: tc.iconBg,
+            color: "#fff", borderRadius: "13px",
+            boxShadow: `0 4px 12px ${tc.shadow}`,
+          }}>
+            <IconComponent sx={{ fontSize: 22 }} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" sx={{
+              color: "#94a3b8", fontWeight: 700,
+              bgcolor: "#f8fafc", border: "1px solid #e2e8f0",
+              borderRadius: "20px", px: "9px", py: "2px",
+            }}>
+              #{(page - 1) * pageSize + i + 1}
+            </Typography>
           </Box>
         </Box>
 
-        {isFormView && (
-          <Box sx={{ mb: 4 }}>
-            {renderFormPage()}
-          </Box>
+        <Typography sx={{ fontWeight: 800, fontSize: "0.96rem", color: "#0f172a", mb: "3px" }}>
+          {o.outletName}
+        </Typography>
+        {o.outletCode && (
+          <Typography variant="caption" sx={{ color: "#94a3b8", fontFamily: "monospace", display: "block", mb: 0.75 }}>
+            {o.outletCode}
+          </Typography>
         )}
 
-        {/* ── Stats ── */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-          <StatCard label="Total Outlets" value={loading ? "—" : outlets.length} color="#4f46e5" bg="#eef2ff" icon={<HomeWorkIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%)" border="#e0e7ff" />
-          <StatCard label="Filtered" value={loading ? "—" : filtered.length} color="#15803d" bg="#ecfdf5" icon={<SearchIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" border="#dcfce7" />
-          <StatCard label="Locations Used" value={loading ? "—" : [...new Set(outlets.map((o) => o.locationName).filter(Boolean))].length} color="#b45309" bg="#fffbeb" icon={<LocationOnIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" border="#fef3c7" />
-          <StatCard label="Types" value={loading ? "—" : [...new Set(outlets.map((o) => o.outletType).filter(Boolean))].length} color="#0891b2" bg="#ecfeff" icon={<GridViewIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #ecfeff 100%)" border="#cffafe" />
+        <Stack direction="row" spacing={0.75} flexWrap="wrap" sx={{ mb: 1 }}>
+          {o.outletType && <TypeBadge type={o.outletType} />}
+          {o.locationName && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <LocationOnIcon sx={{ fontSize: 13, color: "#94a3b8" }} />
+              <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{o.locationName}</Typography>
+            </Box>
+          )}
         </Stack>
 
-        {/* ── Error ── */}
-        {error && <Alert severity="error" icon={<WarningAmberIcon />} sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+        {o.divisionNames?.length > 0 && (
+          <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mb: 0.75 }}>
+            {o.divisionNames.map((d, idx) => (
+              <Chip key={idx} label={d} size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }} />
+            ))}
+          </Stack>
+        )}
+        {o.productNames?.length > 0 && (
+          <Stack direction="row" flexWrap="wrap" gap={0.5} sx={{ mb: 0.75 }}>
+            {o.productNames.slice(0, 3).map((p, idx) => (
+              <Chip key={idx} label={p} size="small" sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontSize: "0.7rem" }} />
+            ))}
+            {o.productNames.length > 3 && (
+              <Chip label={`+${o.productNames.length - 3}`} size="small" sx={{ bgcolor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }} />
+            )}
+          </Stack>
+        )}
+        {o.ownerName && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+            <PersonIcon sx={{ fontSize: 13, color: "#94a3b8" }} />
+            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{o.ownerName}</Typography>
+          </Box>
+        )}
+        {o.address && (
+          <Typography variant="caption" sx={{ color: "#94a3b8", display: "block", mb: 1,
+            overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+            {o.address}
+          </Typography>
+        )}
 
-        {/* ── Toolbar ── */}
-        <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2, mb: 2 }}>
+        <Divider sx={{ my: 1.25 }} />
+        <Stack direction="row" spacing={1}>
+          <Button size="small" startIcon={<EditIcon sx={{ fontSize: 14 }} />} onClick={() => openEditModal(o)}
+            fullWidth sx={{
+              color: "#4f46e5", bgcolor: "#ede9fe", fontWeight: 700, borderRadius: "9px",
+              "&:hover": { bgcolor: "#4f46e5", color: "#fff" }, fontSize: "12px",
+            }}>
+            Edit
+          </Button>
+          <Button size="small" startIcon={<DeleteIcon sx={{ fontSize: 14 }} />} onClick={() => setDeleteModal(o)}
+            fullWidth sx={{
+              color: "#ef4444", bgcolor: "#fef2f2", fontWeight: 700, borderRadius: "9px",
+              "&:hover": { bgcolor: "#ef4444", color: "#fff" }, fontSize: "12px",
+            }}>
+            Delete
+          </Button>
+        </Stack>
+      </GlassCard>
+    );
+  };
+
+  /* ═══ RENDER ═══ */
+  return (
+    <ThemeProvider theme={theme}>
+      <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "#f8fafc", minHeight: "100vh" }}>
+
+        {/* ─── Hero ─── */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 900, color: "#0f172a", letterSpacing: "-0.4px" }}>
+              <TypingText text="Outlet Management" />
+            </Typography>
+            <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>
+              Manage and monitor all your outlet locations
+            </Typography>
+          </Box>
+          {!isFormView && (
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button variant="outlined" startIcon={<UploadFileIcon />}
+                sx={{ borderColor: "#c7d2fe", color: "#4f46e5", fontWeight: 700, borderRadius: "10px",
+                  "&:hover": { bgcolor: "#ede9fe", borderColor: "#4f46e5" } }}
+                onClick={() => setBulkOpen(true)}>
+                Bulk Upload
+              </Button>
+              <ExportMenu getData={() => formatOutletData(filtered)} filename="outlets" title="Outlets Report" backendType="outlets" />
+              <Button variant="contained" startIcon={<AddIcon />}
+                sx={{ bgcolor: "#4f46e5", "&:hover": { bgcolor: "#4338ca" },
+                  boxShadow: "0 4px 14px rgba(79,70,229,0.35)", borderRadius: "10px" }}
+                onClick={openAddModal}>
+                Add Outlet
+              </Button>
+            </Box>
+          )}
+        </Box>
+
+        {isFormView ? (
+          /* ─── Form page (Full Page with Animation) ─── */
+          <Box className="animate-fade-in">
+            <Paper elevation={0} sx={{ mb: 4, borderRadius: "20px", border: "1.5px solid #e8eaf6", overflow: "hidden" }}>
+              {renderFormPage()}
+            </Paper>
+          </Box>
+        ) : (
+          <Box className="animate-fade-in">
+            {/* ─── Stats ─── */}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+              <StatCard label="Total Outlets" value={loading ? "—" : totalElements}
+            icon={<HomeWorkIcon />}
+            gradient="linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)"
+            iconBg="linear-gradient(135deg, #4f46e5, #7c3aed)" iconColor="#4f46e5" accent="#4f46e5" />
+          <StatCard label="Filtered" value={loading ? "—" : filtered.length}
+            icon={<FilterListIcon />}
+            gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)"
+            iconBg="linear-gradient(135deg, #10b981, #059669)" iconColor="#10b981" accent="#10b981" />
+          <StatCard label="Locations Used" value={loading ? "—" : [...new Set(outlets.map((o) => o.locationName).filter(Boolean))].length}
+            icon={<LocationOnIcon />}
+            gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)"
+            iconBg="linear-gradient(135deg, #f59e0b, #d97706)" iconColor="#f59e0b" accent="#f59e0b" />
+          <StatCard label="Types" value={loading ? "—" : [...new Set(outlets.map((o) => o.outletType).filter(Boolean))].length}
+            icon={<CategoryIcon />}
+            gradient="linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)"
+            iconBg="linear-gradient(135deg, #0ea5e9, #0284c7)" iconColor="#0ea5e9" accent="#0ea5e9" />
+        </Stack>
+
+        {/* ─── Error ─── */}
+        {error && (
+          <Alert severity="error" icon={<WarningAmberIcon />} sx={{ mb: 2, borderRadius: "12px" }}>{error}</Alert>
+        )}
+
+        {/* ─── Toolbar ─── */}
+        <Paper elevation={0} sx={{ border: "1.5px solid #e8eaf6", borderRadius: "16px", p: "14px 18px", mb: 2, bgcolor: "#fff" }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
 
             {/* Search */}
-            <TextField
-              size="small" placeholder="Search by name, type, location…" value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              sx={{ minWidth: 260, flex: 1 }}
+            <TextField size="small" placeholder="Search by name, type, location…" value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  setPage(1);
+                }
+              }}
+              sx={{ minWidth: 260, flex: 1, "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
               InputProps={{
                 startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
-                endAdornment: search ? (
+                endAdornment: searchInput ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
                   </InputAdornment>
                 ) : null,
-              }}
-            />
+              }} />
 
-            {/* Filters */}
-            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ flex: 1 }}>
-              <Box sx={{ minWidth: 160 }}>
-                <SearchableSelect
-                  options={locations}
-                  value={locationFilter}
-                  onChange={(id) => { setLocationFilter(id); setPage(1); }}
-                  placeholder="All Locations"
-                  searchPlaceholder="Search locations..."
-                />
-              </Box>
+            {/* Filter Toggle */}
+            <Button
+              size="small" startIcon={<TuneIcon />}
+              variant={showFilters ? "contained" : "outlined"}
+              onClick={() => setShowFilters((v) => !v)}
+              sx={{
+                borderRadius: "10px", fontWeight: 700, height: 40, px: 2,
+                ...(showFilters
+                  ? { bgcolor: "#4f46e5", color: "#fff", "&:hover": { bgcolor: "#4338ca" } }
+                  : { borderColor: "#e2e8f0", color: "#64748b" }),
+              }}>
+              Filters {hasActiveFilters && !showFilters ? `(${[locationFilter, typeFilter, divisionFilter, productFilter].filter(Boolean).length})` : ""}
+            </Button>
 
-              <Box sx={{ minWidth: 160 }}>
-                <SearchableSelect
-                  options={OUTLET_TYPES.map(t => ({ id: t, name: t }))}
-                  value={typeFilter}
-                  onChange={(id) => { setTypeFilter(id); setPage(1); }}
-                  placeholder="All Types"
-                  searchPlaceholder="Search types..."
-                />
-              </Box>
+            {hasActiveFilters && (
+              <Button size="small" onClick={() => { setLocationFilter(""); setTypeFilter(""); setDivisionFilter(""); setProductFilter(""); setSearch(""); setSearchInput(""); setPage(1); }}
+                sx={{ color: "#ef4444", bgcolor: "#fef2f2", borderRadius: "10px", fontWeight: 700, height: 40, px: 2 }}>
+                Clear All
+              </Button>
+            )}
 
-              <Box sx={{ minWidth: 160 }}>
-                <SearchableSelect
-                  options={divisions}
-                  value={divisionFilter}
-                  onChange={(id) => { setDivisionFilter(id); setPage(1); }}
-                  placeholder="All Divisions"
-                  searchPlaceholder="Search divisions..."
-                />
-              </Box>
-
-              <Box sx={{ minWidth: 160 }}>
-                <SearchableSelect
-                  options={allFilterProducts}
-                  value={productFilter}
-                  onChange={(id) => { setProductFilter(id); setPage(1); }}
-                  placeholder="All Products"
-                  searchPlaceholder="Search products..."
-                />
-              </Box>
-
-              {(locationFilter || typeFilter || divisionFilter || productFilter || search) && (
-                <Button size="small" variant="outlined" color="inherit"
-                  sx={{ color: "#64748b", borderColor: "#e2e8f0", height: 42, borderRadius: 2, px: 2 }}
-                  onClick={() => { setLocationFilter(""); setTypeFilter(""); setDivisionFilter(""); setProductFilter(""); setSearch(""); setPage(1); }}>
-                  Clear
-                </Button>
-              )}
-            </Stack>
-
-            {/* Show entries + View toggle */}
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ ml: { md: "auto" } }}>
+            <Box sx={{ ml: { md: "auto" }, display: "flex", alignItems: "center", gap: 1.5 }}>
               <Stack direction="row" spacing={1} alignItems="center">
                 <Typography variant="body2" sx={{ color: "#64748b", whiteSpace: "nowrap" }}>Show</Typography>
                 <FormControl size="small" sx={{ minWidth: 72 }}>
-                  <Select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                  <Select value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                    sx={{ borderRadius: "10px" }}>
                     {PAGE_SIZES.map((n) => <MenuItem key={n} value={n}>{n}</MenuItem>)}
                   </Select>
                 </FormControl>
@@ -959,22 +1075,56 @@ export default function Outlet() {
               </Stack>
 
               <ToggleButtonGroup size="small" value={view} exclusive onChange={(_, v) => v && setView(v)}
-                sx={{ "& .MuiToggleButton-root": { px: 1.5, border: "1px solid #e2e8f0" } }}>
+                sx={{ "& .MuiToggleButton-root": { px: 1.5, border: "1.5px solid #e8eaf6", borderRadius: "10px !important" } }}>
                 <ToggleButton value="table"><Tooltip title="Table"><TableChartIcon fontSize="small" /></Tooltip></ToggleButton>
                 <ToggleButton value="card"><Tooltip title="Cards"><GridViewIcon fontSize="small" /></Tooltip></ToggleButton>
               </ToggleButtonGroup>
-            </Stack>
+            </Box>
           </Stack>
+
+          {/* Collapsible Filters */}
+          <Collapse in={showFilters}>
+            <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #f1f5f9" }}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} flexWrap="wrap">
+                {[
+                  { options: locations, value: locationFilter, onChange: (id) => { setLocationFilter(id); setPage(1); }, placeholder: "All Locations" },
+                  { options: OUTLET_TYPES.map((t) => ({ id: t, name: t })), value: typeFilter, onChange: (id) => { setTypeFilter(id); setPage(1); }, placeholder: "All Types" },
+                  { options: divisions, value: divisionFilter, onChange: (id) => { setDivisionFilter(id); setPage(1); }, placeholder: "All Divisions" },
+                  { options: allFilterProducts, value: productFilter, onChange: (id) => { setProductFilter(id); setPage(1); }, placeholder: "All Products" },
+                ].map((f, idx) => (
+                  <Box key={idx} sx={{ minWidth: 160 }}>
+                    <SearchableSelect
+                      options={f.options} value={f.value} onChange={f.onChange}
+                      placeholder={f.placeholder} searchPlaceholder={`Search ${f.placeholder.toLowerCase()}...`}
+                    />
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Collapse>
         </Paper>
 
-        {/* ── Table View ── */}
+        {/* Active filter chips */}
+        {hasActiveFilters && (
+          <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+            {search && <Chip label={`Search: "${search}"`} size="small" onDelete={() => setSearch("")} sx={{ bgcolor: "#ede9fe", color: "#4f46e5" }} />}
+            {locationFilter && <Chip label={`Location: ${locations.find((l) => l.id == locationFilter)?.name ?? locationFilter}`} size="small" onDelete={() => setLocationFilter("")} sx={{ bgcolor: "#d1fae5", color: "#065f46" }} />}
+            {typeFilter && <Chip label={`Type: ${typeFilter}`} size="small" onDelete={() => setTypeFilter("")} sx={{ bgcolor: "#fef3c7", color: "#92400e" }} />}
+            {divisionFilter && <Chip label={`Division: ${divisions.find((d) => d.id == divisionFilter)?.name ?? divisionFilter}`} size="small" onDelete={() => setDivisionFilter("")} sx={{ bgcolor: "#e0f2fe", color: "#075985" }} />}
+          </Stack>
+        )}
+
+        {/* ─── Loading bar ─── */}
+        {loading && <LinearProgress sx={{ mb: 2, borderRadius: "4px", bgcolor: "#ede9fe", "& .MuiLinearProgress-bar": { bgcolor: "#4f46e5" } }} />}
+
+        {/* ─── Table View ─── */}
         {view === "table" && (
-          <StyledTableContainer component={Paper}>
+          <Paper elevation={0} sx={{ borderRadius: "16px", border: "1.5px solid #e8eaf6", overflow: "hidden", mb: 2 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {["#", "Outlet Name", "Code", "Type", "Location", "Divisions", "Products", "Owner Name", "Address", "Actions"].map((h) => (
-                    <TableCell key={h}>{h}</TableCell>
+                  {["", "#", "Outlet", "Code", "Type", "Location", "Divisions", "Products", "Owner", "Actions"].map((h) => (
+                    <TableCell key={h} sx={h === "" ? { width: 40, p: "15px 8px" } : {}}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -983,19 +1133,25 @@ export default function Outlet() {
                   [1, 2, 3, 4, 5].map((i) => (
                     <TableRow key={i}>
                       {Array(10).fill(0).map((_, j) => (
-                        <TableCell key={j}><Skeleton variant="text" width={j === 1 ? 140 : 80} /></TableCell>
+                        <TableCell key={j}><Skeleton variant="text" width={j === 2 ? 130 : 70} height={18} /></TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : paginated.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={10} align="center" sx={{ py: 7 }}>
                       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-                        <HomeWorkIcon sx={{ fontSize: 48, color: "#cbd5e1" }} />
-                        <Typography color="text.secondary">{search ? "No outlets match your search" : "No outlets yet"}</Typography>
+                        <Box sx={{ width: 60, height: 60, borderRadius: "18px", bgcolor: "#f1f5f9",
+                          display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <HomeWorkIcon sx={{ fontSize: 30, color: "#cbd5e1" }} />
+                        </Box>
+                        <Typography color="text.secondary" sx={{ fontWeight: 600 }}>
+                          {search ? "No outlets match your search" : "No outlets yet"}
+                        </Typography>
                         {!search && (
-                          <Button variant="contained" size="small" startIcon={<AddIcon />} color="primary"
-                            sx={{ boxShadow: "none" }} onClick={openAddModal}>
+                          <Button variant="contained" size="small" startIcon={<AddIcon />}
+                            sx={{ bgcolor: "#4f46e5", borderRadius: "10px", boxShadow: "none" }}
+                            onClick={openAddModal}>
                             Add First Outlet
                           </Button>
                         )}
@@ -1003,229 +1159,237 @@ export default function Outlet() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginated.map((o, i) => {
-                    const tc = TYPE_COLOR[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b" };
-                    return (
-                      <StyledTableRow key={o.id}>
-                        <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(page - 1) * pageSize + i + 1}</TableCell>
+                  paginated.map((o, i) => (
+                    <>
+                      <StyledTableRow key={`row-${o.id}`}>
+                        {/* Expand toggle */}
+                        <TableCell sx={{ width: 40, p: "13px 8px" }}>
+                          <IconButton size="small"
+                            onClick={() => setExpandedRow(expandedRow === o.id ? null : o.id)}
+                            sx={{ color: "#94a3b8", bgcolor: expandedRow === o.id ? "#ede9fe" : "transparent",
+                              borderRadius: "8px", width: 28, height: 28 }}>
+                            {expandedRow === o.id
+                              ? <KeyboardArrowUpIcon sx={{ fontSize: 18, color: "#4f46e5" }} />
+                              : <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />}
+                          </IconButton>
+                        </TableCell>
+
+                        <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontSize: "12px" }}>
+                          {(page - 1) * pageSize + i + 1}
+                        </TableCell>
+
                         <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Avatar sx={{ width: 30, height: 30, fontSize: "0.75rem", fontWeight: 700, bgcolor: "#eef2ff", color: "#6366f1" }}>
-                              {o.outletName?.charAt(0).toUpperCase()}
-                            </Avatar>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>{o.outletName}</Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            {(() => {
+                              const tc = TYPE_META[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #94a3b8, #64748b)", shadow: "rgba(100,116,139,0.3)" };
+                              const IconComp = tc.icon;
+                              return (
+                                <Box sx={{
+                                  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                                  background: tc.iconBg, color: "#fff", borderRadius: "10px",
+                                  boxShadow: `0 2px 8px ${tc.shadow}`,
+                                }}>
+                                  <IconComp sx={{ fontSize: 16 }} />
+                                </Box>
+                              );
+                            })()}
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                              {o.outletName}
+                            </Typography>
                           </Box>
                         </TableCell>
+
                         <TableCell>
                           {o.outletCode
-                            ? <Chip label={o.outletCode} size="small" sx={{ bgcolor: "#f8fafc", color: "#475569", fontFamily: "monospace", fontSize: "0.72rem" }} />
+                            ? <Box sx={{ display: "inline-block", bgcolor: "#f8fafc", border: "1px solid #e2e8f0",
+                                borderRadius: "7px", px: "8px", py: "2px", fontFamily: "monospace",
+                                fontSize: "11.5px", color: "#475569", fontWeight: 700 }}>
+                                {o.outletCode}
+                              </Box>
                             : <Typography variant="body2" sx={{ color: "#cbd5e1" }}>—</Typography>}
                         </TableCell>
+
                         <TableCell>
                           {o.outletType
-                            ? <Chip label={o.outletType} size="small" sx={{ bgcolor: tc.bg, color: tc.color, fontWeight: 700 }} />
+                            ? <TypeBadge type={o.outletType} />
                             : <Typography variant="body2" sx={{ color: "#cbd5e1" }}>—</Typography>}
                         </TableCell>
+
                         <TableCell>
                           {o.locationName
-                            ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><LocationOnIcon sx={{ fontSize: 14, color: "#94a3b8" }} /><Typography variant="body2">{o.locationName}</Typography></Box>
+                            ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+                                <LocationOnIcon sx={{ fontSize: 13, color: "#10b981" }} />
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>{o.locationName}</Typography>
+                              </Box>
                             : <Typography variant="body2" sx={{ color: "#cbd5e1" }}>—</Typography>}
                         </TableCell>
+
                         <TableCell>
-                          {(!o.divisionNames || o.divisionNames.length === 0) ? (
-                            <Typography variant="body2" sx={{ color: "#cbd5e1" }}>No divisions</Typography>
-                          ) : (
-                            <Stack direction="row" sx={{ flexWrap: "wrap" }} gap={0.5}>
-                              {o.divisionNames.map((d, idx) => (
-                                <Chip key={idx} label={d || "Unknown"} size="small"
-                                  sx={{ bgcolor: "#f0fdf4", color: "#16a34a", fontSize: "0.7rem" }} />
-                              ))}
-                            </Stack>
-                          )}
+                          {!o.divisionNames?.length
+                            ? <Typography variant="body2" sx={{ color: "#cbd5e1" }}>No divisions</Typography>
+                            : <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                                {o.divisionNames.slice(0, 2).map((d, idx) => (
+                                  <Chip key={idx} label={d} size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }} />
+                                ))}
+                                {o.divisionNames.length > 2 && (
+                                  <Chip label={`+${o.divisionNames.length - 2}`} size="small" sx={{ bgcolor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }} />
+                                )}
+                              </Stack>}
                         </TableCell>
+
                         <TableCell>
-                          {(!o.productNames || o.productNames.length === 0) ? (
-                            <Typography variant="body2" sx={{ color: "#cbd5e1" }}>No products</Typography>
-                          ) : (
-                            <Stack direction="row" sx={{ flexWrap: "wrap" }} gap={0.5}>
-                              {o.productNames.map((p, idx) => (
-                                <Chip key={idx} label={p || "Unknown"} size="small"
-                                  sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontSize: "0.7rem" }} />
-                              ))}
-                            </Stack>
-                          )}
+                          {!o.productNames?.length
+                            ? <Typography variant="body2" sx={{ color: "#cbd5e1" }}>No products</Typography>
+                            : <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                                {o.productNames.slice(0, 2).map((p, idx) => (
+                                  <Chip key={idx} label={p} size="small" sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontSize: "0.7rem" }} />
+                                ))}
+                                {o.productNames.length > 2 && (
+                                  <Chip label={`+${o.productNames.length - 2}`} size="small" sx={{ bgcolor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }} />
+                                )}
+                              </Stack>}
                         </TableCell>
+
                         <TableCell>
                           {o.ownerName
-                            ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}><PersonIcon sx={{ fontSize: 14, color: "#94a3b8" }} /><Typography variant="body2">{o.ownerName}</Typography></Box>
+                            ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+                                <PersonIcon sx={{ fontSize: 13, color: "#7c3aed" }} />
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>{o.ownerName}</Typography>
+                              </Box>
                             : <Typography variant="body2" sx={{ color: "#cbd5e1" }}>—</Typography>}
                         </TableCell>
+
                         <TableCell>
-                          {o.address
-                            ? <Typography variant="body2" sx={{ color: "#475569", maxWidth: 160, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.address}</Typography>
-                            : <Typography variant="body2" sx={{ color: "#cbd5e1" }}>—</Typography>}
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={0.5}>
+                          <Stack direction="row" spacing={0.75}>
                             <Tooltip title="Edit">
                               <IconButton size="small" onClick={() => openEditModal(o)}
-                                sx={{ color: "#6366f1", bgcolor: "#eef2ff", borderRadius: 1.5, "&:hover": { bgcolor: "#e0e7ff" } }}>
-                                <EditIcon sx={{ fontSize: 16 }} />
+                                sx={{ color: "#4f46e5", bgcolor: "#ede9fe", borderRadius: "8px",
+                                  "&:hover": { bgcolor: "#4f46e5", color: "#fff" } }}>
+                                <EditIcon sx={{ fontSize: 15 }} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete">
                               <IconButton size="small" onClick={() => setDeleteModal(o)}
-                                sx={{ color: "#ef4444", bgcolor: "#fef2f2", borderRadius: 1.5, "&:hover": { bgcolor: "#fee2e2" } }}>
-                                <DeleteIcon sx={{ fontSize: 16 }} />
+                                sx={{ color: "#ef4444", bgcolor: "#fef2f2", borderRadius: "8px",
+                                  "&:hover": { bgcolor: "#ef4444", color: "#fff" } }}>
+                                <DeleteIcon sx={{ fontSize: 15 }} />
                               </IconButton>
                             </Tooltip>
                           </Stack>
                         </TableCell>
                       </StyledTableRow>
-                    );
-                  })
+
+                      {/* Expandable detail row */}
+                      {expandedRow === o.id && (
+                        <OutletDetailRow key={`exp-${o.id}`} outlet={o} colSpan={10} />
+                      )}
+                    </>
+                  ))
                 )}
               </TableBody>
             </Table>
-          </StyledTableContainer>
+          </Paper>
         )}
 
-        {/* ── Card View ── */}
+        {/* ─── Card View ─── */}
         {view === "card" && (
-          <Grid container spacing={2}>
-            {loading ? (
-              [1, 2, 3, 4, 5, 6].map((i) => (
-                <Grid xs={12} sm={6} md={4} key={i}>
-                  <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
-                    <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1 }} />
-                    <Skeleton width="60%" height={24} sx={{ mb: 0.5 }} />
-                    <Skeleton width="40%" height={18} />
-                  </Paper>
-                </Grid>
-              ))
-            ) : paginated.length === 0 ? (
-              <Grid xs={12}>
-                <Box sx={{ py: 8, textAlign: "center" }}>
-                  <HomeWorkIcon sx={{ fontSize: 56, color: "#cbd5e1", mb: 1 }} />
-                  <Typography color="text.secondary">{search ? "No outlets match your search" : "No outlets yet"}</Typography>
-                </Box>
-              </Grid>
-            ) : (
-              paginated.map((o, i) => {
-                const tc = TYPE_COLOR[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b" };
-                return (
-                  <Grid xs={12} sm={6} md={4} key={o.id}>
-                    <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, height: "100%", display: "flex", flexDirection: "column", transition: "box-shadow .2s", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,.08)" } }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
-                        <Avatar sx={{ width: 44, height: 44, fontSize: "1rem", fontWeight: 700, bgcolor: "#eef2ff", color: "#6366f1" }}>
-                          {o.outletName?.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 600 }}>#{(page - 1) * pageSize + i + 1}</Typography>
-                      </Box>
-                      <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", mb: 0.5 }}>{o.outletName}</Typography>
-                      {o.outletCode && (
-                        <Typography variant="caption" sx={{ color: "#94a3b8", fontFamily: "monospace", mb: 0.75 }}>{o.outletCode}</Typography>
-                      )}
-                      <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mb: 1 }}>
-                        {o.outletType && <Chip label={o.outletType} size="small" sx={{ bgcolor: tc.bg, color: tc.color, fontWeight: 700 }} />}
-                        {o.locationName && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                            <LocationOnIcon sx={{ fontSize: 13, color: "#94a3b8" }} />
-                            <Typography variant="caption" sx={{ color: "#64748b" }}>{o.locationName}</Typography>
-                          </Box>
-                        )}
-                      </Stack>
-
-                      {(o.divisionNames?.length > 0) && (
-                        <Stack direction="row" sx={{ flexWrap: "wrap", mb: 0.75 }} gap={0.5}>
-                          {o.divisionNames.map((d, idx) => <Chip key={idx} label={d} size="small" sx={{ bgcolor: "#f0fdf4", color: "#16a34a", fontSize: "0.7rem" }} />)}
-                        </Stack>
-                      )}
-                      {(o.productNames?.length > 0) && (
-                        <Stack direction="row" sx={{ flexWrap: "wrap", mb: 0.75 }} gap={0.5}>
-                          {o.productNames.map((p, idx) => <Chip key={idx} label={p} size="small" sx={{ bgcolor: "#eef2ff", color: "#6366f1", fontSize: "0.7rem" }} />)}
-                        </Stack>
-                      )}
-                      {o.ownerName && (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                          <PersonIcon sx={{ fontSize: 13, color: "#94a3b8" }} />
-                          <Typography variant="caption" sx={{ color: "#64748b" }}>{o.ownerName}</Typography>
-                        </Box>
-                      )}
-                      {o.address && (
-                        <Typography variant="caption" sx={{ color: "#94a3b8", mb: 1, display: "block" }}>{o.address}</Typography>
-                      )}
-
-                      <Divider sx={{ my: 1 }} />
-                      <Stack direction="row" spacing={1} sx={{ mt: "auto" }}>
-                        <Button size="small" startIcon={<EditIcon />} onClick={() => openEditModal(o)}
-                          sx={{ flex: 1, color: "#6366f1", bgcolor: "#eef2ff", "&:hover": { bgcolor: "#e0e7ff" }, fontWeight: 600 }}>Edit</Button>
-                        <Button size="small" startIcon={<DeleteIcon />} onClick={() => setDeleteModal(o)}
-                          sx={{ flex: 1, color: "#ef4444", bgcolor: "#fef2f2", "&:hover": { bgcolor: "#fee2e2" }, fontWeight: 600 }}>Delete</Button>
-                      </Stack>
+          <Grid container spacing={2.5} sx={{ mb: 2 }}>
+            {loading
+              ? [1, 2, 3, 4, 5, 6].map((i) => (
+                  <Grid item xs={12} sm={6} md={4} key={i}>
+                    <Paper elevation={0} sx={{ borderRadius: "18px", border: "1.5px solid #e8eaf6", p: 2.5 }}>
+                      <Skeleton variant="circular" width={46} height={46} sx={{ mb: 1.5 }} />
+                      <Skeleton width="60%" height={22} sx={{ mb: 0.5 }} />
+                      <Skeleton width="40%" height={18} />
                     </Paper>
                   </Grid>
-                );
-              })
-            )}
+                ))
+              : paginated.length === 0
+              ? (
+                <Grid item xs={12}>
+                  <Box sx={{ py: 8, textAlign: "center" }}>
+                    <HomeWorkIcon sx={{ fontSize: 56, color: "#c7d2fe", mb: 1 }} />
+                    <Typography color="text.secondary" sx={{ fontWeight: 600 }}>
+                      {search ? "No outlets match your search" : "No outlets yet"}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )
+              : paginated.map((o, i) => (
+                  <Grid item xs={12} sm={6} md={4} key={o.id}>
+                    <OutletCard o={o} i={i} />
+                  </Grid>
+                ))}
           </Grid>
         )}
 
-        {/* ── Pagination ── */}
+        {/* ─── Pagination ─── */}
         {!loading && totalElements > 0 && (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, flexWrap: "wrap", gap: 1 }}>
-            <Typography variant="body2" sx={{ color: "#64748b" }}>
-              Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
+          <Paper elevation={0} sx={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            px: 3, py: 1.75, borderRadius: "14px", border: "1.5px solid #e8eaf6",
+            flexWrap: "wrap", gap: 1, bgcolor: "#fff",
+          }}>
+            <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+              Showing <strong style={{ color: "#0f172a" }}>{start}–{end}</strong> of{" "}
+              <strong style={{ color: "#0f172a" }}>{totalElements}</strong> entries
             </Typography>
-            <Pagination
-              count={totalPages} page={page} onChange={(_, v) => setPage(v)}
+            <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)}
               shape="rounded" size="small"
               sx={{
-                "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600 },
-                "& .Mui-selected": { bgcolor: "#6366f1 !important", color: "#fff" },
-              }}
-            />
+                "& .MuiPaginationItem-root": { borderRadius: "9px", fontWeight: 700 },
+                "& .Mui-selected": {
+                  background: "linear-gradient(135deg, #4f46e5, #7c3aed) !important",
+                  color: "#fff",
+                  boxShadow: "0 3px 10px rgba(79,70,229,0.3)",
+                },
+              }} />
+          </Paper>
+        )}
           </Box>
         )}
 
-        {/* ── Delete Modal ── */}
+        {/* ─── Delete Dialog ─── */}
         <Dialog open={!!deleteModal} onClose={() => setDeleteModal(null)} maxWidth="xs" fullWidth>
-          <ModalIconHeader icon={<WarningAmberIcon />} title="Delete Outlet" subtitle="This action cannot be undone" accent="#ef4444"
-            onClose={() => setDeleteModal(null)} />
-          <DialogContent sx={{ pt: 2 }}>
-            <Typography variant="body2" sx={{ color: "#475569" }}>
-              Are you sure you want to delete <strong>"{deleteModal?.outletName}"</strong>?
-            </Typography>
-            <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>
-              All associated data will be permanently removed.
-            </Typography>
+          <ModalIconHeader icon={<WarningAmberIcon />} title="Delete Outlet"
+            subtitle="This action cannot be undone" accent="#ef4444" onClose={() => setDeleteModal(null)} />
+          <DialogContent sx={{ pt: 2.5 }}>
+            <Box sx={{ bgcolor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "12px", p: "14px 16px" }}>
+              <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 600, mb: 0.5 }}>
+                Are you sure you want to delete{" "}
+                <Typography component="span" sx={{ color: "#ef4444", fontWeight: 800 }}>
+                  "{deleteModal?.outletName}"
+                </Typography>?
+              </Typography>
+              <Typography variant="caption" sx={{ color: "#ef4444" }}>
+                All associated data will be permanently removed.
+              </Typography>
+            </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
+            <Button variant="outlined" color="inherit"
+              sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "10px" }}
               onClick={() => setDeleteModal(null)}>Cancel</Button>
             <Button variant="contained" color="error" startIcon={<DeleteIcon />} disabled={saving}
-              sx={{ boxShadow: "none" }} onClick={handleDelete}>
+              sx={{ borderRadius: "10px", boxShadow: "none" }} onClick={handleDelete}>
               {saving ? "Deleting…" : "Delete Outlet"}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* ── Toast ── */}
+        {/* ─── Toast ─── */}
         <Snackbar open={!!toast} autoHideDuration={4000} onClose={() => setToast(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-          <Alert
-            severity={toast?.type === "success" ? "success" : toast?.type === "warning" ? "warning" : "error"}
-            onClose={() => setToast(null)} sx={{ borderRadius: 2, fontWeight: 500 }}>
+          <Alert severity={toast?.type === "success" ? "success" : toast?.type === "warning" ? "warning" : "error"}
+            onClose={() => setToast(null)} sx={{ borderRadius: "12px", fontWeight: 600 }}>
             {toast?.message}
           </Alert>
         </Snackbar>
 
-        {/* ── Bulk Upload Modal ── */}
+        {/* ─── Bulk Upload ─── */}
         <BulkUploadModal
-          open={bulkOpen}
-          onClose={() => setBulkOpen(false)}
-          title="Bulk Upload Outlets"
-          accent="#6366f1"
+          open={bulkOpen} onClose={() => setBulkOpen(false)}
+          title="Bulk Upload Outlets" accent="#4f46e5"
           templateHeaders={["outletName", "ownerName", "address", "locationName", "outletType", "divisionNames", "productNames"]}
           templateRows={[
             ["Main Branch", "John Doe", "123 Main St", "New York", "Retail", "Electronics", "Laptop"],
@@ -1237,8 +1401,8 @@ export default function Outlet() {
             const address      = (row["address"]      || "").trim();
             const locationName = (row["locationname"] || row["locationName"] || "").trim();
             const outletType   = (row["outlettype"]   || row["outletType"]   || "").trim();
-            const divisionNamesStr = (row["divisionnames"] || row["divisionNames"] || "").trim();
-            const productNamesStr  = (row["productnames"]  || row["productNames"]  || "").trim();
+            const divNamesStr  = (row["divisionnames"] || row["divisionNames"] || "").trim();
+            const prodNamesStr = (row["productnames"]  || row["productNames"]  || "").trim();
 
             if (!outletName)  return { valid: false, error: "outletName is required" };
             if (/\d/.test(outletName)) return { valid: false, error: "outletName cannot contain numbers" };
@@ -1249,48 +1413,33 @@ export default function Outlet() {
             if (!outletType)  return { valid: false, error: "outletType is required" };
             if (!OUTLET_TYPES.includes(outletType)) return { valid: false, error: `outletType must be one of: ${OUTLET_TYPES.join(", ")}` };
 
-            const loc = locations.find(l => l.name.toLowerCase() === locationName.toLowerCase());
+            const loc = locations.find((l) => l.name.toLowerCase() === locationName.toLowerCase());
             if (!loc) return { valid: false, error: `Location not found: ${locationName}` };
 
             let mappings = [];
-            
-            if (divisionNamesStr) {
-              const divNames = divisionNamesStr.split(",").map(s => s.trim()).filter(Boolean);
-              for (let divName of divNames) {
-                const d = divisions.find(x => x.name.toLowerCase() === divName.toLowerCase());
-                if (d) {
-                  mappings.push({ divisionId: d.id, productId: null });
-                } else {
-                  return { valid: false, error: `Division not found: ${divName}` };
-                }
+            if (divNamesStr) {
+              for (let divName of divNamesStr.split(",").map((s) => s.trim()).filter(Boolean)) {
+                const d = divisions.find((x) => x.name.toLowerCase() === divName.toLowerCase());
+                if (d) mappings.push({ divisionId: d.id, productId: null });
+                else return { valid: false, error: `Division not found: ${divName}` };
               }
             }
-
-            if (productNamesStr) {
-              const prodNames = productNamesStr.split(",").map(s => s.trim()).filter(Boolean);
-              for (let prodName of prodNames) {
-                let foundProd = null;
-                let foundDivId = null;
+            if (prodNamesStr) {
+              for (let prodName of prodNamesStr.split(",").map((s) => s.trim()).filter(Boolean)) {
+                let foundProd = null, foundDivId = null;
                 for (let d of divisions) {
-                  const p = d.products?.find(x => x.name.toLowerCase() === prodName.toLowerCase() || String(x.productCode).toLowerCase() === prodName.toLowerCase());
-                  if (p) {
-                    foundProd = p;
-                    foundDivId = d.id;
-                    break;
-                  }
+                  const p = d.products?.find((x) =>
+                    x.name.toLowerCase() === prodName.toLowerCase() ||
+                    String(x.productCode).toLowerCase() === prodName.toLowerCase()
+                  );
+                  if (p) { foundProd = p; foundDivId = d.id; break; }
                 }
-                if (foundProd) {
-                  mappings.push({ divisionId: foundDivId, productId: foundProd.id });
-                } else {
-                  return { valid: false, error: `Product not found: ${prodName}` };
-                }
+                if (foundProd) mappings.push({ divisionId: foundDivId, productId: foundProd.id });
+                else return { valid: false, error: `Product not found: ${prodName}` };
               }
             }
 
-            return {
-              valid: true,
-              data: { outletName, ownerName, address, locationId: loc.id, outletType, mappings },
-            };
+            return { valid: true, data: { outletName, ownerName, address, locationId: loc.id, outletType, mappings } };
           }}
           onUpload={(rows) => bulkCreateOutlets(rows)}
           onDone={() => fetchAll(true)}

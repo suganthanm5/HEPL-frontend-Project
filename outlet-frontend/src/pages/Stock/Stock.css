@@ -2,7 +2,7 @@
    Stock Management Page CSS
 ══════════════════════════════════════════ */
 .stock-page {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
   padding: 8px 0;
 }
 
@@ -14,7 +14,7 @@
 }
 
 .stock-level-bar {
-  height: 8px;
+  height: 6px;
   border-radius: 99px;
   background: #f0ebff;
   overflow: hidden;
@@ -32,7 +32,7 @@
 .stock-level-fill.low    { background: linear-gradient(90deg, #f87171, #ef4444); }
 
 .stock-level-text {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
 }
 
@@ -44,21 +44,22 @@
 .transfer-dialog-title {
   background: linear-gradient(135deg, #7d2ae8, #a855f7);
   color: #fff;
-  padding: 20px 24px;
-  font-family: 'Poppins', sans-serif;
+  padding: 16px 20px;
+  font-family: var(--font-body);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .transfer-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #7d2ae8, #a855f7);
   color: #fff;
   margin: 0 auto;
   box-shadow: 0 4px 12px rgba(125, 42, 232, 0.35);
 }
+

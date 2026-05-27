@@ -110,7 +110,7 @@ const SearchableSelect = ({
                 fullWidth
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ fontSize: '0.875rem', fontFamily: 'Poppins, sans-serif' }}
+                sx={{ fontSize: '0.875rem', fontFamily: "inherit" }}
               />
             </Box>
             

@@ -21,4 +21,5 @@ public class ProductResponse {
     private Long divisionId;
     private String divisionName;
     private String image;
+    private Integer totalStock;
 }

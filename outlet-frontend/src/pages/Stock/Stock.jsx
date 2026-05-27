@@ -24,6 +24,7 @@ import { formatStockData } from "../../utils/exportUtils";
 import "./Stock.css";
 import "../UserManagement/UserManagement.css";
 
+
 /* ── Stock level helper ── */
 const stockLevel = (qty, max = 200) => {
   if (qty <= 0)  return { cls: "critical", label: "Out of Stock", color: "#ef4444" };
@@ -261,7 +262,7 @@ const Stock = () => {
         <Box sx={{ display: "flex", gap: 1.5 }}>
           {isAdmin && (
             <ButtonBase onClick={() => { setAddStockData({ id: null, productId: "", quantity: "", purchasePrice: "", sellingPrice: "", expiryDate: "", batchNo: "" }); setIsFormView(true); }} disableRipple
-              sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(16,185,129,0.35)" }}>
+              sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(16,185,129,0.35)" }}>
               <AddRounded sx={{ fontSize: 18 }} /> Fill Stock
             </ButtonBase>
           )}
@@ -278,10 +279,10 @@ const Stock = () => {
                   <CloseRounded />
                 </IconButton>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "inherit" }}>
                     {addStockData.id ? "Edit Main Stock" : "Fill Main Stock"}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "inherit" }}>
                     Add or update inventory in the main warehouse
                   </Typography>
                 </Box>
@@ -343,7 +344,7 @@ const Stock = () => {
                             }
                           }}
                           error={!!formErrors.purchasePrice} helperText={formErrors.purchasePrice}
-                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
                       </Box>
                       <Box>
                         <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.sellingPrice ? "#ef4444" : "inherit" }}>Selling Price *</Typography>
@@ -359,7 +360,7 @@ const Stock = () => {
                             }
                           }}
                           error={!!formErrors.sellingPrice} helperText={formErrors.sellingPrice}
-                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
                       </Box>
                     </Box>
 
@@ -378,7 +379,7 @@ const Stock = () => {
                             }
                           }}
                           error={!!formErrors.quantity} helperText={formErrors.quantity}
-                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
                       </Box>
                       <Box>
                         <Typography className="dialog-field-label" sx={{ mb: 1, color: formErrors.expiryDate ? "#ef4444" : "inherit" }}>Expiry Date *</Typography>
@@ -386,7 +387,7 @@ const Stock = () => {
                           value={addStockData.expiryDate} onChange={(e) => { setAddStockData(t => ({ ...t, expiryDate: e.target.value })); if (formErrors.expiryDate) setFormErrors(er => ({ ...er, expiryDate: null })); }}
                           InputLabelProps={{ shrink: true }}
                           error={!!formErrors.expiryDate} helperText={formErrors.expiryDate}
-                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "Poppins, sans-serif" } }} />
+                          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
                       </Box>
                     </Box>
                   </Box>
@@ -421,7 +422,7 @@ const Stock = () => {
       <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
         {["stock", "main", "history"].map((t) => (
           <ButtonBase key={t} onClick={() => setTab(t)} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, transition: "all 0.2s", background: tab === t ? "linear-gradient(135deg,#7d2ae8,#a855f7)" : "#f5f0ff", color: tab === t ? "#fff" : "#7d2ae8", boxShadow: tab === t ? "0 4px 12px rgba(125,42,232,0.3)" : "none" }}>
+            sx={{ px: 2.5, py: 1, borderRadius: "50px", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600, transition: "all 0.2s", background: tab === t ? "linear-gradient(135deg,#7d2ae8,#a855f7)" : "#f5f0ff", color: tab === t ? "#fff" : "#7d2ae8", boxShadow: tab === t ? "0 4px 12px rgba(125,42,232,0.3)" : "none" }}>
             {t === "stock" ? "Outlet Stock" : t === "main" ? "Main Warehouse Stock" : "Transaction History"}
           </ButtonBase>
         ))}
@@ -431,7 +432,7 @@ const Stock = () => {
       <Box className="table-card">
         <Box className="table-toolbar">
           <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
-            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
+            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>
               {tab === "stock" ? "Current Stock" : tab === "main" ? "Main Warehouse Stock" : "Transaction History"}
             </Typography>
             <ExportMenu
@@ -446,7 +447,7 @@ const Stock = () => {
                 <Select 
                   size="small" displayEmpty value={filters.type} 
                   onChange={(e) => setFilters(f => ({ ...f, type: e.target.value }))}
-                  sx={{ minWidth: 100, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                  sx={{ minWidth: 100, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit" }}
                 >
                   <MenuItem value="">All Types</MenuItem>
                   <MenuItem value="IN">IN</MenuItem>
@@ -457,7 +458,7 @@ const Stock = () => {
                 <Select 
                   size="small" displayEmpty value={filters.productId} 
                   onChange={(e) => setFilters(f => ({ ...f, productId: e.target.value }))}
-                  sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                  sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit" }}
                 >
                   <MenuItem value="">All Products</MenuItem>
                   {products.map(p => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
@@ -467,7 +468,7 @@ const Stock = () => {
                   size="small" displayEmpty value={filters.outletId} 
                   onChange={(e) => setFilters(f => ({ ...f, outletId: e.target.value }))}
                   disabled={!isAdmin}
-                  sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                  sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit" }}
                 >
                   <MenuItem value="">{isAdmin ? "All Outlets" : "Select Outlet"}</MenuItem>
                   {outlets.map(ot => <MenuItem key={ot.id} value={ot.id}>{ot.outletName}</MenuItem>)}
@@ -480,7 +481,7 @@ const Stock = () => {
           <Box className="table-search">
             <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
             <InputBase placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)}
-              sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }} />
+              sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b" }} />
           </Box>
         </Box>
 
@@ -491,10 +492,10 @@ const Stock = () => {
                 <TableRow sx={{ background: "#fafafa" }}>
                   {isOutletUser 
                     ? ["Product Name", "Available Stock", "Action"].map((h) => (
-                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                       ))
                     : ["Outlet", "Product", "Available", "Reserved", "Level"].map((h) => (
-                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                       ))
                   }
                 </TableRow>
@@ -503,7 +504,7 @@ const Stock = () => {
                 {loading ? (
                   <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
                 ) : filteredStock.length === 0 ? (
-                  <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No stock found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>No stock found</TableCell></TableRow>
                 ) : (
                   filteredStock.map((s) => {
                     const lvl = stockLevel(s.availableQty);
@@ -519,8 +520,8 @@ const Stock = () => {
                       >
                         {isOutletUser ? (
                           <>
-                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.productId}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "inherit" }}>{s.availableQty}</TableCell>
                             <TableCell>
                               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                 <Tooltip title="View Stock Detail">
@@ -536,7 +537,7 @@ const Stock = () => {
                                     background: "linear-gradient(135deg,#7d2ae8,#a855f7)",
                                     textTransform: "none",
                                     fontWeight: 600,
-                                    fontFamily: "Poppins",
+                                    fontFamily: "inherit",
                                     fontSize: "0.75rem",
                                     borderRadius: "20px",
                                     boxShadow: "0 2px 8px rgba(125,42,232,0.25)",
@@ -550,10 +551,10 @@ const Stock = () => {
                           </>
                         ) : (
                           <>
-                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.outletName || s.outletId}</TableCell>
-                            <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.productId}</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.availableQty}</TableCell>
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.reservedQty || 0}</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.outletName || s.outletId}</TableCell>
+                            <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.productId}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "inherit" }}>{s.availableQty}</TableCell>
+                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.reservedQty || 0}</TableCell>
                             <TableCell>
                               <Box className="stock-level">
                                 <Box className="stock-level-bar">
@@ -575,7 +576,7 @@ const Stock = () => {
               <TableHead>
                 <TableRow sx={{ background: "#fafafa" }}>
                   {["Ref No", "Product", "Available", "Purchase Price", "Selling Price", "Expiry", "Actions"].map((h) => (
-                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -583,7 +584,7 @@ const Stock = () => {
                 {loading ? (
                   <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
                 ) : mainStock.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No main stock found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>No main stock found</TableCell></TableRow>
                 ) : (
                   mainStock.map((s) => {
                     return (
@@ -591,12 +592,12 @@ const Stock = () => {
                         key={s.id} hover 
                         sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}
                       >
-                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.batchNo}</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.productName || s.product?.name || s.productId}</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>{s.quantity}</TableCell>
-                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>${s.purchasePrice}</TableCell>
-                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>${s.sellingPrice}</TableCell>
-                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{s.expiryDate}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.batchNo}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.product?.name || s.productId}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1e1b4b", fontFamily: "inherit" }}>{s.quantity}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>${s.purchasePrice}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>${s.sellingPrice}</TableCell>
+                        <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.expiryDate}</TableCell>
                         <TableCell>
                           <Box sx={{ display: "flex", gap: 0.75 }}>
                             <Tooltip title="View Batch Details">
@@ -641,7 +642,7 @@ const Stock = () => {
                                     background: "linear-gradient(135deg,#7d2ae8,#a855f7)",
                                     textTransform: "none",
                                     fontWeight: 600,
-                                    fontFamily: "Poppins",
+                                    fontFamily: "inherit",
                                     fontSize: "0.75rem",
                                     borderRadius: "20px",
                                     boxShadow: "0 2px 8px rgba(125,42,232,0.25)",
@@ -664,7 +665,7 @@ const Stock = () => {
               <TableHead>
                 <TableRow sx={{ background: "#fafafa" }}>
                   {["Type", "Product", "Outlet", "Qty", "By", "Date"].map((h) => (
-                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                    <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
                   ))}
                 </TableRow>
               </TableHead>
@@ -672,7 +673,7 @@ const Stock = () => {
                 {loading ? (
                   <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
                 ) : txns.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>No transactions</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>No transactions</TableCell></TableRow>
                 ) : (
                   txns.map((t) => (
                     <TableRow key={t.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
@@ -682,14 +683,14 @@ const Stock = () => {
                             ? <TrendingUpRounded sx={{ fontSize: 16, color: "#16a34a" }} />
                             : <TrendingDownRounded sx={{ fontSize: 16, color: "#ef4444" }} />
                           }
-                          <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: t.transactionType === "IN" ? "#16a34a" : "#ef4444", fontFamily: "Poppins, sans-serif" }}>{t.transactionType}</Typography>
+                          <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: t.transactionType === "IN" ? "#16a34a" : "#ef4444", fontFamily: "inherit" }}>{t.transactionType}</Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.productName || t.productId}</TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.outletName || t.outletId}</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.quantity}</TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>{t.createdBy}</TableCell>
-                      <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.productName || t.productId}</TableCell>
+                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.outletName || t.outletId}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.quantity}</TableCell>
+                      <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.createdBy}</TableCell>
+                      <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit" }}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "—"}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -725,7 +726,7 @@ const Stock = () => {
   )}
 
       <Dialog open={detailDialog.open} onClose={() => setDetailDialog({ open: false, data: null })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b" }}>Stock Details</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b" }}>Stock Details</DialogTitle>
         <DialogContent>
           {detailDialog.data && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -761,15 +762,16 @@ const Stock = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setDetailDialog({ open: false, data: null })} sx={{ fontFamily: "Poppins", fontWeight: 600, color: "#64748b", background: "#f1f5f9", borderRadius: "50px", px: 3 }}>Close</Button>
+          <Button onClick={() => setDetailDialog({ open: false, data: null })} sx={{ fontFamily: "inherit", fontWeight: 600, color: "#64748b", background: "#f1f5f9", borderRadius: "50px", px: 3 }}>Close</Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "Poppins, sans-serif" }}>{snack.msg}</Alert>
+        <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "inherit" }}>{snack.msg}</Alert>
       </Snackbar>
     </Box>
   );
 };
 
 export default Stock;
+

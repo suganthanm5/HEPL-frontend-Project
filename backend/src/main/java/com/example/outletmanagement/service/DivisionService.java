@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface DivisionService {
     DivisionResponse createDivision(DivisionRequest request);
-    Page<DivisionResponse> getAllDivisions(String search, Boolean hasProducts, Pageable pageable);
+    Page<DivisionResponse> getAllDivisions(String search, Integer minProducts, Integer maxProducts, Integer daysAgo, Pageable pageable);
     DivisionResponse updateDivision(Long id, DivisionRequest request);
     DivisionResponse getDivisionById(Long id);
     void deleteDivision(Long id);

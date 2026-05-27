@@ -9,7 +9,7 @@
   padding: 40px 20px;
   background-color: #faf8ff;
   min-height: calc(100vh - 100px);
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-body);
 }
 
 .notif-page-card {
@@ -45,7 +45,7 @@
 }
 
 .notif-page-title {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-weight: 750 !important;
   color: #1e1b4b !important;
   font-size: 1.25rem !important;
@@ -53,7 +53,7 @@
 }
 
 .notif-page-subtitle {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   color: #7c3aed !important;
   font-weight: 550 !important;
   font-size: 0.825rem !important;
@@ -114,14 +114,14 @@
 }
 
 .notif-item-title-text {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-weight: 700 !important;
   color: #1e1b4b !important;
   font-size: 0.925rem !important;
 }
 
 .notif-item-desc-text {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   color: #64748b !important;
   font-size: 0.825rem !important;
   font-weight: 500 !important;
@@ -130,7 +130,7 @@
 }
 
 .notif-item-time-text {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   color: #7d2ae8 !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
@@ -170,7 +170,7 @@
 }
 
 .notif-empty-title {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-weight: 750 !important;
   color: #1e1b4b !important;
   font-size: 1.15rem !important;
@@ -178,7 +178,7 @@
 }
 
 .notif-empty-desc {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: var(--font-body) !important;
   color: #94a3b8 !important;
   font-size: 0.875rem !important;
   font-weight: 500 !important;
@@ -202,3 +202,4 @@
     align-items: flex-end;
   }
 }
+

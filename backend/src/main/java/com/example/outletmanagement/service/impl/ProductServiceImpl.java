@@ -149,6 +149,7 @@ public class ProductServiceImpl implements ProductService {
                 .divisionId(product.getDivision() != null ? product.getDivision().getId() : null)
                 .divisionName(product.getDivision() != null ? product.getDivision().getName() : null)
                 .image(product.getImage())
+                .totalStock(productBatchRepository.sumQuantityByProductId(product.getId()))
                 .build();
     }
 }

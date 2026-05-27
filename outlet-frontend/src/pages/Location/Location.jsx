@@ -3,184 +3,137 @@ import { getLocations, createLocation, updateLocation, deleteLocation, bulkCreat
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatLocationData } from "../../utils/exportUtils";
-
-// Material UI imports
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  InputAdornment,
-  MenuItem,
-  Paper,
-  Select,
-  Skeleton,
-  Snackbar,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  Grid,
-  Avatar,
-  Tooltip,
-  FormControl,
-  ToggleButton,
-  ToggleButtonGroup,
-  Pagination,
-  Stack,
-  Divider,
-} from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-
-// Material UI Icons
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import TableChartIcon from "@mui/icons-material/TableChart";
-import GridViewIcon from "@mui/icons-material/GridView";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import BulkUploadModal from "../../components/BulkUploadModal";
 
-/* ── MUI Theme ── */
-const theme = createTheme({
-  palette: {
-    primary: { main: "#7d2ae8" },
-    secondary: { main: "#a855f7" },
-    error: { main: "#ef4444" },
-    warning: { main: "#f59e0b" },
-  },
-  typography: { fontFamily: "Poppins, sans-serif" },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: { textTransform: "none", borderRadius: 8, fontWeight: 600 },
-      },
-    },
-    MuiDialog: {
-      styleOverrides: {
-        paper: { borderRadius: 16, minWidth: 460 },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        head: {
-          fontWeight: 700,
-          background: "#faf5ff",
-          fontSize: "0.78rem",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          color: "#7d2ae8",
-        },
-      },
-    },
-  },
-});
+import {
+  Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  IconButton, InputAdornment, MenuItem, Paper, Select, Skeleton,
+  Snackbar, Alert, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, TextField, Typography, Grid, Avatar, Tooltip,
+  FormControl, ToggleButton, ToggleButtonGroup, Pagination, Stack,
+  Divider, Chip, LinearProgress, Fade, Grow, Badge, InputBase,
+  Card, CardContent, CardActions, ButtonBase,
+} from "@mui/material";
+
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import TableChartRoundedIcon from "@mui/icons-material/TableChartRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
+import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
+import FmdGoodRoundedIcon from "@mui/icons-material/FmdGoodRounded";
+import LayersRoundedIcon from "@mui/icons-material/LayersRounded";
+
+const PAGE_SIZES = [5, 10, 25, 50];
+
+/* ── Gradient avatar color based on first char ── */
+const AVATAR_GRADIENTS = [
+  ["#7d2ae8", "#a855f7"],
+  ["#10b981", "#34d399"],
+  ["#0284c7", "#38bdf8"],
+  ["#f59e0b", "#fbbf24"],
+  ["#ef4444", "#f87171"],
+  ["#db2777", "#f472b6"],
+  ["#6366f1", "#818cf8"],
+  ["#14b8a6", "#2dd4bf"],
+];
+const getGradient = (name = "") => {
+  const idx = (name.charCodeAt(0) || 0) % AVATAR_GRADIENTS.length;
+  return AVATAR_GRADIENTS[idx];
+};
 
 /* ── Stat Card ── */
-const StatCard = ({ label, value, color, bg, icon, gradient, border }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      border: `1.5px solid ${border}`,
-      borderRadius: "16px",
-      p: 2.5,
+const StatCard = ({ label, value, icon: Icon, color, bg, border, loading }) => (
+  <Grow in timeout={400}>
+    <Box sx={{
+      background: "#fff",
+      borderRadius: "14px",
+      padding: "18px 20px",
       display: "flex",
       alignItems: "center",
       gap: 2,
       flex: 1,
       minWidth: 160,
-      background: gradient,
-      transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s",
-      "&:hover": {
-        transform: "translateY(-5px) scale(1.01)",
-        boxShadow: "0 12px 40px rgba(15,23,42,0.12)",
-        borderColor: color
-      }
-    }}
-  >
-    <Box sx={{ width: 44, height: 44, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: bg, color, "& svg": { fontSize: 22 } }}>
-      {icon}
+      border: "1px solid #f1f5f9",
+      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04)",
+      transition: "transform 0.2s",
+      "&:hover": { transform: "translateY(-3px)" },
+      position: "relative",
+      overflow: "hidden"
+    }}>
+      <Box sx={{
+        width: 46, height: 46, borderRadius: "12px",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: bg, color, flexShrink: 0,
+      }}>
+        <Icon sx={{ fontSize: 22 }} />
+      </Box>
+      <Box>
+        {loading
+          ? <Skeleton width={48} height={28} />
+          : <Typography sx={{ fontSize: "28px", fontWeight: 800, color: "#1e1b4b", lineHeight: 1, letterSpacing: "-0.5px", fontFamily: "inherit" }}>{value}</Typography>
+        }
+        <Typography sx={{ fontSize: "12.5px", color: "#64748b", fontWeight: 500, mt: 0.5, fontFamily: "inherit" }}>{label}</Typography>
+      </Box>
     </Box>
-    <Box>
-      <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e1b4b", lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="caption" sx={{ color, fontWeight: 600 }}>{label}</Typography>
-    </Box>
-  </Paper>
+  </Grow>
 );
 
-/* ── Modal Header ── */
-const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
-  <DialogTitle sx={{ p: 0 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px 24px 16px", borderBottom: "1px solid #f1f5f9" }}>
-      <Box sx={{ width: 40, height: 40, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: `${accent}20`, color: accent, "& svg": { fontSize: 20 } }}>
-        {icon}
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b" }}>{title}</Typography>
-        {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
-      </Box>
-      <IconButton size="small" onClick={onClose} sx={{ color: "#94a3b8" }}><CloseIcon fontSize="small" /></IconButton>
-    </Box>
-  </DialogTitle>
-);
-
-const PAGE_SIZES = [5, 10, 25, 50];
+/* ── Location Avatar ── */
+const LocAvatar = ({ name, size = 36 }) => {
+  const [c1, c2] = getGradient(name);
+  return (
+    <Avatar sx={{
+      width: size, height: size,
+      background: `linear-gradient(135deg, ${c1}, ${c2})`,
+      fontSize: size * 0.4, fontWeight: 700, fontFamily: "inherit",
+      boxShadow: `0 3px 10px ${c1}40`,
+    }}>
+      {name?.charAt(0)?.toUpperCase() || "?"}
+    </Avatar>
+  );
+};
 
 const Location = () => {
   const [locations, setLocations] = useState([]);
-  const [allLocations, setAllLocations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
+  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem("itemsPerPage") || "10", 10));
   const [page, setPage] = useState(1);
   const [view, setView] = useState("table");
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [toast, setToast] = useState(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [allLocations, setAllLocations] = useState([]);
 
-  const [addModal, setAddModal] = useState(false);
+  const [isFormView, setIsFormView] = useState(false);
   const [editModal, setEditModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
 
-  const [addName, setAddName] = useState("");
-  const [editName, setEditName] = useState("");
+  const [formName, setFormName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [isFormView, setIsFormView] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    const delay = setTimeout(() => {
-      fetchLocations(controller.signal);
-    }, 800);
+    const delay = setTimeout(() => fetchLocations(controller.signal), 800);
     return () => { clearTimeout(delay); controller.abort(); };
   }, [page, pageSize, search]);
 
   const showToast = (message, type = "error") => setToast({ message, type });
 
-  const handleInputChange = (value, setter) => {
-    if (/[^a-zA-Z\s,]/.test(value)) {
-      showToast("Please enter a valid format. Only letters, spaces, and commas are allowed.", "warning");
-      return;
-    }
-    if (value.startsWith(" ") || value.startsWith(",")) {
-      showToast("Location name cannot start with a space or comma.", "warning");
-      return;
-    }
-    setter(value);
+  const handleInputChange = (value) => {
+    if (/[^a-zA-Z\s,]/.test(value)) { showToast("Only letters, spaces, and commas allowed.", "warning"); return; }
+    if (value.startsWith(" ") || value.startsWith(",")) { showToast("Cannot start with a space or comma.", "warning"); return; }
+    setFormName(value);
   };
 
   const fetchLocations = async (signal) => {
@@ -193,78 +146,44 @@ const Location = () => {
       else if (Array.isArray(res?.content)) list = res.content;
       else if (Array.isArray(res?.data)) list = res.data;
       else if (Array.isArray(res?.data?.content)) list = res.data.content;
-      
       setLocations(list);
+      setAllLocations(list);
       setTotalPages(res?.totalPages || 1);
       setTotalElements(res?.totalElements || list.length);
     } catch (e) {
       if (e?.name === "CanceledError" || e?.name === "AbortError") return;
-      setError("Failed to load locations. Check API connection.");
-    } finally {
-      setLoading(false);
-    }
+      setError("Failed to load locations.");
+    } finally { setLoading(false); }
   };
 
   const handleAdd = async () => {
-    if (!addName.trim()) return;
-    const locationNames = addName.split(",").map((n) => n.trim()).filter((n) => n.length > 0);
-    if (locationNames.length === 0) { showToast("Please enter at least one valid location name.", "warning"); return; }
-
-    const duplicates = [], validLocations = [];
-    locationNames.forEach((name) => {
-      if (allLocations.some((l) => l.name?.toLowerCase() === name.toLowerCase())) duplicates.push(name);
-      else validLocations.push(name);
-    });
-
-    const uniqueValid = [], inputDups = [];
-    validLocations.forEach((name) => {
-      if (uniqueValid.some((e) => e.toLowerCase() === name.toLowerCase())) inputDups.push(name);
-      else uniqueValid.push(name);
-    });
-
-    if (duplicates.length > 0) showToast(`These locations already exist: ${duplicates.join(", ")}`, "warning");
-    if (inputDups.length > 0) showToast(`Duplicate entries in input: ${inputDups.join(", ")}`, "warning");
-    if (uniqueValid.length === 0) return;
-
+    if (!formName.trim()) return;
+    const names = formName.split(",").map(n => n.trim()).filter(Boolean);
+    if (!names.length) { showToast("Enter at least one valid location name.", "warning"); return; }
     setSaving(true);
-    let successCount = 0;
-    const failedLocations = [];
+    let ok = 0; const failed = [];
     try {
-      for (const name of uniqueValid) {
-        try { await createLocation({ name }); successCount++; }
-        catch { failedLocations.push(name); }
+      for (const name of names) {
+        try { await createLocation({ name }); ok++; }
+        catch { failed.push(name); }
       }
-      if (successCount > 0) {
-        showToast(successCount === 1 ? `Location "${uniqueValid[0]}" added successfully!` : `${successCount} locations added successfully!`, "success");
-      }
-      if (failedLocations.length > 0) showToast(`Failed to add: ${failedLocations.join(", ")}`, "error");
-      setPage(1);
-      fetchLocations();
-      setAddName("");
-      setIsFormView(false);
-    } catch (e) {
-      showToast("Failed to add locations: " + (e.response?.data?.message || e.message), "error");
-    } finally { setSaving(false); }
+      if (ok > 0) showToast(ok === 1 ? `"${names[0]}" added!` : `${ok} locations added!`, "success");
+      if (failed.length) showToast(`Failed: ${failed.join(", ")}`, "error");
+      setPage(1); fetchLocations(); setFormName(""); setIsFormView(false);
+    } catch (e) { showToast("Failed to add: " + (e.response?.data?.message || e.message), "error"); }
+    finally { setSaving(false); }
   };
 
   const handleUpdate = async () => {
-    if (!editName.trim()) return;
-    const trimmed = editName.trim();
-    if (allLocations.some((l) => l.id !== editModal.id && l.name?.toLowerCase() === trimmed.toLowerCase())) {
-      showToast(`Location "${trimmed}" already exists. Please choose a different name.`, "error");
-      return;
-    }
+    if (!formName.trim()) return;
+    const trimmed = formName.trim();
     setSaving(true);
     try {
       await updateLocation(editModal.id, { name: trimmed });
-      fetchLocations();
-      setEditModal(null); setIsFormView(false);
-      showToast(`Location updated to "${trimmed}" successfully!`, "success");
+      fetchLocations(); setEditModal(null); setIsFormView(false); setFormName("");
+      showToast(`Updated to "${trimmed}"!`, "success");
     } catch (e) {
-      const msg = e.response?.data?.message || e.message;
-      showToast(msg.toLowerCase().includes("already") || msg.toLowerCase().includes("duplicate")
-        ? `Location "${trimmed}" already exists. Please choose a different name.`
-        : "Failed to update location: " + msg, "error");
+      showToast("Failed to update: " + (e.response?.data?.message || e.message), "error");
     } finally { setSaving(false); }
   };
 
@@ -273,365 +192,437 @@ const Location = () => {
     setSaving(true);
     try {
       await deleteLocation(deleteModal.id);
-      fetchLocations();
-      setDeleteModal(null);
-      showToast(`Location "${name}" deleted successfully!`, "success");
-    } catch (e) {
-      showToast("Failed to delete location: " + (e.response?.data?.message || e.message), "error");
-    } finally { setSaving(false); }
+      fetchLocations(); setDeleteModal(null);
+      showToast(`"${name}" deleted.`, "success");
+    } catch (e) { showToast("Failed to delete: " + (e.response?.data?.message || e.message), "error"); }
+    finally { setSaving(false); }
   };
 
-  const openEdit = (loc) => { setEditModal(loc); setEditName(loc.name); setIsFormView(true); };
+  const openAdd = () => { setEditModal(null); setFormName(""); setIsFormView(true); };
+  const openEdit = (loc) => { setEditModal(loc); setFormName(loc.name); setIsFormView(true); };
+  const closeForm = () => { setIsFormView(false); setEditModal(null); setFormName(""); };
 
   const safePage = Math.min(page, totalPages || 1);
   const start = totalElements === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const end = Math.min(safePage * pageSize, totalElements);
+  const formComplete = formName.trim().length > 0;
+
+  // ── TABLE HEAD CELL SX ──
+  const thSx = {
+    fontWeight: 700, color: "#7d2ae8", fontFamily: "inherit",
+    fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 0.8,
+    py: 1.5, bgcolor: "#faf5ff",
+  };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <Box sx={{ fontFamily: "inherit" }}>
 
-        {/* ── Hero ── */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Box>
-            <Typography variant="h5" fontWeight={700} sx={{ fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}>
-              <TypingText text="Location Management" />
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#64748b" }}>
-              Manage geographic locations for your outlets
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button variant="outlined" startIcon={<UploadFileIcon />}
-              sx={{ borderColor: "#10b981", color: "#10b981", fontWeight: 600, textTransform: "none", borderRadius: 2, "&:hover": { bgcolor: "#f0fdf4", borderColor: "#10b981" } }}
+      {/* ── Page Header ── */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 1.5 }}>
+        <Box>
+          <Typography sx={{ fontWeight: 800, fontSize: "1.35rem", color: "#1e1b4b", fontFamily: "inherit", mb: 0.25 }}>
+            <TypingText text="Location Management" />
+          </Typography>
+          <Typography sx={{ fontSize: "0.8rem", color: "#7d2ae8", fontFamily: "inherit", fontWeight: 500 }}>
+            Manage geographic locations for your outlets
+          </Typography>
+        </Box>
+        {!isFormView && (
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+            <Tooltip title="Refresh">
+              <IconButton onClick={() => fetchLocations()} size="small"
+                sx={{ color: "#7d2ae8", bgcolor: "#f5f0ff", "&:hover": { bgcolor: "#ede9fe" } }}>
+                <RefreshRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Button variant="outlined" startIcon={<UploadFileRoundedIcon />}
+              sx={{ borderColor: "#10b981", color: "#10b981", fontWeight: 600, fontFamily: "inherit", borderRadius: 2, "&:hover": { bgcolor: "#f0fdf4", borderColor: "#10b981" }, textTransform: "none" }}
               onClick={() => setBulkOpen(true)}>
               Bulk Upload
             </Button>
             <ExportMenu getData={() => formatLocationData(allLocations)} filename="locations" title="Locations Report" backendType="locations" />
-            <Button variant="contained" startIcon={<AddIcon />} color="primary"
-              sx={{ boxShadow: "none", "&:hover": { boxShadow: "none" } }}
-              onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}>
-              Add Location
-            </Button>
+            <ButtonBase onClick={openAdd} disableRipple sx={{
+              display: "flex", alignItems: "center", gap: 1,
+              px: 2.5, py: 1.2, borderRadius: "50px",
+              background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
+              color: "#fff", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600,
+              boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
+              transition: "all 0.25s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
+            }}>
+              <AddRoundedIcon sx={{ fontSize: 18 }} /> Add Location
+            </ButtonBase>
           </Box>
-        </Box>
+        )}
+      </Box>
 
-        {isFormView ? (
-          /* ── Full Page Form View ── */
-          <Box className="animate-fade-in">
-            <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-              <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <IconButton onClick={() => { setIsFormView(false); setEditModal(null); setAddName(""); }} sx={{ color: "#64748b" }}>
-                    <CloseIcon />
-                  </IconButton>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b" }}>
-                      {editModal ? "Edit Location" : "Add New Location"}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "#64748b" }}>
-                      {editModal ? `Updating details for ${editModal.name}` : "Fill in the details to create a new location node"}
-                    </Typography>
-                  </Box>
+      {isFormView ? (
+        /* ── Full Page Form ── */
+        <Fade in>
+          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+            {/* Form Header */}
+            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton onClick={closeForm} sx={{ color: "#64748b" }}><CloseRoundedIcon /></IconButton>
+                <Box>
+                  <Typography sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "inherit", fontSize: "1.1rem" }}>
+                    {editModal ? "Edit Location" : "Add New Location"}
+                  </Typography>
+                  <Typography sx={{ color: "#64748b", fontFamily: "inherit", fontSize: "0.75rem" }}>
+                    {editModal ? `Updating: ${editModal.name}` : "Create one or multiple locations at once"}
+                  </Typography>
                 </Box>
-                <Stack direction="row" spacing={1.5}>
-                  <Button variant="outlined" color="inherit" onClick={() => { setIsFormView(false); setEditModal(null); setAddName(""); }}
-                    sx={{ color: "#64748b", borderColor: "#e2e8f0" }}>
-                    Cancel
-                  </Button>
-                  <Button variant="contained" startIcon={editModal ? <EditIcon /> : <AddIcon />}
-                    disabled={saving || (editModal ? !editName.trim() : !addName.trim())}
-                    sx={{ bgcolor: editModal ? "#6366f1" : "#10b981", "&:hover": { bgcolor: editModal ? "#4f46e5" : "#059669" }, color: "#fff", boxShadow: "none" }}
-                    onClick={editModal ? handleUpdate : handleAdd}>
-                    {saving ? "Saving…" : editModal ? "Save Changes" : "Create Location"}
-                  </Button>
-                </Stack>
               </Box>
-
-              <Box sx={{ p: { xs: 2, md: 4 } }}>
-                <Grid container spacing={4}>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, display: "flex", alignItems: "center", gap: 1 }}>
-                        <Box sx={{ width: 4, height: 16, bgcolor: editModal ? "#6366f1" : "#10b981", borderRadius: 1 }} />
-                        Location Details
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        label="Location Name"
-                        value={editModal ? editName : addName}
-                        onChange={(e) => handleInputChange(e.target.value, editModal ? setEditName : setAddName)}
-                        required
-                        placeholder={editModal ? "" : "e.g. Chennai, Mumbai (comma separated for multiple)"}
-                        helperText={!editModal && "You can add multiple locations by separating them with commas"}
-                        variant="outlined"
-                      />
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 1 }}>Quick Tips</Typography>
-                      <ul style={{ paddingLeft: 20, margin: 0, color: "#64748b", fontSize: "0.85rem" }}>
-                        <li>Location names should be concise.</li>
-                        <li>Only letters and spaces are allowed.</li>
-                        <li>Use commas to bulk-add multiple locations at once.</li>
-                      </ul>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Paper>
-          </Box>
-        ) : (
-          <>
-            {/* ── Stats ── */}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-              <StatCard label="Total Locations" value={loading ? "—" : totalElements} color="#15803d" bg="#ecfdf5" icon={<LocationOnIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" border="#dcfce7" />
-              <StatCard label="Current Page" value={loading ? "—" : locations.length} color="#4f46e5" bg="#eef2ff" icon={<SearchIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%)" border="#e0e7ff" />
-              <StatCard label="Total Pages" value={loading ? "—" : totalPages} color="#b45309" bg="#fffbeb" icon={<GridViewIcon />} gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" border="#fef3c7" />
-            </Stack>
-
-            {/* ── Error ── */}
-            {error && (
-              <Alert severity="error" icon={<WarningAmberIcon />} sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>
-            )}
-
-            {/* ── Toolbar ── */}
-            <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2, mb: 2 }}>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>
-
-                {/* Search */}
-                <TextField
-                  size="small" placeholder="Search locations…" value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  sx={{ minWidth: 240, flex: 1 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
-                      endAdornment: search ? (
-                        <InputAdornment position="end">
-                          <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
-                        </InputAdornment>
-                      ) : null,
-                    }
-                  }}
-                />
-
-                {/* Show entries + View toggle */}
-                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ ml: { sm: "auto" } }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="body2" sx={{ color: "#64748b", whiteSpace: "nowrap" }}>Show</Typography>
-                    <FormControl size="small" sx={{ minWidth: 72 }}>
-                      <Select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
-                        {PAGE_SIZES.map((n) => <MenuItem key={n} value={n}>{n}</MenuItem>)}
-                      </Select>
-                    </FormControl>
-                    <Typography variant="body2" sx={{ color: "#64748b" }}>entries</Typography>
-                  </Stack>
-
-                  <ToggleButtonGroup size="small" value={view} exclusive onChange={(_, v) => v && setView(v)}
-                    sx={{ "& .MuiToggleButton-root": { px: 1.5, border: "1px solid #e2e8f0" } }}>
-                    <ToggleButton value="table"><Tooltip title="Table"><TableChartIcon fontSize="small" /></Tooltip></ToggleButton>
-                    <ToggleButton value="card"><Tooltip title="Cards"><GridViewIcon fontSize="small" /></Tooltip></ToggleButton>
-                  </ToggleButtonGroup>
-                </Stack>
+              <Stack direction="row" spacing={1.5}>
+                <Button variant="outlined" color="inherit" onClick={closeForm}
+                  sx={{ color: "#64748b", borderColor: "#e2e8f0", fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                  Cancel
+                </Button>
+                <Button variant="contained"
+                  startIcon={editModal ? <CheckRoundedIcon /> : <AddRoundedIcon />}
+                  disabled={saving || !formComplete}
+                  onClick={editModal ? handleUpdate : handleAdd}
+                  sx={{
+                    bgcolor: editModal ? "#7d2ae8" : "#10b981",
+                    "&:hover": { bgcolor: editModal ? "#6b21c1" : "#059669" },
+                    color: "#fff", boxShadow: "none", fontFamily: "inherit",
+                    textTransform: "none", borderRadius: 2, fontWeight: 600,
+                  }}>
+                  {saving ? "Saving…" : editModal ? "Save Changes" : "Create Location"}
+                </Button>
               </Stack>
-            </Paper>
+            </Box>
 
-            {/* ── Table View ── */}
+            {/* Form Body */}
+            <Box sx={{ p: { xs: 2, md: 4 } }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={7}>
+                  <Typography sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 1, fontSize: "0.875rem" }}>
+                    <Box sx={{ width: 4, height: 16, bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 1 }} />
+                    Location Details
+                  </Typography>
+                  <TextField
+                    fullWidth label="Location Name" value={formName}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    placeholder={editModal ? "" : "e.g. Chennai, Mumbai, Delhi"}
+                    helperText={!editModal ? "Separate multiple locations with commas" : ""}
+                    variant="outlined"
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" }, mb: 2 }}
+                  />
+                  {/* Completion bar */}
+                  <Box>
+                    <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8", fontFamily: "inherit", mb: 0.5, fontWeight: 600 }}>
+                      FORM COMPLETION
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate" value={formComplete ? 100 : 0}
+                      sx={{ borderRadius: 4, height: 6, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 4 } }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  {/* Preview / Tips */}
+                  <Box sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                      <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: "#f5f0ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FmdGoodRoundedIcon sx={{ color: "#7d2ae8", fontSize: 20 }} />
+                      </Box>
+                      <Typography sx={{ fontWeight: 700, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>
+                        {formName.trim() ? "Preview" : "Quick Tips"}
+                      </Typography>
+                    </Box>
+                    {formName.trim() ? (
+                      <Stack spacing={1}>
+                        {formName.split(",").map(n => n.trim()).filter(Boolean).map((name, i) => (
+                          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
+                            <LocAvatar name={name} size={32} />
+                            <Typography sx={{ fontWeight: 600, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>{name}</Typography>
+                            <Chip label="New" size="small" sx={{ ml: "auto", bgcolor: "#dcfce7", color: "#16a34a", fontWeight: 700, fontFamily: "inherit", fontSize: "0.65rem", height: 18 }} />
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Box component="ul" sx={{ pl: 2.5, m: 0, color: "#64748b", fontSize: "0.82rem", fontFamily: "inherit" }}>
+                        <li style={{ marginBottom: 6 }}>Only letters and spaces allowed</li>
+                        <li style={{ marginBottom: 6 }}>Use commas to add multiple locations</li>
+                        <li>Names should be concise and clear</li>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Paper>
+        </Fade>
+      ) : (
+        <>
+          {/* ── Stats Row ── */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+            <StatCard label="Total Locations" value={loading ? "—" : totalElements} icon={LocationOnRoundedIcon} color="#7d2ae8" bg="#f3e8ff" border="#e9d5ff" loading={loading} />
+            <StatCard label="This Page" value={loading ? "—" : locations.length} icon={LayersRoundedIcon} color="#0284c7" bg="#e0f2fe" border="#bae6fd" loading={loading} />
+            <StatCard label="Total Pages" value={loading ? "—" : totalPages} icon={TravelExploreRoundedIcon} color="#10b981" bg="#dcfce7" border="#bbf7d0" loading={loading} />
+          </Stack>
+
+          {/* ── Error ── */}
+          {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2, fontFamily: "inherit" }}>{error}</Alert>}
+
+          {/* ── Toolbar ── */}
+          <Box className="table-card" sx={{ bgcolor: "#fff", border: "1px solid rgba(125,42,232,0.08)", borderRadius: 3, mb: 2 }}>
+            <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderBottom: "1px solid rgba(125,42,232,0.07)" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>All Locations</Typography>
+                <Chip label={totalElements} size="small" sx={{ bgcolor: "#f3e8ff", color: "#7d2ae8", fontWeight: 700, fontFamily: "inherit", height: 20, fontSize: "0.7rem" }} />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                {/* Page size */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit", whiteSpace: "nowrap" }}>Show</Typography>
+                  <Select value={pageSize} size="small"
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); localStorage.setItem("itemsPerPage", e.target.value); }}
+                    sx={{ fontFamily: "inherit", fontSize: "0.8rem", borderRadius: 2, "& .MuiSelect-select": { py: 0.5, px: 1.5 } }}>
+                    {PAGE_SIZES.map(n => <MenuItem key={n} value={n} sx={{ fontFamily: "inherit", fontSize: "0.875rem" }}>{n}</MenuItem>)}
+                  </Select>
+                </Box>
+                {/* View toggle */}
+                <ToggleButtonGroup size="small" value={view} exclusive onChange={(_, v) => v && setView(v)}
+                  sx={{ "& .MuiToggleButton-root": { px: 1.5, border: "1px solid #e2e8f0", fontFamily: "inherit" }, "& .Mui-selected": { bgcolor: "#f5f0ff !important", color: "#7d2ae8 !important" } }}>
+                  <ToggleButton value="table"><Tooltip title="Table"><TableChartRoundedIcon fontSize="small" /></Tooltip></ToggleButton>
+                  <ToggleButton value="card"><Tooltip title="Cards"><GridViewRoundedIcon fontSize="small" /></Tooltip></ToggleButton>
+                </ToggleButtonGroup>
+                {/* Search */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: "#f5f0ff", border: "1.5px solid transparent", borderRadius: "50px", px: 2, py: 0.8, width: 240, transition: "all 0.3s", "&:focus-within": { borderColor: "#7d2ae8", bgcolor: "#fff", boxShadow: "0 0 0 3px rgba(125,42,232,0.1)" } }}>
+                  <SearchRoundedIcon sx={{ fontSize: 17, color: "#7d2ae8", flexShrink: 0 }} />
+                  <InputBase placeholder="Search locations…" value={search}
+                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                    sx={{ fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b", flex: 1 }}
+                  />
+                  {search && (
+                    <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }} sx={{ p: 0, color: "#94a3b8" }}>
+                      <CloseRoundedIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* ── TABLE VIEW ── */}
             {view === "table" && (
-              <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, overflow: "hidden", mb: 2 }}>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ ...thSx, width: 60 }}>#</TableCell>
+                      <TableCell sx={thSx}>Location Name</TableCell>
+                      <TableCell sx={{ ...thSx, width: 140 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {loading ? (
+                      Array.from({ length: pageSize > 5 ? 5 : pageSize }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={24} /></TableCell>
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                              <Skeleton variant="circular" width={34} height={34} />
+                              <Skeleton variant="text" width={140} />
+                            </Box>
+                          </TableCell>
+                          <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : locations.length === 0 ? (
                       <TableRow>
-                        <TableCell sx={{ width: 60 }}>#</TableCell>
-                        <TableCell>Location Name</TableCell>
-                        <TableCell sx={{ width: 160 }}>Actions</TableCell>
+                        <TableCell colSpan={3} align="center" sx={{ py: 8 }}>
+                          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
+                            <LocationOnRoundedIcon sx={{ fontSize: 52, color: "#e2e8f0" }} />
+                            <Typography sx={{ color: "#94a3b8", fontFamily: "inherit", fontWeight: 600 }}>
+                              {search ? `No results for "${search}"` : "No locations yet"}
+                            </Typography>
+                            {!search && (
+                              <Button size="small" variant="contained" startIcon={<AddRoundedIcon />}
+                                onClick={openAdd}
+                                sx={{ bgcolor: "#7d2ae8", "&:hover": { bgcolor: "#6b21c1" }, boxShadow: "none", textTransform: "none", fontFamily: "inherit", borderRadius: 2 }}>
+                                Add First Location
+                              </Button>
+                            )}
+                          </Box>
+                        </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {loading ? (
-                        [1, 2, 3, 4, 5].map((i) => (
-                          <TableRow key={i}>
-                            <TableCell><Skeleton variant="text" width={24} /></TableCell>
-                            <TableCell><Skeleton variant="text" width="60%" /></TableCell>
-                            <TableCell><Skeleton variant="text" width={100} /></TableCell>
-                          </TableRow>
-                        ))
-                      ) : locations.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={3} align="center" sx={{ py: 6 }}>
-                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-                              <LocationOnIcon sx={{ fontSize: 48, color: "#cbd5e1" }} />
-                              <Typography color="text.secondary">{search ? "No locations match your search" : "No locations yet"}</Typography>
-                              {!search && (
-                                <Button variant="contained" size="small" startIcon={<AddIcon />} color="primary"
-                                  sx={{ boxShadow: "none" }}
-                                  onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}>
-                                  Add First Location
-                                </Button>
-                              )}
+                    ) : (
+                      locations.map((loc, i) => (
+                        <TableRow key={loc.id} hover sx={{ "&:hover": { bgcolor: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
+                          <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontFamily: "inherit", fontSize: "0.8rem" }}>
+                            {(safePage - 1) * pageSize + i + 1}
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                              <LocAvatar name={loc.name} size={34} />
+                              <Typography sx={{ fontWeight: 600, color: "#1e1b4b", fontFamily: "inherit", fontSize: "0.875rem" }}>
+                                {loc.name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: "flex", gap: 0.75 }}>
+                              <Tooltip title="Edit">
+                                <IconButton size="small" onClick={() => openEdit(loc)}
+                                  sx={{ color: "#f59e0b", bgcolor: "#fef3c7", borderRadius: 1.5, "&:hover": { bgcolor: "#fde68a" } }}>
+                                  <EditRoundedIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete">
+                                <IconButton size="small" onClick={() => setDeleteModal(loc)}
+                                  sx={{ color: "#ef4444", bgcolor: "#fee2e2", borderRadius: 1.5, "&:hover": { bgcolor: "#fecaca" } }}>
+                                  <DeleteRoundedIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </Tooltip>
                             </Box>
                           </TableCell>
                         </TableRow>
-                      ) : (
-                        locations.map((loc, i) => (
-                          <TableRow key={loc.id} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                            <TableCell sx={{ color: "#94a3b8", fontWeight: 600 }}>{(safePage - 1) * pageSize + i + 1}</TableCell>
-                            <TableCell>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                <Avatar sx={{ width: 30, height: 30, fontSize: "0.75rem", fontWeight: 700, bgcolor: "#f3e8ff", color: "#7d2ae8" }}>
-                                  {loc.name?.charAt(0).toUpperCase()}
-                                </Avatar>
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e1b4b" }}>{loc.name}</Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Stack direction="row" spacing={0.5}>
-                                <Tooltip title="Edit">
-                                  <IconButton size="small" onClick={() => openEdit(loc)}
-                                    sx={{ color: "#f59e0b", bgcolor: "#fef3c7", borderRadius: 1.5, "&:hover": { bgcolor: "#fde68a" } }}>
-                                    <EditIcon sx={{ fontSize: 16 }} />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                  <IconButton size="small" onClick={() => setDeleteModal(loc)}
-                                    sx={{ color: "#ef4444", bgcolor: "#fee2e2", borderRadius: 1.5, "&:hover": { bgcolor: "#fecaca" } }}>
-                                    <DeleteIcon sx={{ fontSize: 16 }} />
-                                  </IconButton>
-                                </Tooltip>
-                              </Stack>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
 
-            {/* ── Card View ── */}
+            {/* ── CARD VIEW ── */}
             {view === "card" && (
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                {loading ? (
-                  [1, 2, 3, 4, 5, 6].map((i) => (
-                    <Grid xs={12} sm={6} md={4} key={i}>
-                      <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
-                        <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1 }} />
-                        <Skeleton width="60%" height={24} sx={{ mb: 0.5 }} />
-                        <Skeleton width="40%" height={18} />
-                      </Paper>
+              <Box sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                  {loading ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <Grid item xs={12} sm={6} md={4} key={i}>
+                        <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
+                          <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1.5 }} />
+                          <Skeleton width="70%" height={24} sx={{ mb: 0.5 }} />
+                          <Skeleton width="45%" height={18} />
+                        </Paper>
+                      </Grid>
+                    ))
+                  ) : locations.length === 0 ? (
+                    <Grid item xs={12}>
+                      <Box sx={{ py: 8, textAlign: "center" }}>
+                        <LocationOnRoundedIcon sx={{ fontSize: 56, color: "#e2e8f0", mb: 1 }} />
+                        <Typography sx={{ color: "#94a3b8", fontFamily: "inherit" }}>
+                          {search ? `No results for "${search}"` : "No locations yet"}
+                        </Typography>
+                      </Box>
                     </Grid>
-                  ))
-                ) : locations.length === 0 ? (
-                  <Grid xs={12}>
-                    <Box sx={{ py: 8, textAlign: "center" }}>
-                      <LocationOnIcon sx={{ fontSize: 56, color: "#cbd5e1", mb: 1 }} />
-                      <Typography color="text.secondary">{search ? "No locations match your search" : "No locations yet"}</Typography>
-                    </Box>
-                  </Grid>
-                ) : (
-                  locations.map((loc, i) => (
-                    <Grid xs={12} sm={6} md={4} key={loc.id}>
-                      <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5, display: "flex", flexDirection: "column", transition: "box-shadow .2s", "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,.08)" } }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
-                          <Avatar sx={{ width: 44, height: 44, fontSize: "1rem", fontWeight: 700, bgcolor: "#d1fae5", color: "#10b981" }}>
-                            {loc.name?.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 600 }}>#{(safePage - 1) * pageSize + i + 1}</Typography>
-                        </Box>
-                        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", mb: 0.5 }}>{loc.name}</Typography>
-                        <Typography variant="caption" sx={{ color: "#94a3b8", mb: 2 }}>Location Node</Typography>
-                        <Divider sx={{ mb: 1.5 }} />
-                        <Stack direction="row" spacing={1} sx={{ mt: "auto" }}>
-                          <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(loc)}
-                            sx={{ flex: 1, color: "#6366f1", bgcolor: "#eef2ff", "&:hover": { bgcolor: "#e0e7ff" }, fontWeight: 600 }}>Edit</Button>
-                          <Button size="small" startIcon={<DeleteIcon />} onClick={() => setDeleteModal(loc)}
-                            sx={{ flex: 1, color: "#ef4444", bgcolor: "#fef2f2", "&:hover": { bgcolor: "#fee2e2" }, fontWeight: 600 }}>Delete</Button>
-                        </Stack>
-                      </Paper>
-                    </Grid>
-                  ))
-                )}
-              </Grid>
-            )}
-
-            {/* ── Pagination ── */}
-            {!loading && totalElements > 0 && (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1, flexWrap: "wrap", gap: 1 }}>
-                <Typography variant="body2" sx={{ color: "#64748b" }}>
-                  Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
-                </Typography>
-                <Pagination
-                  count={totalPages} page={safePage} onChange={(_, v) => setPage(v)}
-                  shape="rounded" size="small"
-                  sx={{
-                    "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600 },
-                    "& .Mui-selected": { bgcolor: "#7d2ae8 !important", color: "#fff" },
-                  }}
-                />
+                  ) : (
+                    locations.map((loc, i) => {
+                      const [c1, c2] = getGradient(loc.name);
+                      return (
+                        <Grid item xs={12} sm={6} md={4} key={loc.id}>
+                          <Paper elevation={0} sx={{
+                            border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5,
+                            display: "flex", flexDirection: "column",
+                            transition: "all 0.2s",
+                            "&:hover": { boxShadow: `0 8px 28px ${c1}25`, borderColor: c1, transform: "translateY(-3px)" },
+                            position: "relative", overflow: "hidden",
+                            "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${c1}, ${c2})` },
+                          }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                              <LocAvatar name={loc.name} size={44} />
+                              <Typography sx={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, px: 1.2, py: 0.4, fontFamily: "inherit" }}>
+                                #{(safePage - 1) * pageSize + i + 1}
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e293b", fontFamily: "inherit", mb: 0.25 }}>
+                              {loc.name}
+                            </Typography>
+                            <Typography sx={{ fontSize: "0.72rem", color: "#94a3b8", fontFamily: "inherit", mb: 2 }}>Location Node</Typography>
+                            <Divider sx={{ mb: 1.5 }} />
+                            <Stack direction="row" spacing={1}>
+                              <Button size="small" fullWidth startIcon={<EditRoundedIcon />} onClick={() => openEdit(loc)}
+                                sx={{ color: "#f59e0b", bgcolor: "#fef3c7", "&:hover": { bgcolor: "#fde68a" }, fontWeight: 600, fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                                Edit
+                              </Button>
+                              <Button size="small" fullWidth startIcon={<DeleteRoundedIcon />} onClick={() => setDeleteModal(loc)}
+                                sx={{ color: "#ef4444", bgcolor: "#fee2e2", "&:hover": { bgcolor: "#fecaca" }, fontWeight: 600, fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                                Delete
+                              </Button>
+                            </Stack>
+                          </Paper>
+                        </Grid>
+                      );
+                    })
+                  )}
+                </Grid>
               </Box>
             )}
+          </Box>
 
-            {/* ── Add Modal (REPLACED) ── */}
+          {/* ── Pagination ── */}
+          {!loading && totalElements > 0 && (
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1, flexWrap: "wrap", gap: 1 }}>
+              <Typography variant="body2" sx={{ color: "#64748b", fontFamily: "inherit" }}>
+                Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
+              </Typography>
+              <Pagination count={totalPages} page={safePage} onChange={(_, v) => setPage(v)}
+                shape="rounded" size="small"
+                sx={{
+                  "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600, fontFamily: "inherit" },
+                  "& .Mui-selected": { bgcolor: "#7d2ae8 !important", color: "#fff" },
+                }}
+              />
+            </Box>
+          )}
 
-            {/* ── Edit Modal (REPLACED) ── */}
+          {/* ── Delete Dialog ── */}
+          <Dialog open={!!deleteModal} onClose={() => setDeleteModal(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+            <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b", pb: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <WarningAmberRoundedIcon sx={{ color: "#ef4444", fontSize: 20 }} />
+                </Box>
+                Delete Location
+              </Box>
+            </DialogTitle>
+            <DialogContent>
+              <Typography sx={{ fontFamily: "inherit", color: "#64748b", fontSize: "0.9rem" }}>
+                Delete <strong>"{deleteModal?.name}"</strong>? This cannot be undone.
+              </Typography>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+              <Button variant="outlined" color="inherit" onClick={() => setDeleteModal(null)}
+                sx={{ color: "#64748b", borderColor: "#e2e8f0", fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                Cancel
+              </Button>
+              <Button variant="contained" color="error" startIcon={<DeleteRoundedIcon />}
+                disabled={saving} onClick={handleDelete}
+                sx={{ boxShadow: "none", fontFamily: "inherit", textTransform: "none", borderRadius: 2, fontWeight: 600 }}>
+                {saving ? "Deleting…" : "Delete"}
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-            {/* ── Delete Modal ── */}
-            <Dialog open={!!deleteModal} onClose={() => setDeleteModal(null)} maxWidth="xs" fullWidth>
-              <ModalIconHeader icon={<WarningAmberIcon />} title="Delete Location" subtitle="This action cannot be undone" accent="#ef4444"
-                onClose={() => setDeleteModal(null)} />
-              <DialogContent sx={{ pt: 2 }}>
-                <Typography variant="body2" sx={{ color: "#475569" }}>
-                  Are you sure you want to delete <strong>"{deleteModal?.name}"</strong>?
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>
-                  All associated data will be permanently removed.
-                </Typography>
-              </DialogContent>
-              <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-                <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
-                  onClick={() => setDeleteModal(null)}>Cancel</Button>
-                <Button variant="contained" color="error" startIcon={<DeleteIcon />}
-                  disabled={saving} sx={{ boxShadow: "none" }} onClick={handleDelete}>
-                  {saving ? "Deleting…" : "Delete Location"}
-                </Button>
-              </DialogActions>
-            </Dialog>
+          {/* ── Toast ── */}
+          <Snackbar open={!!toast} autoHideDuration={4000} onClose={() => setToast(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+            <Alert severity={toast?.type === "success" ? "success" : toast?.type === "warning" ? "warning" : "error"}
+              onClose={() => setToast(null)} sx={{ borderRadius: 2, fontFamily: "inherit", fontWeight: 500 }}>
+              {toast?.message}
+            </Alert>
+          </Snackbar>
 
-            {/* ── Toast ── */}
-            <Snackbar open={!!toast} autoHideDuration={4000} onClose={() => setToast(null)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-              <Alert
-                severity={toast?.type === "success" ? "success" : toast?.type === "warning" ? "warning" : "error"}
-                onClose={() => setToast(null)} sx={{ borderRadius: 2, fontWeight: 500 }}>
-                {toast?.message}
-              </Alert>
-            </Snackbar>
-
-            {/* ── Bulk Upload Modal ── */}
-            <BulkUploadModal
-              open={bulkOpen}
-              onClose={() => setBulkOpen(false)}
-              title="Bulk Upload Locations"
-              accent="#10b981"
-              templateHeaders={["name"]}
-              templateRows={[["Chennai"], ["Mumbai"], ["Delhi"]]}
-              parseRow={(row, rowNum) => {
-                const name = (row["name"] || "").trim();
-                if (!name) return { valid: false, error: "Name is required" };
-                if (/[^a-zA-Z\s]/.test(name)) return { valid: false, error: "Only letters and spaces allowed" };
-                return { valid: true, data: { name } };
-              }}
-              onUpload={(rows) => bulkCreateLocations(rows.map((r) => r.name))}
-              onDone={() => { fetchLocations(); }}
-            />
-          </>
-        )}
-      </Box>
-    </ThemeProvider>
+          {/* ── Bulk Upload ── */}
+          <BulkUploadModal
+            open={bulkOpen} onClose={() => setBulkOpen(false)}
+            title="Bulk Upload Locations" accent="#10b981"
+            templateHeaders={["name"]}
+            templateRows={[["Chennai"], ["Mumbai"], ["Delhi"]]}
+            parseRow={(row) => {
+              const name = (row["name"] || "").trim();
+              if (!name) return { valid: false, error: "Name required" };
+              if (/[^a-zA-Z\s]/.test(name)) return { valid: false, error: "Only letters/spaces allowed" };
+              return { valid: true, data: { name } };
+            }}
+            onUpload={(rows) => bulkCreateLocations(rows.map(r => r.name))}
+            onDone={() => fetchLocations()}
+          />
+        </>
+      )}
+    </Box>
   );
 };
 

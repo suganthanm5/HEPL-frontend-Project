@@ -22,6 +22,9 @@ public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long
     @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE b.product.id = :productId")
     List<ProductBatch> findByProductId(@Param("productId") Long productId);
     
+    @Query("SELECT COALESCE(SUM(b.quantity), 0) FROM ProductBatch b WHERE b.product.id = :productId")
+    Integer sumQuantityByProductId(@Param("productId") Long productId);
+    
     @Query("SELECT b FROM ProductBatch b JOIN FETCH b.product WHERE b.status = :status")
     List<ProductBatch> findByStatus(@Param("status") ProductBatch.Status status);
     

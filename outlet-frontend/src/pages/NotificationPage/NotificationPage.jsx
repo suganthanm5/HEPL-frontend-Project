@@ -327,7 +327,7 @@ const NotificationPage = () => {
                   borderRadius: "12px",
                   fontSize: "12px",
                   fontWeight: 600,
-                  fontFamily: "Poppins, sans-serif",
+                  fontFamily: "inherit",
                   textTransform: "none",
                 }}
               >
@@ -357,7 +357,7 @@ const NotificationPage = () => {
               "& .MuiOutlinedInput-root": {
                 borderRadius: "50px",
                 backgroundColor: "#f5f0ff",
-                fontFamily: "Poppins, sans-serif",
+                fontFamily: "inherit",
                 fontSize: "13px",
                 "& fieldset": { borderColor: "transparent" },
                 "&:hover fieldset": { borderColor: "rgba(125,42,232,0.25)" },
@@ -378,7 +378,7 @@ const NotificationPage = () => {
                 textTransform: "none",
                 fontSize: "13px",
                 fontWeight: 600,
-                fontFamily: "Poppins, sans-serif",
+                fontFamily: "inherit",
                 color: "#94a3b8",
                 "&.Mui-selected": { color: "#7d2ae8" },
               },
@@ -445,7 +445,7 @@ const NotificationPage = () => {
                             fontWeight: 700,
                             fontSize: "10px",
                             height: "20px",
-                            fontFamily: "Poppins, sans-serif",
+                            fontFamily: "inherit",
                           }}
                         />
                       </Box>
@@ -468,7 +468,7 @@ const NotificationPage = () => {
                         sx={{
                           textTransform: "none",
                           fontSize: "12px",
-                          fontFamily: "Poppins, sans-serif",
+                          fontFamily: "inherit",
                           color: "#94a3b8",
                           fontWeight: 500,
                           "&:hover": { color: "#ef4444", background: "rgba(239,68,68,0.06)" },
@@ -490,3 +490,4 @@ const NotificationPage = () => {
 };
 
 export default NotificationPage;
+

@@ -8,11 +8,14 @@ import {
   CircularProgress, Snackbar, Alert, IconButton, Paper,
   Grid, Stack, Divider, Tabs, Tab
 } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import {
   AddRounded, SearchRounded, EditRounded,
   CheckRounded, ShoppingCartRounded, PendingRounded,
   ThumbUpRounded, ThumbDownRounded, LocalShippingRounded,
-  DeleteRounded, CloseRounded, VisibilityRounded
+  DeleteRounded, CloseRounded, VisibilityRounded,
+  InventoryRounded, PendingActionsRounded, CalendarMonthRounded,
+  ArrowBackRounded
 } from "@mui/icons-material";
 import { orderService } from "../../services/orderService";
 import { outletService } from "../../services/outletService";
@@ -26,6 +29,21 @@ import { formatOrderData } from "../../utils/exportUtils";
 import "./Orders.css";
 import "../UserManagement/UserManagement.css";
 
+
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  transition: "all 0.2s ease",
+  backgroundColor: "#faf5ff",
+  "&:hover": {
+    backgroundColor: "#f3e8ff",
+    "& td": { borderColor: "#c7d2fe" },
+  },
+  "& td": {
+    borderBottom: "1px solid #f1f5f9",
+    padding: "16px 12px",
+    transition: "border-color 0.2s ease",
+  },
+}));
 
 const STATUS_META = {
   PENDING: { label: "Pending", cls: "pending", Icon: PendingRounded },
@@ -262,7 +280,7 @@ const Orders = () => {
               setIsFormView(true);
             }}
             disableRipple
-            sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}
+            sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}
           >
             <AddRounded sx={{ fontSize: 18 }} /> Create Order
           </ButtonBase>
@@ -279,10 +297,10 @@ const Orders = () => {
                   <CloseRounded />
                 </IconButton>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "inherit" }}>
                     Create New Order
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "Poppins, sans-serif" }}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "inherit" }}>
                     Select an outlet and add items to create a supply order
                   </Typography>
                 </Box>
@@ -328,7 +346,7 @@ const Orders = () => {
                     </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "Poppins, sans-serif" }}>Order Items</Typography>
+                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "inherit" }}>Order Items</Typography>
                     <Button variant="text" startIcon={<AddRounded />} onClick={addItem} sx={{ color: "#7d2ae8", fontWeight: 700 }}>Add Item</Button>
                   </Box>
 
@@ -404,7 +422,7 @@ const Orders = () => {
             </Box>
           </Paper>
         </Box>
-      ) : (
+      ) : !detail && (
         <>
           {/* ── Stat Cards ── */}
           <Box className="stat-cards-row">
@@ -443,7 +461,7 @@ const Orders = () => {
           <Box className="table-card">
             <Box className="table-toolbar">
               <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
-                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "Poppins, sans-serif" }}>
+                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>
                   All Orders
                 </Typography>
                 <ExportMenu getData={() => formatOrderData(filtered)} filename="orders" title="Orders Report" backendType="orders" />
@@ -453,7 +471,7 @@ const Orders = () => {
                   <Select
                     size="small" displayEmpty value={filters.outletId}
                     onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}
-                    sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}
+                    sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit" }}
                   >
                     <MenuItem value="">All Outlets</MenuItem>
                     {outlets.map((ot) => (
@@ -475,7 +493,7 @@ const Orders = () => {
                 <InputBase
                   placeholder="Search order no…" value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", color: "#1e1b4b" }}
+                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b" }}
                 />
               </Box>
             </Box>
@@ -494,7 +512,7 @@ const Orders = () => {
                   textTransform: "none",
                   fontSize: "13px",
                   fontWeight: 700,
-                  fontFamily: "Poppins, sans-serif",
+                  fontFamily: "inherit",
                   color: "#64748b",
                   pb: 1.5,
                   pt: 1.5,
@@ -514,7 +532,7 @@ const Orders = () => {
                 <TableHead>
                   <TableRow sx={{ background: "#fafafa" }}>
                     {["Order No", "Outlet", "Items", "Status", "Date", "Actions"].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "Poppins, sans-serif", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>
+                      <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>
                         {h}
                       </TableCell>
                     ))}
@@ -529,7 +547,7 @@ const Orders = () => {
                     </TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "Poppins, sans-serif" }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>
                         No orders found
                       </TableCell>
                     </TableRow>
@@ -542,19 +560,21 @@ const Orders = () => {
                           sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 }, cursor: "pointer" }}
                           onClick={() => setDetail(o)}
                         >
-                          <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "Poppins, sans-serif", fontSize: "0.875rem" }}>
+                          <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "inherit", fontSize: "0.875rem" }}>
                             {o.orderNo || `ORD-${o.id}`}
                           </TableCell>
-                          <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
+                          <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>
                             {o.outlet?.outletName || "—"}
                           </TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif" }}>
+                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>
                             {o.items?.length || 0}
                           </TableCell>
                           <TableCell>
-                            <Typography className={`order-status ${meta.cls}`}>{meta.label}</Typography>
+                            <Typography className={`order-status ${meta.cls}`}>
+                              <meta.Icon sx={{ fontSize: 16 }} /> {meta.label}
+                            </Typography>
                           </TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "Poppins, sans-serif" }}>
+                          <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit" }}>
                             {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}
                           </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -642,123 +662,179 @@ const Orders = () => {
         </>
       )}
 
-      {/* ── Create Order Dialog (REPLACED) ── */}
-      {/* ── Create Order Dialog (REPLACED) ── */}
-
-      {/* ── Order Detail Dialog ── */}
-      <Dialog
-        open={!!detail} onClose={() => setDetail(null)}
-        maxWidth="sm" fullWidth
-        PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}
-      >
-        {detail && (
-          <>
-            <Box className="order-detail-header" sx={{ position: "relative" }}>
-              <IconButton onClick={() => setDetail(null)} size="small" sx={{ position: "absolute", right: 12, top: 12, color: "#fff" }}>
-                <CloseRounded />
-              </IconButton>
-              <Typography className="order-no-badge">{detail.orderNo || `ORD-${detail.id}`}</Typography>
-              <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", mt: 0.5 }}>
+      {/* ── Order Detail Full View ── */}
+      {detail && (
+        <Box className="animate-fade-in">
+          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: "20px", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.08)", mb: 4 }}>
+            {/* Elegant Header */}
+            <Box sx={{ 
+              background: "linear-gradient(135deg, #111827 0%, #374151 100%)", 
+              color: "#fff", 
+              p: { xs: 3, md: 5 }, 
+              position: "relative" 
+            }}>
+              <Box sx={{ mb: 3 }}>
+                <ButtonBase 
+                  onClick={() => setDetail(null)} disableRipple
+                  sx={{ display: "flex", alignItems: "center", gap: 1, color: "rgba(255,255,255,0.7)", transition: "all 0.2s", "&:hover": { color: "#fff", transform: "translateX(-4px)" }, fontWeight: 600, fontSize: "0.85rem", letterSpacing: "0.5px" }}
+                >
+                  <ArrowBackRounded fontSize="small" /> BACK TO ORDERS
+                </ButtonBase>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+                <Typography sx={{ display: "inline-flex", alignItems: "center", px: 1.5, py: 0.5, background: "rgba(255,255,255,0.15)", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "1px", border: "1px solid rgba(255,255,255,0.2)" }}>
+                  {detail.orderNo || `ORD-${detail.id}`}
+                </Typography>
+                <Typography sx={{ display: "inline-flex", alignItems: "center", px: 1.5, py: 0.5, background: detail.status === "COMPLETED" ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)", color: detail.status === "COMPLETED" ? "#6ee7b7" : "#fcd34d", borderRadius: "6px", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px" }}>
+                  {detail.status}
+                </Typography>
+              </Box>
+              <Typography sx={{ fontWeight: 800, fontSize: "2rem", fontFamily: "inherit", mt: 1, textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
                 {detail.outlet?.outletName || "Outlet Order"}
               </Typography>
-              <Typography sx={{ fontSize: "0.8rem", opacity: 0.8 }}>Status: {detail.status}</Typography>
             </Box>
 
             {/* Timeline */}
-            <Box className="order-timeline">
+            <Box sx={{ display: "flex", p: { xs: 3, md: 5 }, bgcolor: "#fafafa", borderBottom: "1px solid #f1f5f9", overflowX: "auto" }}>
               {TIMELINE.map((step, i) => {
                 const done = timelineIdx(detail.status) >= i;
+                const active = timelineIdx(detail.status) === i;
+                const StepIcon = STATUS_META[step]?.Icon || CheckRounded;
                 return (
-                  <Box key={step} sx={{ display: "flex", alignItems: "flex-start", flex: 1 }}>
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-                      <Box className={`timeline-dot${done ? " done" : ""}`}>{i + 1}</Box>
-                      <Typography className={`timeline-label${done ? " done" : ""}`}>
+                  <Box key={step} sx={{ display: "flex", alignItems: "center", flex: 1, position: "relative", minWidth: "120px" }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", zIndex: 2 }}>
+                      <Box sx={{ 
+                        width: 56, height: 56, borderRadius: "16px", 
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        background: done ? "linear-gradient(135deg, #111827, #374151)" : "#fff",
+                        color: done ? "#fff" : "#cbd5e1",
+                        border: done ? "none" : "2px dashed #cbd5e1",
+                        boxShadow: done ? "0 8px 20px rgba(17,24,39,0.3)" : "none",
+                        transition: "all 0.3s ease",
+                        transform: active ? "scale(1.1)" : "scale(1)"
+                      }}>
+                        <StepIcon sx={{ fontSize: 28 }} />
+                      </Box>
+                      <Typography sx={{ 
+                        fontSize: "0.8rem", fontWeight: 800, mt: 2, textTransform: "uppercase", letterSpacing: "0.5px",
+                        color: active ? "#111827" : done ? "#475569" : "#94a3b8" 
+                      }}>
                         {STATUS_META[step]?.label}
                       </Typography>
                     </Box>
                     {i < TIMELINE.length - 1 && (
-                      <Box
-                        className={`timeline-line${done && timelineIdx(detail.status) > i ? " done" : ""}`}
-                        sx={{ mt: "14px", flex: 1 }}
-                      />
+                      <Box sx={{ 
+                        position: "absolute", top: 28, left: "50%", width: "100%", height: "4px",
+                        background: done && timelineIdx(detail.status) > i ? "linear-gradient(90deg, #111827, #374151)" : "#e2e8f0",
+                        transform: "translateY(-50%)", zIndex: 1, borderRadius: "2px"
+                      }} />
                     )}
                   </Box>
                 );
               })}
             </Box>
 
-            <DialogContent>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    {["Product", "Qty", "Price"].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontSize: "0.75rem" }}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(detail.items || []).map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{item.product?.name || item.productName || item.productId || "—"}</TableCell>
-                      <TableCell>{item.quantity} (Fulfilled: {item.fulfilledQuantity || 0})</TableCell>
-                      <TableCell>₹{item.price ?? "—"}</TableCell>
+            <Box sx={{ p: { xs: 3, md: 5 }, position: "relative" }}>
+              <Typography sx={{ fontWeight: 800, color: "#1e1b4b", fontSize: "1.2rem", mb: 2, fontFamily: "inherit" }}>Order Items</Typography>
+              <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: "12px", overflow: "hidden", mb: 4 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                      {["Product Details", "Quantity", "Price", "Total"].map((h) => (
+                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.5px", borderBottom: "2px solid #e2e8f0" }}>{h}</TableCell>
+                      ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </DialogContent>
+                  </TableHead>
+                  <TableBody>
+                    {(detail.items || []).map((item, idx) => {
+                      const matchedProduct = products.find(p => String(p.id) === String(item.productId));
+                      const displayImg = item.image || item.product?.imageUrl || item.product?.image || matchedProduct?.image;
+                      
+                      return (
+                      <StyledTableRow key={idx}>
+                        <TableCell sx={{ fontWeight: 600, color: "#1e293b", fontSize: "1rem" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                            <Box sx={{ width: 44, height: 44, borderRadius: "10px", overflow: "hidden", bgcolor: "#f1f5f9", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e2e8f0" }}>
+                              {displayImg ? (
+                                <img src={displayImg} alt="product" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : (
+                                <Typography sx={{ color: "#cbd5e1", fontSize: "0.7rem", fontWeight: 700 }}>IMG</Typography>
+                              )}
+                            </Box>
+                            <Typography sx={{ fontWeight: 600, color: "#1e293b", fontSize: "0.95rem" }}>
+                              {item.product?.name || item.productName || item.productId || "—"}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography sx={{ fontWeight: 700, color: "#4f46e5", display: "inline-block", bgcolor: "#eef2ff", px: 2, py: 0.5, borderRadius: "8px", fontSize: "0.95rem" }}>
+                            {item.quantity}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "#64748b", ml: 1, fontWeight: 600 }}>
+                            (Fulfilled: {item.fulfilledQuantity || 0})
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: "#64748b", fontSize: "0.95rem" }}>₹{item.price ?? "—"}</TableCell>
+                        <TableCell sx={{ fontWeight: 800, color: "#10b981", fontSize: "1rem" }}>₹{(item.quantity * (item.price || 0)).toLocaleString()}</TableCell>
+                      </StyledTableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
-            <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-              <ButtonBase
-                onClick={() => setDetail(null)} disableRipple
-                sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontWeight: 600 }}
-              >
-                Close
-              </ButtonBase>
-              {(isAdmin || isManager) && (detail.status === "PENDING" || detail.status === "PARTIALLY_APPROVED") && (
-                <>
-                  <ButtonBase
-                    onClick={() => updateStatus(detail.id, "REJECTED")}
-                    sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#fee2e2", color: "#ef4444", fontWeight: 600 }}
-                  >
-                    Reject
-                  </ButtonBase>
-                  <ButtonBase
-                    onClick={() => updateStatus(detail.id, "APPROVED")}
-                    sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600 }}
-                  >
-                    Approve
-                  </ButtonBase>
-                </>
-              )}
-              {detail.status === "APPROVED" && (isAdmin || isManager || isOutletManager) && (
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, pt: 3, borderTop: "1px solid #e2e8f0" }}>
                 <ButtonBase
-                  onClick={() => updateStatus(detail.id, "COMPLETED")}
-                  sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontWeight: 600 }}
+                  onClick={() => setDetail(null)} disableRipple
+                  sx={{ px: 4, py: 1.5, borderRadius: "50px", border: "2px solid #e2e8f0", color: "#64748b", fontWeight: 700, transition: "all 0.2s", "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" } }}
                 >
-                  Mark Completed
+                  Back to Orders
                 </ButtonBase>
-              )}
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+                {(isAdmin || isManager) && (detail.status === "PENDING" || detail.status === "PARTIALLY_APPROVED") && (
+                  <>
+                    <ButtonBase
+                      onClick={() => updateStatus(detail.id, "REJECTED")}
+                      sx={{ px: 4, py: 1.5, borderRadius: "50px", background: "#fee2e2", color: "#ef4444", fontWeight: 700, transition: "all 0.2s", "&:hover": { background: "#fca5a5", color: "#b91c1c" } }}
+                    >
+                      Reject Order
+                    </ButtonBase>
+                    <ButtonBase
+                      onClick={() => updateStatus(detail.id, "APPROVED")}
+                      sx={{ px: 5, py: 1.5, borderRadius: "50px", background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(79,70,229,0.3)", transition: "all 0.2s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(79,70,229,0.4)" } }}
+                    >
+                      Approve Order
+                    </ButtonBase>
+                  </>
+                )}
+                {detail.status === "APPROVED" && (isAdmin || isManager || isOutletManager) && (
+                  <ButtonBase
+                    onClick={() => updateStatus(detail.id, "COMPLETED")}
+                    sx={{ px: 5, py: 1.5, borderRadius: "50px", background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(16,185,129,0.3)", transition: "all 0.2s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(16,185,129,0.4)" } }}
+                  >
+                    Mark as Completed
+                  </ButtonBase>
+                )}
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
+      )}
 
       {/* Delete Confirm Dialog */}
       <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null, title: "" })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "Poppins, sans-serif", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontFamily: "Poppins, sans-serif", color: "#64748b", fontSize: "0.9rem" }}>
+          <Typography sx={{ fontFamily: "inherit", color: "#64748b", fontSize: "0.9rem" }}>
             Are you sure you want to delete <strong>{delDialog.title}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <ButtonBase onClick={() => setDelDialog({ open: false, id: null, title: "" })} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>
+            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit", fontWeight: 600 }}>
             Cancel
           </ButtonBase>
           <ButtonBase onClick={handleDelete} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#ef4444", color: "#fff", fontSize: "0.875rem", fontFamily: "Poppins, sans-serif", fontWeight: 600, boxShadow: "0 4px 12px rgba(239,68,68,0.35)" }}>
+            sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#ef4444", color: "#fff", fontSize: "0.875rem", fontFamily: "inherit", fontWeight: 600, boxShadow: "0 4px 12px rgba(239,68,68,0.35)" }}>
             Delete
           </ButtonBase>
         </DialogActions>
@@ -769,7 +845,7 @@ const Orders = () => {
         onClose={() => setSnack((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "Poppins, sans-serif" }}>
+        <Alert severity={snack.severity} onClose={() => setSnack((s) => ({ ...s, open: false }))} sx={{ fontFamily: "inherit" }}>
           {snack.msg}
         </Alert>
       </Snackbar>
@@ -778,3 +854,4 @@ const Orders = () => {
 };
 
 export default Orders;
+

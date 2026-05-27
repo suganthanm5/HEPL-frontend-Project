@@ -467,7 +467,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <PersonRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#334155" }}>
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "inherit", color: "#334155" }}>
                         My Profile
                       </Typography>
                     </ListItemButton>
@@ -478,7 +478,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <SettingsRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "Poppins, sans-serif", color: "#334155" }}>
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "inherit", color: "#334155" }}>
                         Settings
                       </Typography>
                     </ListItemButton>

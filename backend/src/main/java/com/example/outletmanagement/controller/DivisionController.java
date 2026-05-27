@@ -50,13 +50,15 @@ public class DivisionController {
     public ResponseEntity<ApiResponse> getAllDivisions(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Boolean hasProducts,
+            @RequestParam(required = false) Integer minProducts,
+            @RequestParam(required = false) Integer maxProducts,
+            @RequestParam(required = false) Integer daysAgo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         String activeSearch = keyword != null ? keyword : search;
         log.info("Fetching divisions - page: {}, size: {}, keyword: {}", page, size, activeSearch);
-        Page<DivisionResponse> response = divisionService.getAllDivisions(activeSearch, hasProducts, PageRequest.of(page, size));
+        Page<DivisionResponse> response = divisionService.getAllDivisions(activeSearch, minProducts, maxProducts, daysAgo, PageRequest.of(page, size));
         log.info("Found {} divisions", response.getTotalElements());
         return ResponseEntity.ok(ApiResponse.builder()
                 .httpStatus(HttpStatus.OK.value())
