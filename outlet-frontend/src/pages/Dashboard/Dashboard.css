@@ -412,12 +412,29 @@
   margin-top: 2px;
 }
 
-.db-stat-indigo .db-stat-icon-wrap { background: var(--db-indigo-soft); }
-.db-stat-blue .db-stat-icon-wrap { background: var(--db-blue-soft); }
-.db-stat-green .db-stat-icon-wrap { background: var(--db-green-soft); }
-.db-stat-orange .db-stat-icon-wrap { background: var(--db-orange-soft); }
-.db-stat-rose .db-stat-icon-wrap { background: var(--db-rose-soft); }
-.db-stat-purple .db-stat-icon-wrap { background: var(--db-purple-soft); }
+.db-stat-indigo .db-stat-icon-wrap {
+  background: var(--db-indigo-soft);
+}
+
+.db-stat-blue .db-stat-icon-wrap {
+  background: var(--db-blue-soft);
+}
+
+.db-stat-green .db-stat-icon-wrap {
+  background: var(--db-green-soft);
+}
+
+.db-stat-orange .db-stat-icon-wrap {
+  background: var(--db-orange-soft);
+}
+
+.db-stat-rose .db-stat-icon-wrap {
+  background: var(--db-rose-soft);
+}
+
+.db-stat-purple .db-stat-icon-wrap {
+  background: var(--db-purple-soft);
+}
 
 .db-stat-icon {
   font-size: 18px;

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, ButtonBase } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { LockRounded, ArrowBackRounded } from "@mui/icons-material";
 import "./Unauthorized.css";
 
@@ -21,14 +21,15 @@ const Unauthorized = () => {
           Please contact your administrator to get the required access.
         </Typography>
 
-        <ButtonBase
-          className="unauth-btn"
+        <Button
+          variant="contained"
+          color="primary"
           onClick={() => navigate("/dashboard")}
-          disableRipple
+          startIcon={<ArrowBackRounded />}
+          sx={{ borderRadius: "50px", textTransform: "none", boxShadow: "none" }}
         >
-          <ArrowBackRounded sx={{ fontSize: 18 }} />
           Back to Dashboard
-        </ButtonBase>
+        </Button>
 
       </Box>
     </Box>

@@ -9,6 +9,7 @@ import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.DivisionRepository;
 import com.example.outletmanagement.service.DivisionService;
 import com.example.outletmanagement.specification.DivisionSpecification;
+import com.example.outletmanagement.exception.ResourceAlreadyExistsException;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class DivisionServiceImpl implements DivisionService {
                 Division restored = divisionRepository.save(existing);
                 return mapToResponse(restored);
             } else {
-                throw new RuntimeException("Division with name '" + request.getName() + "' already exists");
+                throw new ResourceAlreadyExistsException("Division", "name", request.getName());
             }
         }
         
@@ -67,7 +68,7 @@ public class DivisionServiceImpl implements DivisionService {
                 if (existing.getIsDeleted() != null && existing.getIsDeleted()) {
                     throw new RuntimeException("A deleted division with this name already exists. Please restore it by adding it as a new division.");
                 } else {
-                    throw new RuntimeException("Division with name '" + request.getName() + "' already exists");
+                    throw new ResourceAlreadyExistsException("Division", "name", request.getName());
                 }
             }
         }

@@ -9,6 +9,7 @@ import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatDivisionData } from "../../utils/exportUtils";
 import BulkUploadModal from "../../components/BulkUploadModal";
+import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
 import "../UserManagement/UserManagement.css";
 
 import { styled, alpha } from "@mui/material/styles";
@@ -214,11 +215,28 @@ const Division = () => {
   const [prodLoading, setProdLoading] = useState(false);
   const [prodSaving, setProdSaving] = useState(false);
   const [newProd, setNewProd] = useState(EMPTY_PROD);
+  const [existingNames, setExistingNames] = useState([]);
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
+
+  const fetchAllDivisionNames = async () => {
+    try {
+      const res = await getDivisions(0, 1000, "");
+      const list = res?.content || [];
+      setExistingNames(list.map(d => d.name?.toLowerCase().trim()).filter(Boolean));
+    } catch (e) {
+      console.error("Failed to pre-fetch division names:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (isFormView) {
+      fetchAllDivisionNames();
+    }
+  }, [isFormView]);
 
   const handleInputChange = (value, setter) => {
     setter(value);
@@ -234,10 +252,19 @@ const Division = () => {
     }
 
     // Check for duplicates dynamically
-    const names = value.split(",").map(n => n.trim()).filter(Boolean);
-    const dupes = names.filter(n => divisions.some(d => d.name?.toLowerCase() === n.toLowerCase()));
+    const names = value.split(",").map(n => n.trim().toLowerCase()).filter(Boolean);
+    const dupes = names.filter(n => {
+      if (editModal && editModal.name?.toLowerCase().trim() === n) {
+        return false;
+      }
+      return existingNames.includes(n);
+    });
+
     if (dupes.length > 0) {
-      setInlineError(`Division already exists: ${dupes.join(", ")}`);
+      const dupOriginals = value.split(",")
+        .map(n => n.trim())
+        .filter(n => dupes.includes(n.toLowerCase()));
+      setInlineError(`Division already exists: ${dupOriginals.join(", ")}`);
     }
   };
 
@@ -277,9 +304,15 @@ const Division = () => {
     if (!addName.trim()) return;
     const names = addName.split(",").map(n => n.trim()).filter(Boolean);
     if (!names.length) { showToast("Enter at least one valid name.", "warning"); return; }
-    const dupes = names.filter(n => divisions.some(d => d.name?.toLowerCase() === n.toLowerCase()));
+    
+    const dupes = names.filter(n => existingNames.includes(n.toLowerCase()));
+    if (dupes.length) {
+      showToast(`Already exists: ${dupes.join(", ")}`, "warning");
+      setInlineError(`Division already exists: ${dupes.join(", ")}`);
+      return;
+    }
+
     const unique = [...new Set(names.filter(n => !dupes.includes(n)))];
-    if (dupes.length) showToast(`Already exist: ${dupes.join(", ")}`, "warning");
     if (!unique.length) return;
     setSaving(true);
     let ok = 0; const failed = [];
@@ -297,6 +330,9 @@ const Division = () => {
         const validationErrors = Object.values(e.response.data.data).join(", ");
         if (validationErrors) errMsg += `: ${validationErrors}`;
       }
+      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
+        setInlineError(errMsg);
+      }
       showToast("Error: " + errMsg);
     }
     finally { setSaving(false); }
@@ -304,15 +340,27 @@ const Division = () => {
 
   const handleUpdate = async () => {
     if (!editName.trim()) return;
+    const trimmed = editName.trim();
+    if (editModal && editModal.name?.toLowerCase().trim() !== trimmed.toLowerCase()) {
+      if (existingNames.includes(trimmed.toLowerCase())) {
+        showToast(`Division "${trimmed}" already exists.`, "warning");
+        setInlineError(`Division already exists: ${trimmed}`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
-      await updateDivision(editModal.id, { name: editName.trim() });
+      await updateDivision(editModal.id, { name: trimmed });
       setEditModal(null); setIsFormView(false); fetchDivisions();
     } catch (e) {
       let errMsg = e.response?.data?.message || e.message;
       if (e.response?.data?.data && typeof e.response.data.data === 'object') {
         const validationErrors = Object.values(e.response.data.data).join(", ");
         if (validationErrors) errMsg += `: ${validationErrors}`;
+      }
+      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
+        setInlineError(errMsg);
       }
       showToast("Update failed: " + errMsg);
     }
@@ -382,57 +430,31 @@ const Division = () => {
   /* ── FORM VIEW ── */
   if (isFormView) return (
     <Box sx={{ animation: "fadeIn 0.3s ease", "@keyframes fadeIn": { from: { opacity: 0, transform: "translateY(8px)" }, to: { opacity: 1, transform: "translateY(0)" } } }}>
-      <Paper elevation={0} sx={{ border: `1px solid ${C.slate200}`, borderRadius: 4, overflow: "hidden" }}>
-        {/* Header */}
-        <Box sx={{
-          px: 3, py: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: `linear-gradient(135deg, ${C.slate50} 0%, ${C.indigoSoft} 100%)`,
-          borderBottom: `1px solid ${C.slate200}`,
-        }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton onClick={() => { setIsFormView(false); setEditModal(null); setAddName(""); }}
-              sx={{ bgcolor: C.white, color: C.slate600, border: `1px solid ${C.slate200}`, borderRadius: 2, "&:hover": { bgcolor: C.slate100 } }}>
-              <CloseIcon />
-            </IconButton>
-            <Box>
-              <Typography variant="h6" fontWeight={800} sx={{ color: C.slate900, fontFamily: "'DM Sans', sans-serif" }}>
-                {editModal ? "Edit Division" : "Add New Division"}
-              </Typography>
-              <Typography variant="caption" sx={{ color: C.slate400 }}>
-                {editModal ? `Updating: ${editModal.name}` : "Create one or multiple divisions at once"}
-              </Typography>
-            </Box>
-          </Box>
-          <Stack direction="row" spacing={1.5}>
-            <Button variant="outlined" onClick={() => { setIsFormView(false); setEditModal(null); setAddName(""); }}
-              sx={{ borderRadius: 2, textTransform: "none", color: C.slate600, borderColor: C.slate200, fontWeight: 600 }}>
-              Cancel
-            </Button>
-            <Button variant="contained"
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : editModal ? <EditIcon /> : <AddIcon />}
-              disabled={saving || !!inlineError || (editModal ? !editName.trim() : !addName.trim())}
-              onClick={editModal ? handleUpdate : handleAdd}
-              sx={{
-                borderRadius: 2, textTransform: "none", fontWeight: 700,
-                background: `linear-gradient(135deg, ${C.indigoLight} 0%, ${C.indigo} 100%)`,
-                boxShadow: `0 4px 14px ${alpha(C.indigo, 0.35)}`,
-                "&:hover": { background: `linear-gradient(135deg, ${C.indigo} 0%, #3730a3 100%)` },
-                "&:disabled": { opacity: 0.6 },
-              }}>
-              {saving ? "Saving…" : editModal ? "Save Changes" : "Create Division"}
-            </Button>
-          </Stack>
-        </Box>
+      <FormContainer>
+        <FormHeader
+          title={editModal ? "Edit Division" : "Add New Division"}
+          subtitle={editModal ? `Updating: ${editModal.name}` : "Create one or multiple divisions at once"}
+          onClose={() => { setIsFormView(false); setEditModal(null); setAddName(""); }}
+          onSave={editModal ? handleUpdate : handleAdd}
+          saving={saving}
+          saveDisabled={!!inlineError || (editModal ? !editName.trim() : !addName.trim())}
+          saveLabel={editModal ? "Save Changes" : "Create Division"}
+          saveIcon={editModal ? <EditIcon /> : <AddIcon />}
+          colorAccent="primary"
+        />
 
         {/* Form Body */}
         <Box sx={{ p: { xs: 2, md: 4 } }}>
           <Grid container spacing={4}>
             <Grid item xs={12} md={7}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ color: C.slate800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: 4, height: 18, bgcolor: C.indigoLight, borderRadius: 4 }} />
-                Division Details
-              </Typography>
-              <TextField fullWidth label="Division Name *" variant="outlined"
+              <FormSectionHeader
+                title="Division Details"
+                color={C.indigoLight}
+              />
+              <TextField
+                fullWidth
+                label="Division Name *"
+                variant="outlined"
                 value={editModal ? editName : addName}
                 onChange={(e) => handleInputChange(e.target.value, editModal ? setEditName : setAddName)}
                 placeholder={editModal ? "" : "e.g. Dairy, Electronics (comma-separated)"}
@@ -444,13 +466,6 @@ const Division = () => {
                       <CategoryRoundedIcon sx={{ color: C.slate400, fontSize: 20 }} />
                     </InputAdornment>
                   ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2.5,
-                    "&:hover fieldset": { borderColor: !!inlineError ? C.rose : C.indigoLight },
-                    "&.Mui-focused fieldset": { borderColor: !!inlineError ? C.rose : C.indigoLight },
-                  },
                 }}
               />
             </Grid>
@@ -469,7 +484,7 @@ const Division = () => {
             </Grid>
           </Grid>
         </Box>
-      </Paper>
+      </FormContainer>
     </Box>
   );
 
@@ -487,19 +502,14 @@ const Division = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5}>
-          <Button variant="outlined" onClick={() => setBulkOpen(true)} startIcon={<UploadFileIcon />}
-            sx={{ borderRadius: 2.5, textTransform: "none", borderColor: C.indigoBorder, color: C.indigo, fontWeight: 600, px: 2.5, "&:hover": { bgcolor: C.indigoSoft, borderColor: C.indigo } }}>
+          <Button variant="outlined" color="primary" onClick={() => setBulkOpen(true)} startIcon={<UploadFileIcon />}
+            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 600, px: 2.5 }}>
             Bulk Upload
           </Button>
           <ExportMenu getData={() => formatDivisionData(divisions)} filename="divisions" title="Divisions Report" backendType="divisions" />
-          <Button variant="contained" onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
+          <Button variant="contained" color="primary" onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
             startIcon={<AddIcon />}
-            sx={{
-              borderRadius: 2.5, textTransform: "none", fontWeight: 700, px: 3,
-              background: `linear-gradient(135deg, ${C.indigoLight} 0%, ${C.indigo} 100%)`,
-              boxShadow: `0 4px 14px ${alpha(C.indigo, 0.35)}`,
-              "&:hover": { background: `linear-gradient(135deg, ${C.indigo} 0%, #3730a3 100%)` },
-            }}>
+            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, px: 3, boxShadow: "none" }}>
             Add Division
           </Button>
         </Stack>
@@ -642,8 +652,8 @@ const Division = () => {
                         </Typography>
                         {!searchTerm && (
                           <Button onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
-                            variant="contained" startIcon={<AddIcon />}
-                            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, bgcolor: C.indigo, boxShadow: `0 4px 14px ${alpha(C.indigo, 0.35)}` }}>
+                            variant="contained" color="primary" startIcon={<AddIcon />}
+                            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, boxShadow: "none" }}>
                             Add First Division
                           </Button>
                         )}
@@ -710,8 +720,8 @@ const Division = () => {
                 </Typography>
                 {!searchTerm && (
                   <Button onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
-                    variant="contained" startIcon={<AddIcon />}
-                    sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, bgcolor: C.indigo }}>
+                    variant="contained" color="primary" startIcon={<AddIcon />}
+                    sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, boxShadow: "none" }}>
                     Add First Division
                   </Button>
                 )}
@@ -847,10 +857,10 @@ const Division = () => {
             ))}
           </Stack>
           <DialogActions sx={{ px: 0, pt: 3 }}>
-            <Button onClick={() => setViewModal(null)} variant="outlined"
+            <Button onClick={() => setViewModal(null)} variant="outlined" color="inherit"
               sx={{ borderRadius: 2, textTransform: "none", color: C.slate600, borderColor: C.slate200 }}>Close</Button>
-            <Button onClick={() => { setViewModal(null); openEdit(viewModal); }} variant="contained" startIcon={<EditIcon />}
-              sx={{ borderRadius: 2, textTransform: "none", bgcolor: C.sky, "&:hover": { bgcolor: "#0284c7" }, boxShadow: "none" }}>
+            <Button onClick={() => { setViewModal(null); openEdit(viewModal); }} variant="contained" color="info" startIcon={<EditIcon />}
+              sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>
               Edit Division
             </Button>
           </DialogActions>
@@ -881,10 +891,10 @@ const Division = () => {
                 </Grid>
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                   <Button size="small" onClick={() => setNewProd(EMPTY_PROD)} sx={{ textTransform: "none", color: C.slate400 }}>Clear</Button>
-                  <Button size="small" variant="contained" onClick={handleAddProduct}
+                  <Button size="small" variant="contained" color="primary" onClick={handleAddProduct}
                     disabled={prodSaving || !newProd.name.trim()}
                     startIcon={prodSaving ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
-                    sx={{ textTransform: "none", bgcolor: C.emerald, "&:hover": { bgcolor: "#059669" }, borderRadius: 2, boxShadow: "none", fontWeight: 700 }}>
+                    sx={{ textTransform: "none", borderRadius: 2, boxShadow: "none", fontWeight: 700 }}>
                     {prodSaving ? "Adding…" : "Add Product"}
                   </Button>
                 </Stack>
@@ -941,7 +951,7 @@ const Division = () => {
             </Typography>
           </Box>
           <DialogActions sx={{ px: 0, pt: 2 }}>
-            <Button onClick={() => setDeleteModal(null)} variant="outlined"
+            <Button onClick={() => setDeleteModal(null)} variant="outlined" color="inherit"
               sx={{ borderRadius: 2, textTransform: "none", color: C.slate600, borderColor: C.slate200 }}>Cancel</Button>
             <Button onClick={handleDelete} disabled={saving} variant="contained" color="error"
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}

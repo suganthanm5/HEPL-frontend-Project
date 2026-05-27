@@ -80,6 +80,23 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // ================= RESOURCE ALREADY EXISTS =================
+
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleResourceAlreadyExists(
+            ResourceAlreadyExistsException ex
+    ) {
+        logger.error("Resource Already Exists Exception", ex);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                ApiResponse.builder()
+                        .httpStatus(HttpStatus.CONFLICT.value())
+                        .message(ex.getMessage())
+                        .data(null)
+                        .build()
+        );
+    }
+
     // ================= RUNTIME EXCEPTION =================
 
     @ExceptionHandler(RuntimeException.class)

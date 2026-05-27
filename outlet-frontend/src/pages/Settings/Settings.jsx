@@ -316,9 +316,9 @@ const Settings = () => {
                 </Typography>
                 <Button 
                   variant="contained" 
+                  color="primary"
                   startIcon={<PersonIcon />}
                   onClick={handleOpenProfileDrawer}
-                  sx={{ backgroundColor: colorAccent, '&:hover': { backgroundColor: colorAccent, filter: 'brightness(0.9)' } }}
                   disableElevation
                 >
                   Open Profile Drawer
@@ -378,9 +378,10 @@ const Settings = () => {
                         />
                         <Button 
                           variant="contained" 
+                          color="primary"
                           onClick={handlePasswordChange}
                           disabled={loading}
-                          sx={{ backgroundColor: colorAccent, '&:hover': { backgroundColor: colorAccent, filter: 'brightness(0.9)' }, mt: 1 }} 
+                          sx={{ mt: 1 }} 
                           disableElevation
                         >
                           {loading ? 'Updating...' : 'Update Password'}
@@ -400,7 +401,7 @@ const Settings = () => {
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                         Add additional security to your account using two factor authentication.
                       </Typography>
-                      <Button variant="contained" sx={{ backgroundColor: colorAccent, '&:hover': { backgroundColor: colorAccent, filter: 'brightness(0.9)' } }} disableElevation>Enable 2FA</Button>
+                      <Button variant="contained" color="primary" disableElevation>Enable 2FA</Button>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -652,8 +653,8 @@ const Settings = () => {
           <Box className="settings-footer">
             <Button 
               variant="contained" 
+              color="primary"
               className="save-btn" 
-              sx={{ backgroundColor: colorAccent, '&:hover': { backgroundColor: colorAccent, filter: 'brightness(0.9)' } }}
               onClick={() => setSnackbar({ open: true, message: 'Settings have been automatically saved and applied!', severity: 'success' })}
             >
               Save Changes

@@ -7,6 +7,7 @@ import API, { ENDPOINTS } from '../../api/apiClient';
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatProductData } from "../../utils/exportUtils";
+import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
 import "./Product.css";
 
 // Material UI imports
@@ -48,7 +49,7 @@ import {
   CardContent,
   CardActions,
 } from "@mui/material";
-import { createTheme, ThemeProvider, styled, alpha } from "@mui/material/styles";
+import { styled, alpha } from "@mui/material/styles";
 
 // Material UI Icons
 import AddIcon from "@mui/icons-material/Add";
@@ -92,21 +93,21 @@ const ChartCard = ({ title, subtitle, action, children }) => (
       }
     }}
   >
-    <Box sx={{ 
-      display: "flex", 
-      flexDirection: { xs: "column", sm: "row" }, 
-      justifyContent: "space-between", 
-      alignItems: { xs: "stretch", sm: "center" }, 
+    <Box sx={{
+      display: "flex",
+      flexDirection: { xs: "column", sm: "row" },
+      justifyContent: "space-between",
+      alignItems: { xs: "stretch", sm: "center" },
       gap: 2,
-      mb: 3 
+      mb: 3
     }}>
       <Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>{title}</Typography>
         {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
       </Box>
-      <Box sx={{ 
-        display: "flex", 
-        alignItems: "center", 
+      <Box sx={{
+        display: "flex",
+        alignItems: "center",
         gap: 1,
         flexWrap: "wrap",
         justifyContent: { xs: "flex-start", sm: "flex-end" }
@@ -139,18 +140,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-/* ── MUI Theme ── */
-const theme = createTheme({
-  palette: {
-    primary: { main: "#4f46e5" },
-    secondary: { main: "#7c3aed" },
-    error: { main: "#ef4444" },
-    info: { main: "#0ea5e9" },
-    success: { main: "#10b981" },
-    warning: { main: "#f59e0b" },
-  },
-  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-});
+
 
 /* ── Styled Components ── */
 const GlassCard = styled(Paper)(({ theme }) => ({
@@ -189,12 +179,12 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
   <Paper
     elevation={0}
     sx={{
-      flex: 1, minWidth: 155,
+      flex: 1, minWidth: 200,
       borderRadius: "18px",
       border: `1.5px solid ${accent}33`,
       background: gradient,
-      p: "18px 20px",
-      display: "flex", alignItems: "center", gap: 2,
+      p: "20px 26px",
+      display: "flex", alignItems: "center", gap: 2.5,
       cursor: "default",
       transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s",
       "&:hover": { transform: "translateY(-5px)", boxShadow: `0 14px 40px ${accent}22`, borderColor: accent },
@@ -258,6 +248,8 @@ const Product = () => {
   const [divisionFilter, setDivisionFilter] = useState("");
   const [priceRangeFilter, setPriceRangeFilter] = useState("");
   const [isFormView, setIsFormView] = useState(false);
+  const [existingProductNames, setExistingProductNames] = useState([]);
+  const [inlineError, setInlineError] = useState("");
   const [summary, setSummary] = useState(null);
   const [trendPeriod, setTrendPeriod] = useState("Weekly");
 
@@ -265,14 +257,41 @@ const Product = () => {
     setToast({ message, type });
   };
 
-  const validatePrices = () => {
+  const validateForm = () => {
+    if (!form.name.trim()) { showToast("Product Name is required", "error"); return false; }
+    if (!form.divisionId) { showToast("Division is required", "error"); return false; }
+    
     const mrp = Number(form.mrp) || 0;
     const sellingPrice = Number(form.sellingPrice) || 0;
     const purchasePrice = Number(form.purchasePrice) || 0;
+    const uimPrice = Number(form.uimPrice) || 0;
+
+    if (mrp <= 0) { showToast("MRP must be greater than 0", "error"); return false; }
+    if (sellingPrice <= 0) { showToast("Selling Price must be greater than 0", "error"); return false; }
+    if (purchasePrice <= 0) { showToast("Purchase Price must be greater than 0", "error"); return false; }
+    if (uimPrice <= 0) { showToast("UIM Price must be greater than 0", "error"); return false; }
+
     if (sellingPrice > mrp) { showToast("Selling price should be smaller than MRP", "error"); return false; }
     if (purchasePrice > mrp) { showToast("Purchase price should be smaller than MRP", "error"); return false; }
     return true;
   };
+
+  const fetchAllProductNames = async () => {
+    try {
+      const res = await getProducts(0, 1000, "");
+      const list = res?.content || [];
+      setExistingProductNames(list.map(p => p.name?.toLowerCase().trim()).filter(Boolean));
+    } catch (e) {
+      console.error("Failed to pre-fetch product names:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (isFormView) {
+      fetchAllProductNames();
+      setInlineError("");
+    }
+  }, [isFormView]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -293,7 +312,7 @@ const Product = () => {
         reportService.getDashboardSummary().catch(() => null),
         orderService.getAll({ size: 1000 }, signal).catch(err => [])
       ]);
-      
+
       const divList = divRes?.content ?? [];
       setDivisions(divList);
       setSummary(summRes);
@@ -324,22 +343,22 @@ const Product = () => {
       }
 
       const prodRes = await getProducts(page - 1, pageSize, activeSearch, filters, signal);
-      
+
       const productList = prodRes?.content ?? [];
-      
-   
+
+
       try {
         const batchRes = await API.get('/api/batches', { params: { size: 10000 }, signal });
         const batches = batchRes?.data?.data?.content || batchRes?.data?.data || [];
         const stockMap = {};
         batches.forEach(b => {
-         
+
           if (b.status === "ACTIVE" || !b.status) {
             const pid = b.productId || b.product?.id;
             if (pid) stockMap[pid] = (stockMap[pid] || 0) + (b.quantity || 0);
           }
         });
-        
+
         productList.forEach(p => {
           if (p.totalStock === undefined || p.totalStock === null) {
             p.totalStock = stockMap[p.id] || 0;
@@ -375,6 +394,21 @@ const Product = () => {
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    setForm(f => ({ ...f, name: val }));
+    setInlineError("");
+
+    if (!val.trim()) return;
+
+    if (existingProductNames.includes(val.trim().toLowerCase())) {
+      if (editModal && editModal.name?.toLowerCase().trim() === val.trim().toLowerCase()) {
+        return;
+      }
+      setInlineError(`Product already exists: ${val.trim()}`);
+    }
+  };
+
   const buildPayload = () => ({
     name: form.name.trim(),
     productCode: form.productCode.trim(),
@@ -387,7 +421,14 @@ const Product = () => {
   });
 
   const handleAdd = async () => {
-    if (!form.name.trim() || !validatePrices()) return;
+    if (!validateForm()) return;
+    
+    if (existingProductNames.includes(form.name.trim().toLowerCase())) {
+      showToast(`Product "${form.name.trim()}" already exists.`, "warning");
+      setInlineError(`Product already exists: ${form.name.trim()}`);
+      return;
+    }
+
     setSaving(true);
     try {
       await addProduct({ ...buildPayload(), productCode: generateProductCode() });
@@ -395,7 +436,15 @@ const Product = () => {
       setIsFormView(false); setForm(EMPTY_FORM);
       showToast("Product added successfully!", "success");
     } catch (e) {
-      showToast("Failed to add product: " + (e.response?.data?.message || e.message), "error");
+      let errMsg = e.response?.data?.message || e.message;
+      if (e.response?.data?.data && typeof e.response.data.data === 'object') {
+        const validationErrors = Object.values(e.response.data.data).join(", ");
+        if (validationErrors) errMsg = `${errMsg}: ${validationErrors}`;
+      }
+      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
+        setInlineError(errMsg);
+      }
+      showToast("Failed to add product: " + errMsg, "error");
     } finally { setSaving(false); }
   };
 
@@ -415,7 +464,16 @@ const Product = () => {
   };
 
   const handleUpdate = async () => {
-    if (!form.name.trim() || !validatePrices()) return;
+    if (!validateForm()) return;
+
+    if (editModal && editModal.name?.toLowerCase().trim() !== form.name.trim().toLowerCase()) {
+      if (existingProductNames.includes(form.name.trim().toLowerCase())) {
+        showToast(`Product "${form.name.trim()}" already exists.`, "warning");
+        setInlineError(`Product already exists: ${form.name.trim()}`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       await updateProduct(editModal.id, buildPayload());
@@ -423,7 +481,15 @@ const Product = () => {
       setEditModal(null); setIsFormView(false); setForm(EMPTY_FORM);
       showToast("Product updated successfully!", "success");
     } catch (e) {
-      showToast("Failed to update product: " + (e.response?.data?.message || e.message), "error");
+      let errMsg = e.response?.data?.message || e.message;
+      if (e.response?.data?.data && typeof e.response.data.data === 'object') {
+        const validationErrors = Object.values(e.response.data.data).join(", ");
+        if (validationErrors) errMsg = `${errMsg}: ${validationErrors}`;
+      }
+      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
+        setInlineError(errMsg);
+      }
+      showToast("Failed to update product: " + errMsg, "error");
     } finally { setSaving(false); }
   };
 
@@ -501,7 +567,7 @@ const Product = () => {
         else if (diffDays <= 14) weekKey = "Week 3";
         else if (diffDays <= 21) weekKey = "Week 2";
         else weekKey = "Week 1";
-        
+
         const matchingRevenue = (order.items || []).reduce((sum, item) => {
           if (matchesFilter(item)) {
             return sum + (item.quantity * Number(item.price || 0));
@@ -523,7 +589,7 @@ const Product = () => {
       const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       dailyMap[dateStr] = 0;
     }
-    
+
     orders.forEach(order => {
       const oDate = parseDateStr(order.createdAt);
       const dateStr = oDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -656,8 +722,7 @@ const Product = () => {
   );
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
 
         {/* ── Hero ── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
@@ -665,17 +730,12 @@ const Product = () => {
             <TypingText text="Product Management" />
           </Typography>
           <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Button variant="outlined" startIcon={<UploadFileIcon />}
-              sx={{
-                borderColor: "#1e1b4b", color: "#1e1b4b", fontWeight: 600, textTransform: "none", borderRadius: 2,
-                "&:hover": { bgcolor: "#f1f5f9", borderColor: "#1e1b4b" }
-              }}
+            <Button variant="outlined" color="primary" startIcon={<UploadFileIcon />}
               onClick={() => setBulkOpen(true)}>
               Bulk Upload
             </Button>
             <ExportMenu getData={() => formatProductData(filtered)} filename="products" title="Products Report" />
-            <Button variant="contained" startIcon={<AddIcon />}
-              sx={{ bgcolor: "#1e1b4b", "&:hover": { bgcolor: "#312e81" }, color: "#fff", boxShadow: "none" }}
+            <Button variant="contained" color="primary" startIcon={<AddIcon />}
               onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
               Add Product
             </Button>
@@ -685,34 +745,18 @@ const Product = () => {
         {isFormView ? (
           /* ── Full Page Form View ── */
           <Box className="animate-fade-in">
-            <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-              <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <IconButton onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); }} sx={{ color: "#64748b" }}>
-                    <CloseIcon />
-                  </IconButton>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b" }}>
-                      {editModal ? "Edit Product" : "Add New Product"}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "#64748b" }}>
-                      {editModal ? `Updating details for ${editModal.name}` : "Fill in the details to create a new product"}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Stack direction="row" spacing={1.5}>
-                  <Button variant="outlined" color="inherit" onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); }}
-                    sx={{ color: "#64748b", borderColor: "#e2e8f0" }}>
-                    Cancel
-                  </Button>
-                  <Button variant="contained" startIcon={editModal ? <EditIcon /> : <AddIcon />}
-                    disabled={saving || !form.name.trim()}
-                    sx={{ bgcolor: editModal ? "#6366f1" : "#f59e0b", "&:hover": { bgcolor: editModal ? "#4f46e5" : "#d97706" }, color: "#fff", boxShadow: "none" }}
-                    onClick={editModal ? handleUpdate : handleAdd}>
-                    {saving ? "Saving…" : editModal ? "Save Changes" : "Create Product"}
-                  </Button>
-                </Stack>
-              </Box>
+            <FormContainer>
+              <FormHeader
+                title={editModal ? "Edit Product" : "Add New Product"}
+                subtitle={editModal ? `Updating details for ${editModal.name}` : "Fill in the details to create a new product"}
+                onClose={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); }}
+                onSave={editModal ? handleUpdate : handleAdd}
+                saving={saving}
+                saveDisabled={!form.name.trim() || !form.divisionId || !form.mrp || !form.sellingPrice || !form.purchasePrice || !form.uimPrice || !!inlineError}
+                saveLabel={editModal ? "Save Changes" : "Create Product"}
+                saveIcon={editModal ? <EditIcon /> : <AddIcon />}
+                colorAccent={editModal ? "primary" : "success"}
+              />
 
               <Box sx={{ p: { xs: 2, md: 4 } }}>
                 <Grid container spacing={4}>
@@ -720,7 +764,7 @@ const Product = () => {
                   <Grid item xs={12} md={5}>
                     <Stack spacing={3}>
                       <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2 }}>Product Image</Typography>
+                        <FormSectionHeader title="Product Image" color="#f59e0b" />
                         <Box sx={{
                           width: "100%",
                           aspectRatio: "1/1",
@@ -764,7 +808,7 @@ const Product = () => {
                               </Box>
                               <Typography variant="body2" sx={{ fontWeight: 600, color: "#475569" }}>Click to upload product image</Typography>
                               <Typography variant="caption" sx={{ color: "#94a3b8" }}>PNG, JPG or GIF up to 1MB</Typography>
-                              <Button variant="contained" component="label" size="small" sx={{ mt: 2, bgcolor: "#f59e0b", color: "#fff", "&:hover": { bgcolor: "#d97706" } }}>
+                              <Button variant="contained" color="primary" component="label" size="small" sx={{ mt: 2, borderRadius: 2 }}>
                                 Browse Files
                                 <input type="file" hidden accept="image/*" onChange={(e) => {
                                   const file = e.target.files[0];
@@ -787,21 +831,18 @@ const Product = () => {
                   <Grid item xs={12} md={7}>
                     <Stack spacing={4}>
                       <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ width: 4, height: 16, bgcolor: "#f59e0b", borderRadius: 1 }} />
-                          Basic Information
-                        </Typography>
+                        <FormSectionHeader title="Basic Information" color="#f59e0b" />
                         <Grid container spacing={2.5}>
                           <Grid item xs={12} sm={editModal ? 6 : 12}>
-                            <TextField fullWidth label="Product Name" name="name" value={form.name} onChange={handleChange} required placeholder="e.g. Milk 1L" variant="outlined" />
+                            <TextField fullWidth label="Product Name" name="name" value={form.name} onChange={handleNameChange} required placeholder="e.g. Milk 1L" error={!!inlineError} helperText={inlineError} />
                           </Grid>
                           {editModal && (
                             <Grid item xs={12} sm={6}>
-                              <TextField fullWidth label="Product Code" value={form.productCode} disabled variant="outlined" sx={{ bgcolor: "#f8fafc" }} />
+                              <TextField fullWidth label="Product Code" value={form.productCode} disabled sx={{ bgcolor: "#f8fafc" }} />
                             </Grid>
                           )}
                           <Grid item xs={12}>
-                            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 1, display: "block" }}>Division</Typography>
+                            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 1, display: "block" }}>Division *</Typography>
                             <SearchableSelect options={divisions} value={form.divisionId} onChange={(id) => setForm(f => ({ ...f, divisionId: id }))} placeholder="Select Division" />
                           </Grid>
                         </Grid>
@@ -810,22 +851,19 @@ const Product = () => {
                       <Divider />
 
                       <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ width: 4, height: 16, bgcolor: "#10b981", borderRadius: 1 }} />
-                          Pricing & Inventory
-                        </Typography>
+                        <FormSectionHeader title="Pricing & Inventory" color="#10b981" />
                         <Grid container spacing={2.5}>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="MRP" name="mrp" value={form.mrp} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField fullWidth type="number" label="MRP" name="mrp" value={form.mrp} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="Selling Price" name="sellingPrice" value={form.sellingPrice} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField fullWidth type="number" label="Selling Price" name="sellingPrice" value={form.sellingPrice} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="Purchase Price" name="purchasePrice" value={form.purchasePrice} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField fullWidth type="number" label="Purchase Price" name="purchasePrice" value={form.purchasePrice} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="UIM Price" name="uimPrice" value={form.uimPrice} onChange={handleChange} InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField fullWidth type="number" label="UIM Price" name="uimPrice" value={form.uimPrice} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
                           </Grid>
                         </Grid>
                       </Box>
@@ -833,23 +871,23 @@ const Product = () => {
                   </Grid>
                 </Grid>
               </Box>
-            </Paper>
+            </FormContainer>
           </Box>
         ) : (
           /* ── List View ── */
           <>
             {/* ── 1. Insights Row (Graphs) ── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <ChartCard title="Products by Division" subtitle="Division-wise distribution">
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={performanceData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fontSize: 10, fill: "#94a3b8" }} 
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
                         height={40}
                         angle={-12}
                         textAnchor="end"
@@ -861,7 +899,7 @@ const Product = () => {
                   </ResponsiveContainer>
                 </ChartCard>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={8}>
                 <ChartCard
                   title="Order Summary"
                   subtitle="Revenue by day"
@@ -877,40 +915,38 @@ const Product = () => {
                     </Select>
                   }
                 >
-                  <Box sx={{ width: "100%", height: 300, "& .MuiLineElement-root": { strokeWidth: 2.5 }, "& .MuiAreaElement-root": { fillOpacity: 0.15 } }}>
-                    <svg style={{ width: 0, height: 0, position: 'absolute' }}>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={revenueTrend} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                       <defs>
                         <linearGradient id="muiAreaGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#3a7f85" stopOpacity={0.4} />
                           <stop offset="95%" stopColor="#3a7f85" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                    </svg>
-                    <MuiLineChart
-                      series={[{ 
-                        data: [0, 0, 0, 0, 780000, 0, 0], 
-                        area: true, 
-                        curve: "natural",
-                        color: "#3a7f85"
-                      }]}
-                      xAxis={[{ 
-                        scaleType: 'point', 
-                        data: ['May 21', 'May 22', 'May 23', 'May 24', 'May 25', 'May 26', 'May 27'],
-                        tickLabelStyle: { fill: "#94a3b8", fontSize: 10 }
-                      }]}
-                      yAxis={[{
-                        valueFormatter: (v) => v === 0 ? "0k" : `${v / 1000}k`,
-                        tickLabelStyle: { fill: "#94a3b8", fontSize: 10 }
-                      }]}
-                      height={300}
-                      sx={{
-                        "& .MuiAreaElement-root": { fill: "url(#muiAreaGradient)" },
-                        "& .MuiChartsAxis-tickLabel": { fill: "#94a3b8" },
-                        "& .MuiChartsAxis-line": { stroke: "transparent" },
-                        "& .MuiChartsAxis-tick": { stroke: "transparent" }
-                      }}
-                    />
-                  </Box>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tickFormatter={(v) => v === 0 ? "0" : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                      />
+                      <ReChartsTooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        name="Revenue"
+                        stroke="#3a7f85"
+                        fill="url(#muiAreaGradient)"
+                        strokeWidth={2.5}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </ChartCard>
               </Grid>
             </Grid>
@@ -1041,8 +1077,8 @@ const Product = () => {
                             </Box>
                             <Typography color="text.secondary" sx={{ fontWeight: 600 }}>{activeSearch ? "No products match your search" : "No products yet"}</Typography>
                             {!activeSearch && (
-                              <Button variant="contained" size="small" startIcon={<AddIcon />}
-                                sx={{ bgcolor: "#4f46e5", "&:hover": { bgcolor: "#4338ca" }, color: "#fff", boxShadow: "none", borderRadius: "10px" }}
+                              <Button variant="contained" color="primary" size="small" startIcon={<AddIcon />}
+                                sx={{ borderRadius: "10px", boxShadow: "none" }}
                                 onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
                                 Add First Product
                               </Button>
@@ -1083,11 +1119,11 @@ const Product = () => {
                           <TableCell sx={{ fontWeight: 700, color: "#10b981", fontSize: "13.5px" }}>{fmt(p.sellingPrice)}</TableCell>
                           <TableCell sx={{ fontWeight: 600, color: "#64748b", fontSize: "13px" }}>{fmt(p.purchasePrice)}</TableCell>
                           <TableCell>
-                            <Box sx={{ 
+                            <Box sx={{
                               display: "inline-flex", alignItems: "center", gap: 0.5,
-                              bgcolor: (p.totalStock || 0) > 0 ? "#ecfdf5" : "#fef2f2", 
-                              color: (p.totalStock || 0) > 0 ? "#10b981" : "#ef4444", 
-                              px: 1.5, py: 0.5, borderRadius: "6px", fontWeight: 700, fontSize: "12px" 
+                              bgcolor: (p.totalStock || 0) > 0 ? "#ecfdf5" : "#fef2f2",
+                              color: (p.totalStock || 0) > 0 ? "#10b981" : "#ef4444",
+                              px: 1.5, py: 0.5, borderRadius: "6px", fontWeight: 700, fontSize: "12px"
                             }}>
                               {(p.totalStock || 0) > 0 ? <Inventory2Icon sx={{ fontSize: 14 }} /> : <WarningAmberIcon sx={{ fontSize: 14 }} />}
                               {p.totalStock || 0}
@@ -1128,7 +1164,7 @@ const Product = () => {
               <Grid container spacing={2}>
                 {loading ? (
                   [1, 2, 3, 4, 5, 6].map((i) => (
-                    <Grid item xs={12} sm={6} md={4} key={i}>
+                    <Grid item xs={12} sm={6} md={6} lg={4} key={i}>
                       <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3, p: 2.5 }}>
                         <Skeleton variant="circular" width={44} height={44} sx={{ mb: 1 }} />
                         <Skeleton width="60%" height={24} sx={{ mb: 0.5 }} />
@@ -1145,7 +1181,7 @@ const Product = () => {
                   </Grid>
                 ) : (
                   paginated.map((p, i) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={p.id}>
+                    <Grid item xs={12} sm={6} md={6} lg={4} key={p.id}>
                       <Paper
                         elevation={0}
                         sx={{
@@ -1211,10 +1247,7 @@ const Product = () => {
                 <Pagination
                   count={totalPages} page={page} onChange={(_, v) => setPage(v)}
                   shape="rounded" size="small"
-                  sx={{
-                    "& .MuiPaginationItem-root": { borderRadius: 2, fontWeight: 600 },
-                    "& .Mui-selected": { bgcolor: "#f59e0b !important", color: "#fff" },
-                  }}
+                  color="primary"
                 />
               </Box>
             )}
@@ -1240,10 +1273,9 @@ const Product = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
-              onClick={() => setDeleteModal(null)}>Cancel</Button>
+            <Button variant="outlined" color="inherit" onClick={() => setDeleteModal(null)}>Cancel</Button>
             <Button variant="contained" color="error" startIcon={<DeleteIcon />} disabled={saving}
-              sx={{ boxShadow: "none" }} onClick={handleDelete}>
+              onClick={handleDelete}>
               {saving ? "Deleting…" : "Delete Product"}
             </Button>
           </DialogActions>
@@ -1283,8 +1315,7 @@ const Product = () => {
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
             <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
               onClick={() => setViewModal(null)}>Close</Button>
-            <Button variant="contained" startIcon={<EditIcon />}
-              sx={{ bgcolor: "#0ea5e9", "&:hover": { bgcolor: "#0284c7" }, color: "#fff", boxShadow: "none" }}
+            <Button variant="contained" color="info" startIcon={<EditIcon />}
               onClick={() => { setViewModal(null); openEdit(viewModal); }}>
               Edit Product
             </Button>
@@ -1319,13 +1350,13 @@ const Product = () => {
             const purchasePrice = Number(row["purchaseprice"] || row["purchasePrice"] || 0);
             const uimPrice = Number(row["uimprice"] || row["uimPrice"] || 0);
             const image = (row["image"] || "").trim();
-            
+
             if (!name) return { valid: false, error: "Name is required" };
             if (!divisionName) return { valid: false, error: "divisionName is required" };
             if (mrp <= 0) return { valid: false, error: "MRP must be > 0" };
             if (sellingPrice > mrp) return { valid: false, error: "Selling price must be ≤ MRP" };
             if (purchasePrice > mrp) return { valid: false, error: "Purchase price must be ≤ MRP" };
-            
+
             const div = divisions.find(d => d.name.toLowerCase() === divisionName.toLowerCase());
             if (!div) return { valid: false, error: `Division not found: ${divisionName}` };
 
@@ -1343,7 +1374,6 @@ const Product = () => {
         />
 
       </Box>
-    </ThemeProvider>
   );
 };
 

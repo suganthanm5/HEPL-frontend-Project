@@ -11,18 +11,23 @@ public class ProductRequest {
 
     private String productCode;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "UIM Price must be greater than or equal to 0")
+    @NotNull(message = "UIM Price is required")
+    @DecimalMin(value = "0.01", message = "UIM Price must be greater than 0")
     private BigDecimal uimPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "MRP must be greater than or equal to 0")
+    @NotNull(message = "MRP is required")
+    @DecimalMin(value = "0.01", message = "MRP must be greater than 0")
     private BigDecimal mrp;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Selling price must be greater than or equal to 0")
+    @NotNull(message = "Selling price is required")
+    @DecimalMin(value = "0.01", message = "Selling price must be greater than 0")
     private BigDecimal sellingPrice;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Purchase price must be greater than or equal to 0")
+    @NotNull(message = "Purchase price is required")
+    @DecimalMin(value = "0.01", message = "Purchase price must be greater than 0")
     private BigDecimal purchasePrice;
 
+    @NotNull(message = "Division is required")
     private Long divisionId;
 
     private String image;

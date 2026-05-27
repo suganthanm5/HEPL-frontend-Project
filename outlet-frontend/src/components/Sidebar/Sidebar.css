@@ -82,7 +82,7 @@
 .new-sidebar.dark-theme .header-logo {
   background: linear-gradient(135deg, #1e293b, #0f172a);
   border: 1px solid #334155;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .sidebar-header .header-logo:hover {
@@ -357,23 +357,99 @@
 }
 
 /* Link Active State */
-.new-menu-list .new-menu-link.active {
-  color: var(--color-active-text);
-  background: var(--color-active-bg);
-  border-left-color: var(--color-active-text);
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(125, 42, 232, 0.15);
+@keyframes tabEntrance {
+  0% {
+    transform: translateX(0);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translateX(8px);
+    opacity: 1;
+  }
 }
 
-.new-sidebar.collapsed .new-menu-link.active {
-  background: var(--color-active-bg) !important;
+.new-menu-list .new-menu-link.active {
+  position: relative;
   color: var(--color-active-text) !important;
-  border-left: none;
+  background: transparent !important;
+  border-left-color: transparent !important;
+  border: none !important;
+  font-weight: 700;
+  box-shadow: none !important;
+  transform: translateX(8px) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: tabEntrance 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.new-sidebar.dark-theme .new-menu-list .new-menu-link.active {
+  color: #ffffff !important;
+}
+
+/* Beautiful physical tab pull-out indicator on the left border edge */
+.new-menu-list .new-menu-link.active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  /* sits right on the edge of the menu list */
+  top: 15%;
+  height: 70%;
+  width: 5px;
+  background: linear-gradient(180deg, #7d2ae8, #a855f7);
+  border-radius: 0 6px 6px 0;
+  box-shadow: 2px 0 10px rgba(125, 42, 232, 0.5);
+}
+
+.new-sidebar.dark-theme .new-menu-list .new-menu-link.active::before {
+  background: linear-gradient(180deg, #a855f7, #ec4899);
+  box-shadow: 2px 0 10px rgba(168, 85, 247, 0.5);
+}
+
+/* Hover override for active link to keep it popped out */
+.new-menu-list .new-menu-link.active:hover {
+  transform: translateX(10px) !important;
+  background: transparent !important;
+  color: var(--color-active-text) !important;
+}
+
+.new-sidebar.dark-theme .new-menu-list .new-menu-link.active:hover {
+  color: #ffffff !important;
 }
 
 .new-menu-list .new-menu-link.active .menu-icon {
-  color: var(--color-active-text);
-  filter: none;
+  color: var(--color-active-text) !important;
+  transform: scale(1.18) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.new-sidebar.dark-theme .new-menu-list .new-menu-link.active .menu-icon {
+  color: #ffffff !important;
+  filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.4));
+}
+
+/* Collapsed active item fully filled with gradient */
+.new-sidebar.collapsed .new-menu-link.active {
+  background: linear-gradient(135deg, #7d2ae8, #a855f7) !important;
+  color: #ffffff !important;
+  border-left: none !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(125, 42, 232, 0.35);
+  transform: scale(1.06) !important;
+  animation: none;
+}
+
+.new-sidebar.collapsed .new-menu-link.active::before {
+  display: none;
+}
+
+.new-sidebar.collapsed .new-menu-link.active .menu-icon {
+  color: #ffffff !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  transform: none !important;
 }
 
 /* ══════════════════════════════════════════
@@ -746,10 +822,18 @@
 }
 
 .new-submenu-link .menu-icon.sub-menu-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
-  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-secondary);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.new-submenu-link .menu-icon.sub-menu-icon svg {
+  font-size: 1.15rem;
 }
 
 .new-submenu-link:hover .menu-icon.sub-menu-icon {
@@ -758,17 +842,62 @@
 }
 
 .new-submenu-link.active {
-  color: var(--color-active-text);
-  background: rgba(125, 42, 232, 0.08);
-  border-left: 2px solid var(--color-active-text);
-  padding-left: 36px;
+  color: var(--color-active-text) !important;
+  background: rgba(125, 42, 232, 0.04) !important;
+  border-left: none !important;
+  padding-left: 38px;
   font-weight: 600;
-  box-shadow: none;
+  position: relative;
+  border-radius: 8px;
+}
+
+.new-sidebar.dark-theme .new-submenu-link.active {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #ffffff !important;
+}
+
+/* Beautiful dynamic indicator on the left of active submenus */
+.new-submenu-link.active::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4.5px;
+  height: 4.5px;
+  border-radius: 50%;
+  background: #7d2ae8;
+  box-shadow: 0 0 6px rgba(125, 42, 232, 0.6);
+}
+
+.new-sidebar.dark-theme .new-submenu-link.active::before {
+  background: #a855f7;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
+}
+
+.new-submenu-link.active:hover {
+  background: rgba(125, 42, 232, 0.08) !important;
+}
+
+.new-sidebar.dark-theme .new-submenu-link.active:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 .new-submenu-link.active .menu-icon.sub-menu-icon {
-  color: var(--color-active-text);
+  color: var(--color-active-text) !important;
   opacity: 1;
+}
+
+.new-sidebar.dark-theme .new-submenu-link.active .menu-icon.sub-menu-icon {
+  color: #ffffff !important;
+}
+
+.new-submenu-link.active:hover .menu-icon.sub-menu-icon {
+  color: var(--color-active-text) !important;
+}
+
+.new-sidebar.dark-theme .new-submenu-link.active:hover .menu-icon.sub-menu-icon {
+  color: #ffffff !important;
 }
 
 .new-menu-link.dropdown-parent.active-parent {

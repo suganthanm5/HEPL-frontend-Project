@@ -6,6 +6,7 @@ import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.*;
 import com.example.outletmanagement.service.ProductService;
+import com.example.outletmanagement.exception.ResourceAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse createProduct(ProductRequest request) {
         Division division = divisionRepository.findById(request.getDivisionId())
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + request.getDivisionId()));
+
+        if (productRepository.findByNameIgnoreCase(request.getName().trim()).isPresent()) {
+            throw new ResourceAlreadyExistsException("Product", "name", request.getName());
+        }
 
         Product product = Product.builder()
                 .name(request.getName())
@@ -57,6 +62,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+        java.util.Optional<Product> existingOpt = productRepository.findByNameIgnoreCase(request.getName().trim());
+        if (existingOpt.isPresent() && !existingOpt.get().getId().equals(id)) {
+            throw new ResourceAlreadyExistsException("Product", "name", request.getName());
+        }
 
         product.setName(request.getName());
         product.setProductCode(request.getProductCode());

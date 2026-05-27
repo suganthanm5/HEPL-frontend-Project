@@ -26,6 +26,7 @@ import SearchableSelect from "../../components/SearchableSelect/SearchableSelect
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatOrderData } from "../../utils/exportUtils";
+import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
 import "./Orders.css";
 import "../UserManagement/UserManagement.css";
 
@@ -269,7 +270,7 @@ const Orders = () => {
           <Typography className="page-subtitle">Track and manage batch orders</Typography>
         </Box>
         {(isAdmin || isManager || (role === "USER" || role === "OUTLET_MANAGER")) && (
-          <ButtonBase
+          <Button variant="contained" color="primary" startIcon={<AddRounded />}
             onClick={() => {
               let initialOutletId = "";
               if (!isAdmin) {
@@ -279,71 +280,44 @@ const Orders = () => {
               setCreate({ open: true, data: { ...emptyOrder, outletId: initialOutletId, items: [{ ...emptyItem }] } });
               setIsFormView(true);
             }}
-            disableRipple
-            sx={{ display: "flex", alignItems: "center", gap: 1, px: 2.5, py: 1.2, borderRadius: "50px", background: "linear-gradient(135deg,#7d2ae8,#a855f7)", color: "#fff", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600, boxShadow: "0 4px 16px rgba(125,42,232,0.35)" }}
+            sx={{ borderRadius: 2, boxShadow: "none" }}
           >
-            <AddRounded sx={{ fontSize: 18 }} /> Create Order
-          </ButtonBase>
+            Create Order
+          </Button>
         )}
       </Box>
 
       {isFormView ? (
         /* ── Full Page Form View ── */
         <Box className="animate-fade-in">
-          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <IconButton onClick={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }} sx={{ color: "#64748b" }}>
-                  <CloseRounded />
-                </IconButton>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "inherit" }}>
-                    Create New Order
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "inherit" }}>
-                    Select an outlet and add items to create a supply order
-                  </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Button variant="outlined" color="inherit"
-                  onClick={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }}
-                  sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "50px", textTransform: "none", px: 3 }}>
-                  Cancel
-                </Button>
-                <Button variant="contained" startIcon={<ShoppingCartRounded />}
-                  onClick={handleCreate}
-                  sx={{
-                    borderRadius: "50px",
-                    background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
-                    color: "#fff",
-                    textTransform: "none",
-                    px: 4,
-                    boxShadow: "0 4px 12px rgba(125,42,232,0.35)",
-                    "&:hover": { background: "linear-gradient(135deg, #6b21c1, #9333ea)" }
-                  }}>
-                  Submit Order
-                </Button>
-              </Box>
-            </Box>
+          <FormContainer>
+            <FormHeader
+              title="Create New Supply Order"
+              subtitle="Select an outlet and add items to create a supply order"
+              onClose={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }}
+              onSave={handleCreate}
+              saveLabel="Submit Order"
+              saveIcon={<ShoppingCartRounded />}
+              colorAccent="primary"
+            />
 
             <Box sx={{ p: { xs: 2, md: 4 } }}>
               <Grid container spacing={4}>
                 <Grid item xs={12} md={8}>
-                    <Box sx={{ mb: 4, p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff" }}>
-                      <Typography className="dialog-field-label" sx={{ mb: 1.5 }}>Target Outlet *</Typography>
-                      <SearchableSelect
-                        options={
-                          (isAdmin || isManager) 
-                            ? outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))
-                            : outlets.filter((ot) => String(ot.id) === String(userOutletId)).map((ot) => ({ id: ot.id, name: outletName(ot) }))
-                        }
-                        value={create.data.outletId}
-                        onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
-                        placeholder={userOutletId && !isAdmin && !isManager ? "Assigned Outlet" : "— Select Outlet —"}
-                        searchPlaceholder="Search outlets..."
-                      />
-                    </Box>
+                  <Box sx={{ mb: 4, p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff" }}>
+                    <FormSectionHeader title="Target Outlet" color="#7d2ae8" />
+                    <SearchableSelect
+                      options={
+                        (isAdmin || isManager) 
+                          ? outlets.map((ot) => ({ id: ot.id, name: outletName(ot) }))
+                          : outlets.filter((ot) => String(ot.id) === String(userOutletId)).map((ot) => ({ id: ot.id, name: outletName(ot) }))
+                      }
+                      value={create.data.outletId}
+                      onChange={(id) => setCreate((p) => ({ ...p, data: { ...p.data, outletId: id, items: [{ ...emptyItem }] } }))}
+                      placeholder={userOutletId && !isAdmin && !isManager ? "Assigned Outlet" : "— Select Outlet —"}
+                      searchPlaceholder="Search outlets..."
+                    />
+                  </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
                     <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "inherit" }}>Order Items</Typography>
@@ -371,11 +345,11 @@ const Orders = () => {
                           </Grid>
                           <Grid item xs={6} sm={3}>
                             <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Qty *</Typography>
-                            <TextField fullWidth size="small" type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} inputProps={{ min: 1 }} sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+                            <TextField fullWidth size="small" type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} inputProps={{ min: 1 }} />
                           </Grid>
                           <Grid item xs={6} sm={2}>
                             <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Price ₹</Typography>
-                            <TextField fullWidth size="small" type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} inputProps={{ min: 0 }} sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+                            <TextField fullWidth size="small" type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} inputProps={{ min: 0 }} />
                           </Grid>
                           <Grid item xs={12} sm={1} sx={{ display: "flex", justifyContent: "flex-end" }}>
                             <IconButton onClick={() => removeItem(idx)} color="error" size="small" disabled={create.data.items.length === 1}>
@@ -420,7 +394,7 @@ const Orders = () => {
                 </Grid>
               </Grid>
             </Box>
-          </Paper>
+          </FormContainer>
         </Box>
       ) : !detail && (
         <>
@@ -480,12 +454,13 @@ const Orders = () => {
                   </Select>
                 )}
 
-                <ButtonBase
+                <Button
+                  size="small"
                   onClick={() => setFilters({ status: "", outletId: isAdmin ? "" : userOutletId })}
-                  sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}
+                  sx={{ fontSize: "0.75rem", fontWeight: 600 }}
                 >
                   Clear Filters
-                </ButtonBase>
+                </Button>
               </Box>
 
               <Box className="table-search">
@@ -784,35 +759,43 @@ const Orders = () => {
               </TableContainer>
 
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, pt: 3, borderTop: "1px solid #e2e8f0" }}>
-                <ButtonBase
-                  onClick={() => setDetail(null)} disableRipple
-                  sx={{ px: 4, py: 1.5, borderRadius: "50px", border: "2px solid #e2e8f0", color: "#64748b", fontWeight: 700, transition: "all 0.2s", "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" } }}
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => setDetail(null)}
+                  sx={{ borderRadius: "50px", px: 4 }}
                 >
                   Back to Orders
-                </ButtonBase>
+                </Button>
                 {(isAdmin || isManager) && (detail.status === "PENDING" || detail.status === "PARTIALLY_APPROVED") && (
                   <>
-                    <ButtonBase
+                    <Button
+                      variant="contained"
+                      color="error"
                       onClick={() => updateStatus(detail.id, "REJECTED")}
-                      sx={{ px: 4, py: 1.5, borderRadius: "50px", background: "#fee2e2", color: "#ef4444", fontWeight: 700, transition: "all 0.2s", "&:hover": { background: "#fca5a5", color: "#b91c1c" } }}
+                      sx={{ borderRadius: "50px", px: 4, boxShadow: "none" }}
                     >
                       Reject Order
-                    </ButtonBase>
-                    <ButtonBase
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="primary"
                       onClick={() => updateStatus(detail.id, "APPROVED")}
-                      sx={{ px: 5, py: 1.5, borderRadius: "50px", background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(79,70,229,0.3)", transition: "all 0.2s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(79,70,229,0.4)" } }}
+                      sx={{ borderRadius: "50px", px: 5, boxShadow: "none" }}
                     >
                       Approve Order
-                    </ButtonBase>
+                    </Button>
                   </>
                 )}
                 {detail.status === "APPROVED" && (isAdmin || isManager || isOutletManager) && (
-                  <ButtonBase
+                  <Button
+                    variant="contained"
+                    color="success"
                     onClick={() => updateStatus(detail.id, "COMPLETED")}
-                    sx={{ px: 5, py: 1.5, borderRadius: "50px", background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", fontWeight: 700, boxShadow: "0 4px 14px rgba(16,185,129,0.3)", transition: "all 0.2s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(16,185,129,0.4)" } }}
+                    sx={{ borderRadius: "50px", px: 5, boxShadow: "none" }}
                   >
                     Mark as Completed
-                  </ButtonBase>
+                  </Button>
                 )}
               </Box>
             </Box>
@@ -829,14 +812,14 @@ const Orders = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <ButtonBase onClick={() => setDelDialog({ open: false, id: null, title: "" })} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit", fontWeight: 600 }}>
+          <Button variant="outlined" color="inherit" onClick={() => setDelDialog({ open: false, id: null, title: "" })}
+            sx={{ borderRadius: 2, color: "#64748b", borderColor: "#e2e8f0" }}>
             Cancel
-          </ButtonBase>
-          <ButtonBase onClick={handleDelete} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#ef4444", color: "#fff", fontSize: "0.875rem", fontFamily: "inherit", fontWeight: 600, boxShadow: "0 4px 12px rgba(239,68,68,0.35)" }}>
+          </Button>
+          <Button variant="contained" color="error" onClick={handleDelete}
+            sx={{ borderRadius: 2, boxShadow: "none" }}>
             Delete
-          </ButtonBase>
+          </Button>
         </DialogActions>
       </Dialog>
 

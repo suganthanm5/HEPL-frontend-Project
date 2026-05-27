@@ -9,6 +9,7 @@ import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatOutletData } from "../../utils/exportUtils";
 import BulkUploadModal from "../../components/BulkUploadModal";
+import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
 
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -19,7 +20,7 @@ import {
   Pagination, Stack, Divider, Collapse, Badge, LinearProgress,
   alpha,
 } from "@mui/material";
-import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -51,54 +52,6 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import BusinessIcon from "@mui/icons-material/Business";
 
-/* ─── Theme ─── */
-const theme = createTheme({
-  palette: {
-    primary: { main: "#4f46e5" },
-    secondary: { main: "#7c3aed" },
-    error: { main: "#ef4444" },
-    info: { main: "#0ea5e9" },
-    success: { main: "#10b981" },
-    warning: { main: "#f59e0b" },
-  },
-  typography: { fontFamily: "'DM Sans', 'Segoe UI', sans-serif" },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: { textTransform: "none", borderRadius: 10, fontWeight: 600, letterSpacing: 0 },
-      },
-    },
-    MuiDialog: {
-      styleOverrides: { paper: { borderRadius: 20, minWidth: 520 } },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        head: {
-          background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
-          color: "rgba(255,255,255,0.55)",
-          fontSize: "11px",
-          fontWeight: 700,
-          letterSpacing: "0.9px",
-          textTransform: "uppercase",
-          padding: "15px 16px",
-          borderBottom: "none",
-          "&:first-of-type": { borderRadius: "0" },
-        },
-        body: {
-          padding: "13px 16px",
-          borderBottom: "1px solid #f1f5f9",
-          verticalAlign: "middle",
-          fontSize: "13.5px",
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: { borderRadius: 8, fontWeight: 600, fontSize: "11.5px" },
-      },
-    },
-  },
-});
 
 /* ─── Styled components ─── */
 const StyledTableRow = styled(TableRow)(() => ({
@@ -717,50 +670,16 @@ export default function Outlet() {
   /* ─── Full-page Form ─── */
   const renderFormPage = () => (
     <Box>
-      {/* Top bar */}
-      <Box sx={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        px: 4, py: 2.5, bgcolor: "#fff",
-        borderBottom: "1px solid #e2e8f0",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-      }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton
-            onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}
-            sx={{ bgcolor: "#f1f5f9", "&:hover": { bgcolor: "#e2e8f0" }, borderRadius: "10px" }}>
-            <ArrowBackIcon sx={{ fontSize: 20, color: "#475569" }} />
-          </IconButton>
-          <Box sx={{
-            width: 44, height: 44, borderRadius: "13px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: isEdit ? "linear-gradient(135deg, #7c3aed, #4f46e5)" : "linear-gradient(135deg, #4f46e5, #0ea5e9)",
-            boxShadow: isEdit ? "0 4px 14px rgba(124,58,237,0.35)" : "0 4px 14px rgba(79,70,229,0.35)",
-          }}>
-            {isEdit ? <EditIcon sx={{ fontSize: 20, color: "#fff" }} /> : <StorefrontIcon sx={{ fontSize: 20, color: "#fff" }} />}
-          </Box>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>
-              {isEdit ? `Edit — ${editModal.outletName}` : "Add New Outlet"}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "#64748b" }}>
-              {isEdit ? "Update the outlet details below" : "Fill in the details to register a new outlet"}
-            </Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          <Button variant="outlined" color="inherit"
-            sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "10px" }}
-            onClick={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}>
-            Cancel
-          </Button>
-          <Button variant="contained" startIcon={saving ? null : (isEdit ? <SaveIcon /> : <AddIcon />)}
-            disabled={saving} onClick={isEdit ? handleUpdate : handleAdd}
-            sx={{ bgcolor: isEdit ? "#7c3aed" : "#4f46e5", "&:hover": { bgcolor: isEdit ? "#6d28d9" : "#4338ca" },
-              color: "#fff", borderRadius: "10px", boxShadow: "none", minWidth: 140 }}>
-            {saving ? "Saving…" : (isEdit ? "Save Changes" : "Add Outlet")}
-          </Button>
-        </Box>
-      </Box>
+      <FormHeader
+        title={isEdit ? `Edit — ${editModal.outletName}` : "Add New Outlet"}
+        subtitle={isEdit ? "Update the outlet details below" : "Fill in the details to register a new outlet"}
+        onClose={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); setSelectedDivisions([]); setAvailableProducts([]); }}
+        onSave={isEdit ? handleUpdate : handleAdd}
+        saving={saving}
+        saveLabel={isEdit ? "Save Changes" : "Add Outlet"}
+        saveIcon={isEdit ? <SaveIcon /> : <AddIcon />}
+        colorAccent="primary"
+      />
 
       {/* Scrollable Content */}
       <Box sx={{ px: { xs: 3, md: 6 }, py: 4 }}>
@@ -768,18 +687,10 @@ export default function Outlet() {
 
           {/* Section 1 */}
           <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: "10px",
-                background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 3px 10px rgba(79,70,229,0.3)" }}>
-                <HomeWorkIcon sx={{ fontSize: 18, color: "#fff" }} />
-              </Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.1 }}>Basic Information</Typography>
-                <Typography variant="caption" sx={{ color: "#94a3b8" }}>Outlet identity and contact details</Typography>
-              </Box>
-            </Box>
+            <FormSectionHeader
+              title="Basic Information"
+              color="#4f46e5"
+            />
             <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid #e8eaf6", bgcolor: "#fff" }}>
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
@@ -826,20 +737,10 @@ export default function Outlet() {
 
           {/* Section 2 */}
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: "10px",
-                background: "linear-gradient(135deg, #10b981, #0ea5e9)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 3px 10px rgba(16,185,129,0.3)" }}>
-                <GridViewIcon sx={{ fontSize: 18, color: "#fff" }} />
-              </Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.1 }}>
-                  Divisions & Products <span style={{ color: "#ef4444" }}>*</span>
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#94a3b8" }}>Select a division, then pick its products</Typography>
-              </Box>
-            </Box>
+            <FormSectionHeader
+              title="Divisions & Products *"
+              color="#10b981"
+            />
             <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid #e8eaf6", bgcolor: "#fff" }}>
               {renderDivisionSection()}
             </Paper>
@@ -928,18 +829,12 @@ export default function Outlet() {
 
         <Divider sx={{ my: 1.25 }} />
         <Stack direction="row" spacing={1}>
-          <Button size="small" startIcon={<EditIcon sx={{ fontSize: 14 }} />} onClick={() => openEditModal(o)}
-            fullWidth sx={{
-              color: "#4f46e5", bgcolor: "#ede9fe", fontWeight: 700, borderRadius: "9px",
-              "&:hover": { bgcolor: "#4f46e5", color: "#fff" }, fontSize: "12px",
-            }}>
+          <Button size="small" fullWidth startIcon={<EditIcon sx={{ fontSize: 14 }} />} onClick={() => openEditModal(o)}
+            sx={{ borderRadius: "9px" }}>
             Edit
           </Button>
-          <Button size="small" startIcon={<DeleteIcon sx={{ fontSize: 14 }} />} onClick={() => setDeleteModal(o)}
-            fullWidth sx={{
-              color: "#ef4444", bgcolor: "#fef2f2", fontWeight: 700, borderRadius: "9px",
-              "&:hover": { bgcolor: "#ef4444", color: "#fff" }, fontSize: "12px",
-            }}>
+          <Button size="small" fullWidth startIcon={<DeleteIcon sx={{ fontSize: 14 }} />} onClick={() => setDeleteModal(o)}
+            color="error" sx={{ borderRadius: "9px" }}>
             Delete
           </Button>
         </Stack>
@@ -949,8 +844,7 @@ export default function Outlet() {
 
   /* ═══ RENDER ═══ */
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "#f8fafc", minHeight: "100vh" }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "#f8fafc", minHeight: "100vh" }}>
 
         {/* ─── Hero ─── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
@@ -964,16 +858,14 @@ export default function Outlet() {
           </Box>
           {!isFormView && (
             <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-              <Button variant="outlined" startIcon={<UploadFileIcon />}
-                sx={{ borderColor: "#c7d2fe", color: "#4f46e5", fontWeight: 700, borderRadius: "10px",
-                  "&:hover": { bgcolor: "#ede9fe", borderColor: "#4f46e5" } }}
-                onClick={() => setBulkOpen(true)}>
+              <Button variant="outlined" color="primary" startIcon={<UploadFileIcon />}
+                onClick={() => setBulkOpen(true)}
+                sx={{ borderRadius: "12px" }}>
                 Bulk Upload
               </Button>
               <ExportMenu getData={() => formatOutletData(filtered)} filename="outlets" title="Outlets Report" backendType="outlets" />
-              <Button variant="contained" startIcon={<AddIcon />}
-                sx={{ bgcolor: "#4f46e5", "&:hover": { bgcolor: "#4338ca" },
-                  boxShadow: "0 4px 14px rgba(79,70,229,0.35)", borderRadius: "10px" }}
+              <Button variant="contained" color="primary" startIcon={<AddIcon />}
+                sx={{ borderRadius: "12px", boxShadow: "none" }}
                 onClick={openAddModal}>
                 Add Outlet
               </Button>
@@ -1149,8 +1041,8 @@ export default function Outlet() {
                           {search ? "No outlets match your search" : "No outlets yet"}
                         </Typography>
                         {!search && (
-                          <Button variant="contained" size="small" startIcon={<AddIcon />}
-                            sx={{ bgcolor: "#4f46e5", borderRadius: "10px", boxShadow: "none" }}
+                          <Button variant="contained" color="primary" size="small" startIcon={<AddIcon />}
+                            sx={{ borderRadius: "10px", boxShadow: "none" }}
                             onClick={openAddModal}>
                             Add First Outlet
                           </Button>
@@ -1368,7 +1260,7 @@ export default function Outlet() {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
             <Button variant="outlined" color="inherit"
-              sx={{ color: "#64748b", borderColor: "#e2e8f0", borderRadius: "10px" }}
+              sx={{ borderRadius: "10px" }}
               onClick={() => setDeleteModal(null)}>Cancel</Button>
             <Button variant="contained" color="error" startIcon={<DeleteIcon />} disabled={saving}
               sx={{ borderRadius: "10px", boxShadow: "none" }} onClick={handleDelete}>
@@ -1446,6 +1338,5 @@ export default function Outlet() {
         />
 
       </Box>
-    </ThemeProvider>
   );
 }

@@ -4,6 +4,7 @@ import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
 import { formatLocationData } from "../../utils/exportUtils";
 import BulkUploadModal from "../../components/BulkUploadModal";
+import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
 
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -235,22 +236,17 @@ const Location = () => {
                 <RefreshRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Button variant="outlined" startIcon={<UploadFileRoundedIcon />}
-              sx={{ borderColor: "#10b981", color: "#10b981", fontWeight: 600, fontFamily: "inherit", borderRadius: 2, "&:hover": { bgcolor: "#f0fdf4", borderColor: "#10b981" }, textTransform: "none" }}
-              onClick={() => setBulkOpen(true)}>
+            <Button variant="outlined" color="primary" startIcon={<UploadFileRoundedIcon />}
+              onClick={() => setBulkOpen(true)}
+              sx={{ borderRadius: 2.5, px: 2, py: 1, textTransform: "none", fontWeight: 600, fontFamily: "inherit" }}>
               Bulk Upload
             </Button>
             <ExportMenu getData={() => formatLocationData(allLocations)} filename="locations" title="Locations Report" backendType="locations" />
-            <ButtonBase onClick={openAdd} disableRipple sx={{
-              display: "flex", alignItems: "center", gap: 1,
-              px: 2.5, py: 1.2, borderRadius: "50px",
-              background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
-              color: "#fff", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600,
-              boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
-              transition: "all 0.25s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
-            }}>
-              <AddRoundedIcon sx={{ fontSize: 18 }} /> Add Location
-            </ButtonBase>
+            <Button variant="contained" color="primary" startIcon={<AddRoundedIcon />}
+              onClick={openAdd}
+              sx={{ borderRadius: 2.5, px: 2.5, py: 1, fontWeight: 600, fontFamily: "inherit", boxShadow: "none" }}>
+              Add Location
+            </Button>
           </Box>
         )}
       </Box>
@@ -258,100 +254,83 @@ const Location = () => {
       {isFormView ? (
         /* ── Full Page Form ── */
         <Fade in>
-          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-            {/* Form Header */}
-            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <IconButton onClick={closeForm} sx={{ color: "#64748b" }}><CloseRoundedIcon /></IconButton>
-                <Box>
-                  <Typography sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "inherit", fontSize: "1.1rem" }}>
-                    {editModal ? "Edit Location" : "Add New Location"}
-                  </Typography>
-                  <Typography sx={{ color: "#64748b", fontFamily: "inherit", fontSize: "0.75rem" }}>
-                    {editModal ? `Updating: ${editModal.name}` : "Create one or multiple locations at once"}
-                  </Typography>
-                </Box>
-              </Box>
-              <Stack direction="row" spacing={1.5}>
-                <Button variant="outlined" color="inherit" onClick={closeForm}
-                  sx={{ color: "#64748b", borderColor: "#e2e8f0", fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
-                  Cancel
-                </Button>
-                <Button variant="contained"
-                  startIcon={editModal ? <CheckRoundedIcon /> : <AddRoundedIcon />}
-                  disabled={saving || !formComplete}
-                  onClick={editModal ? handleUpdate : handleAdd}
-                  sx={{
-                    bgcolor: editModal ? "#7d2ae8" : "#10b981",
-                    "&:hover": { bgcolor: editModal ? "#6b21c1" : "#059669" },
-                    color: "#fff", boxShadow: "none", fontFamily: "inherit",
-                    textTransform: "none", borderRadius: 2, fontWeight: 600,
-                  }}>
-                  {saving ? "Saving…" : editModal ? "Save Changes" : "Create Location"}
-                </Button>
-              </Stack>
-            </Box>
+          <Box>
+            <FormContainer>
+              <FormHeader
+                title={editModal ? "Edit Location" : "Add New Location"}
+                subtitle={editModal ? `Updating: ${editModal.name}` : "Create one or multiple locations at once"}
+                onClose={closeForm}
+                onSave={editModal ? handleUpdate : handleAdd}
+                saving={saving}
+                saveDisabled={!formComplete}
+                saveLabel={editModal ? "Save Changes" : "Create Location"}
+                saveIcon={editModal ? <EditRoundedIcon /> : <AddRoundedIcon />}
+                colorAccent="primary"
+              />
 
-            {/* Form Body */}
-            <Box sx={{ p: { xs: 2, md: 4 } }}>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={7}>
-                  <Typography sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, fontFamily: "inherit", display: "flex", alignItems: "center", gap: 1, fontSize: "0.875rem" }}>
-                    <Box sx={{ width: 4, height: 16, bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 1 }} />
-                    Location Details
-                  </Typography>
-                  <TextField
-                    fullWidth label="Location Name" value={formName}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    placeholder={editModal ? "" : "e.g. Chennai, Mumbai, Delhi"}
-                    helperText={!editModal ? "Separate multiple locations with commas" : ""}
-                    variant="outlined"
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" }, mb: 2 }}
-                  />
-                  {/* Completion bar */}
-                  <Box>
-                    <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8", fontFamily: "inherit", mb: 0.5, fontWeight: 600 }}>
-                      FORM COMPLETION
-                    </Typography>
-                    <LinearProgress
-                      variant="determinate" value={formComplete ? 100 : 0}
-                      sx={{ borderRadius: 4, height: 6, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 4 } }}
+              {/* Form Body */}
+              <Box sx={{ p: { xs: 2, md: 4 } }}>
+                <Grid container spacing={4}>
+                  <Grid item xs={12} md={7}>
+                    <FormSectionHeader
+                      title="Location Details"
+                      color={editModal ? "#7d2ae8" : "#10b981"}
                     />
-                  </Box>
-                </Grid>
-                <Grid item xs={12} md={5}>
-                  {/* Preview / Tips */}
-                  <Box sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                      <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: "#f5f0ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FmdGoodRoundedIcon sx={{ color: "#7d2ae8", fontSize: 20 }} />
-                      </Box>
-                      <Typography sx={{ fontWeight: 700, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>
-                        {formName.trim() ? "Preview" : "Quick Tips"}
+                    <TextField
+                      fullWidth
+                      label="Location Name"
+                      value={formName}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      placeholder={editModal ? "" : "e.g. Chennai, Mumbai, Delhi"}
+                      helperText={!editModal ? "Separate multiple locations with commas" : ""}
+                      sx={{ mb: 2 }}
+                    />
+                    {/* Completion bar */}
+                    <Box>
+                      <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8", fontFamily: "inherit", mb: 0.5, fontWeight: 600 }}>
+                        FORM COMPLETION
                       </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={formComplete ? 100 : 0}
+                        sx={{ borderRadius: 4, height: 6, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 4 } }}
+                      />
                     </Box>
-                    {formName.trim() ? (
-                      <Stack spacing={1}>
-                        {formName.split(",").map(n => n.trim()).filter(Boolean).map((name, i) => (
-                          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
-                            <LocAvatar name={name} size={32} />
-                            <Typography sx={{ fontWeight: 600, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>{name}</Typography>
-                            <Chip label="New" size="small" sx={{ ml: "auto", bgcolor: "#dcfce7", color: "#16a34a", fontWeight: 700, fontFamily: "inherit", fontSize: "0.65rem", height: 18 }} />
-                          </Box>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <Box component="ul" sx={{ pl: 2.5, m: 0, color: "#64748b", fontSize: "0.82rem", fontFamily: "inherit" }}>
-                        <li style={{ marginBottom: 6 }}>Only letters and spaces allowed</li>
-                        <li style={{ marginBottom: 6 }}>Use commas to add multiple locations</li>
-                        <li>Names should be concise and clear</li>
+                  </Grid>
+                  <Grid item xs={12} md={5}>
+                    {/* Preview / Tips */}
+                    <Box sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: "#f5f0ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <FmdGoodRoundedIcon sx={{ color: "#7d2ae8", fontSize: 20 }} />
+                        </Box>
+                        <Typography sx={{ fontWeight: 700, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>
+                          {formName.trim() ? "Preview" : "Quick Tips"}
+                        </Typography>
                       </Box>
-                    )}
-                  </Box>
+                      {formName.trim() ? (
+                        <Stack spacing={1}>
+                          {formName.split(",").map(n => n.trim()).filter(Boolean).map((name, i) => (
+                            <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
+                              <LocAvatar name={name} size={32} />
+                              <Typography sx={{ fontWeight: 600, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>{name}</Typography>
+                              <Chip label="New" size="small" sx={{ ml: "auto", bgcolor: "#dcfce7", color: "#16a34a", fontWeight: 700, fontFamily: "inherit", fontSize: "0.65rem", height: 18 }} />
+                            </Box>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Box component="ul" sx={{ pl: 2.5, m: 0, color: "#64748b", fontSize: "0.82rem", fontFamily: "inherit" }}>
+                          <li style={{ marginBottom: 6 }}>Only letters and spaces allowed</li>
+                          <li style={{ marginBottom: 6 }}>Use commas to add multiple locations</li>
+                          <li>Names should be concise and clear</li>
+                        </Box>
+                      )}
+                    </Box>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </Box>
-          </Paper>
+              </Box>
+            </FormContainer>
+          </Box>
         </Fade>
       ) : (
         <>
@@ -438,9 +417,9 @@ const Location = () => {
                               {search ? `No results for "${search}"` : "No locations yet"}
                             </Typography>
                             {!search && (
-                              <Button size="small" variant="contained" startIcon={<AddRoundedIcon />}
-                                onClick={openAdd}
-                                sx={{ bgcolor: "#7d2ae8", "&:hover": { bgcolor: "#6b21c1" }, boxShadow: "none", textTransform: "none", fontFamily: "inherit", borderRadius: 2 }}>
+                              <Button size="small" variant="contained" color="primary" startIcon={<AddRoundedIcon />}
+                                sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, boxShadow: "none" }}
+                                onClick={openAdd}>
                                 Add First Location
                               </Button>
                             )}
@@ -534,11 +513,11 @@ const Location = () => {
                             <Divider sx={{ mb: 1.5 }} />
                             <Stack direction="row" spacing={1}>
                               <Button size="small" fullWidth startIcon={<EditRoundedIcon />} onClick={() => openEdit(loc)}
-                                sx={{ color: "#f59e0b", bgcolor: "#fef3c7", "&:hover": { bgcolor: "#fde68a" }, fontWeight: 600, fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                                sx={{ justifyContent: "flex-start", color: "#0ea5e9", bgcolor: "#f0f9ff", borderRadius: 1.5, "&:hover": { bgcolor: "#e0f2fe" } }}>
                                 Edit
                               </Button>
                               <Button size="small" fullWidth startIcon={<DeleteRoundedIcon />} onClick={() => setDeleteModal(loc)}
-                                sx={{ color: "#ef4444", bgcolor: "#fee2e2", "&:hover": { bgcolor: "#fecaca" }, fontWeight: 600, fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                                sx={{ justifyContent: "flex-start", color: "#ef4444", bgcolor: "#fef2f2", borderRadius: 1.5, "&:hover": { bgcolor: "#fee2e2" } }}>
                                 Delete
                               </Button>
                             </Stack>

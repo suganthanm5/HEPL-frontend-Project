@@ -10,7 +10,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Legend, PieChart, Pie, Cell, ComposedChart,
 } from "recharts";
-import { Typography } from "@mui/material";
+import { Typography, Button } from "@mui/material";
 import {
   GroupRounded, StoreRounded, AttachMoneyRounded,
   WarningAmberRounded, CategoryRounded, ShoppingCartRounded,
@@ -213,7 +213,7 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
         <SectionCard
           title="Recent Outlets"
           subtitle="Latest registered outlets"
-          action={<button className="db-link-btn" onClick={() => navigate("/outlet")}>View All →</button>}
+          action={<Button variant="text" color="primary" onClick={() => navigate("/outlet")} sx={{ textTransform: "none", fontWeight: 700 }}>View All →</Button>}
           delay={320}
         >
           <table className="db-table">
@@ -354,11 +354,11 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
       </div>
 
       <SectionCard title="Quick Actions" subtitle="Navigate to key sections" delay={300}>
-        <div className="db-quick-actions">
-          <button className="db-quick-btn indigo" onClick={() => navigate("/orders")}><ListAltRounded sx={{ mr: 1, fontSize: 20 }} /> Manage Orders</button>
-          <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{ mr: 1, fontSize: 20 }} /> View Stock</button>
-          <button className="db-quick-btn orange" onClick={() => navigate("/outlet")}><StoreRounded sx={{ mr: 1, fontSize: 20 }} /> Outlets</button>
-          <button className="db-quick-btn blue" onClick={() => navigate("/product")}><ShoppingCartRounded sx={{ mr: 1, fontSize: 20 }} /> Products</button>
+        <div className="db-quick-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <Button variant="contained" color="info" onClick={() => navigate("/orders")} startIcon={<ListAltRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Manage Orders</Button>
+          <Button variant="contained" color="success" onClick={() => navigate("/stock")} startIcon={<Inventory2Rounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>View Stock</Button>
+          <Button variant="contained" color="warning" onClick={() => navigate("/outlet")} startIcon={<StoreRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Outlets</Button>
+          <Button variant="contained" color="primary" onClick={() => navigate("/product")} startIcon={<ShoppingCartRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Products</Button>
         </div>
       </SectionCard>
 
@@ -366,7 +366,7 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
         <SectionCard
           title="Outlet Overview"
           subtitle="Outlets under your management"
-          action={<button className="db-link-btn" onClick={() => navigate("/outlet")}>View All →</button>}
+          action={<Button variant="text" color="primary" onClick={() => navigate("/outlet")} sx={{ textTransform: "none", fontWeight: 700 }}>View All →</Button>}
           delay={360}
         >
           <table className="db-table">
@@ -447,9 +447,9 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
         </SectionCard>
 
         <SectionCard title="Quick Actions" subtitle="Common tasks" delay={280}>
-          <div className="db-quick-actions">
-            <button className="db-quick-btn orange" onClick={() => navigate("/orders")}><ListAltRounded sx={{ mr: 1, fontSize: 20 }} /> My Orders</button>
-            <button className="db-quick-btn green" onClick={() => navigate("/stock")}><Inventory2Rounded sx={{ mr: 1, fontSize: 20 }} /> Check Stock</button>
+          <div className="db-quick-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <Button variant="contained" color="warning" onClick={() => navigate("/orders")} startIcon={<ListAltRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>My Orders</Button>
+            <Button variant="contained" color="success" onClick={() => navigate("/stock")} startIcon={<Inventory2Rounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Check Stock</Button>
           </div>
         </SectionCard>
       </div>
@@ -468,20 +468,19 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
             {transactions.length === 0 ? (
               <tr><td colSpan={4} className="db-empty">No recent orders found</td></tr>
             ) : transactions.slice(0, 8).map((ord, i) => (
-                <tr key={i}>
-                  <td><strong>{ord.orderNo || "—"}</strong></td>
-                  <td>
-                    <span className={`db-badge ${
-                      ord.status === "APPROVED" || ord.status === "COMPLETED" ? "green" 
-                      : ord.status === "REJECTED" || ord.status === "CANCELLED" ? "rose" 
-                      : "orange"
+              <tr key={i}>
+                <td><strong>{ord.orderNo || "—"}</strong></td>
+                <td>
+                  <span className={`db-badge ${ord.status === "APPROVED" || ord.status === "COMPLETED" ? "green"
+                      : ord.status === "REJECTED" || ord.status === "CANCELLED" ? "rose"
+                        : "orange"
                     }`}>
-                      {ord.status || "—"}
-                    </span>
-                  </td>
-                  <td>{ord.items?.length || 0}</td>
-                  <td>{ord.requestDate ? new Date(ord.requestDate).toLocaleDateString() : "—"}</td>
-                </tr>
+                    {ord.status || "—"}
+                  </span>
+                </td>
+                <td>{ord.items?.length || 0}</td>
+                <td>{ord.requestDate ? new Date(ord.requestDate).toLocaleDateString() : "—"}</td>
+              </tr>
             ))}
           </tbody>
         </table>
@@ -520,11 +519,11 @@ export default function Dashboard() {
         try {
           const transParams = { page: 0, size: 8 };
           if (user?.outletId || user?.outlet?.id) {
-             transParams.outletId = user?.outletId || user?.outlet?.id;
+            transParams.outletId = user?.outletId || user?.outlet?.id;
           }
-          
+
           const isOutletManager = user?.role === "OUTLET_MANAGER" || user?.role === "USER";
-          
+
           const [data, trans] = await Promise.all([
             reportService.getDashboardSummary(),
             isOutletManager ? API.get('/api/orders?size=8').then(r => r.data.data) : reportService.getTransactions(transParams),
@@ -543,7 +542,7 @@ export default function Dashboard() {
             params.outletId = selectedOutletId;
           }
           const isOutletManager = user?.role === "OUTLET_MANAGER" || user?.role === "USER";
-          const trans = isOutletManager 
+          const trans = isOutletManager
             ? await API.get('/api/orders?size=8').then(r => r.data.data)
             : await reportService.getTransactions(params);
           setTransactions(trans?.content || trans || []);
@@ -676,17 +675,14 @@ export default function Dashboard() {
       </div>
 
       {(selectedOutletId || selectedDivisionId) && (
-        <button
+        <Button
+          variant="outlined" color="error" size="small"
           onClick={() => { setSelectedOutletId(""); setSelectedDivisionId(""); }}
-          className="db-reset-pill-btn"
           title="Clear Filters"
+          sx={{ borderRadius: "50px", textTransform: "none", boxShadow: "none", ml: 2, height: "34px", mt: 0.5 }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="db-pill-svg-reset">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
           Reset
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import {
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Select,
   MenuItem, FormControl, Tooltip, CircularProgress,
-  Snackbar, Alert, Chip, Paper, Grid, Stack, Pagination
+  Snackbar, Alert, Chip, Paper, Grid, Stack, Pagination, FormHelperText
 } from "@mui/material";
 import {
   PersonAddRounded, SearchRounded, EditRounded,
@@ -17,7 +17,9 @@ import { userService } from "../../services/userService";
 import { outletService } from "../../services/outletService";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
+import PageHeader from "../../components/common/PageHeader";
 import { formatUserData } from "../../utils/exportUtils";
+import { FormContainer, FormHeader, FormSectionHeader } from "../../components/common/FormComponents";
 import "./UserManagement.css";
 
 
@@ -50,6 +52,7 @@ const UserManagement = () => {
   const [dialog, setDialog] = useState({ open: false, mode: "add", data: emptyForm });
   const [delDialog, setDelDialog] = useState({ open: false, id: null, name: "" });
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
+  const [formErrors, setFormErrors] = useState({});
 
 
   const load = useCallback(async (signal) => {
@@ -91,9 +94,10 @@ const UserManagement = () => {
   const toast = (msg, severity = "success") =>
     setSnack({ open: true, msg, severity });
 
-  
+
   const handleSave = async () => {
     const { mode, data } = dialog;
+    setFormErrors({});
     try {
       if (mode === "add") {
         await userService.createUser(data);
@@ -110,11 +114,7 @@ const UserManagement = () => {
       const errorData = err.response?.data?.data;
 
       if (errorData && typeof errorData === 'object') {
-        
-        const messages = Object.entries(errorData)
-          .map(([field, msg]) => `${field}: ${msg}`)
-          .join(" | ");
-        toast(messages || "Validation failed", "error");
+        setFormErrors(errorData);
       } else {
         const msg = err.response?.data?.message || "Operation failed";
         toast(msg, "error");
@@ -138,99 +138,85 @@ const UserManagement = () => {
   return (
     <Box className="user-mgmt-page">
       {/* Header */}
-      <Box className="page-header">
-        <Box className="page-header-left">
-          <Typography className="page-title">
-            <TypingText text="User Management" />
-          </Typography>
-          <Typography className="page-subtitle">Manage users and their roles</Typography>
-        </Box>
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-          {!isFormView && (
-            <ButtonBase
-              onClick={() => { setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }}
-              sx={{
-                display: "flex", alignItems: "center", gap: 1,
-                px: 2.5, py: 1.2, borderRadius: "50px",
-                background: "linear-gradient(135deg, #7d2ae8, #a855f7)",
-                color: "#fff", fontFamily: "inherit",
-                fontSize: "0.875rem", fontWeight: 600,
-                boxShadow: "0 4px 16px rgba(125,42,232,0.35)",
-                transition: "all 0.25s ease",
-                "&:hover": { transform: "translateY(-1px)", boxShadow: "0 6px 20px rgba(125,42,232,0.45)" },
-              }}
-              disableRipple
+      <PageHeader
+        title={<TypingText text="User Management" />}
+        subtitle="Manage users and their roles"
+        action={
+          !isFormView && (
+            <Button variant="contained" color="primary" startIcon={<PersonAddRounded />}
+              onClick={() => { setFormErrors({}); setDialog({ open: true, mode: "add", data: emptyForm }); setIsFormView(true); }}
+              sx={{ borderRadius: 2 }}
             >
-              <PersonAddRounded sx={{ fontSize: 18 }} />
               Add User
-            </ButtonBase>
-          )}
-        </Box>
-      </Box>
+            </Button>
+          )
+        }
+      />
 
       {isFormView ? (
         /* ── Full Page Form View ── */
         <Box className="animate-fade-in">
-          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-            <Box sx={{ p: 3, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "#fafafa" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <IconButton onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }} sx={{ color: "#64748b" }}>
-                  <CloseRounded />
-                </IconButton>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", fontFamily: "inherit" }}>
-                    {dialog.mode === "add" ? "Add New User" : "Edit User"}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontFamily: "inherit" }}>
-                    {dialog.mode === "add" ? "Fill in the details to create a new user" : `Updating details for ${dialog.data.name || dialog.data.username}`}
-                  </Typography>
-                </Box>
-              </Box>
-              <Stack direction="row" spacing={1.5}>
-                <Button variant="outlined" color="inherit" onClick={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }}
-                  sx={{ color: "#64748b", borderColor: "#e2e8f0" }}>
-                  Cancel
-                </Button>
-                <Button variant="contained" startIcon={dialog.mode === "add" ? <PersonAddRounded /> : <CheckRounded />}
-                  onClick={handleSave}
-                  sx={{ bgcolor: dialog.mode === "add" ? "#10b981" : "#7d2ae8", "&:hover": { bgcolor: dialog.mode === "add" ? "#059669" : "#6b21c1" }, color: "#fff", boxShadow: "none" }}>
-                  {dialog.mode === "add" ? "Create User" : "Save Changes"}
-                </Button>
-              </Stack>
-            </Box>
+          <FormContainer>
+            <FormHeader
+              title={dialog.mode === "add" ? "Add New User" : "Edit User"}
+              subtitle={dialog.mode === "add" ? "Fill in the details to create a new user" : `Updating details for ${dialog.data.name || dialog.data.username}`}
+              onClose={() => { setIsFormView(false); setDialog({ open: false, mode: "add", data: emptyForm }); }}
+              onSave={handleSave}
+              saveLabel={dialog.mode === "add" ? "Create User" : "Save Changes"}
+              saveIcon={dialog.mode === "add" ? <PersonAddRounded /> : <CheckRounded />}
+              colorAccent="primary"
+            />
 
             <Box sx={{ p: { xs: 2, md: 4 } }}>
               <Grid container spacing={4}>
                 <Grid item xs={12} md={7}>
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#1e293b", mb: 2.5, display: "flex", alignItems: "center", gap: 1, fontFamily: "inherit" }}>
-                      <Box sx={{ width: 4, height: 16, bgcolor: dialog.mode === "add" ? "#10b981" : "#7d2ae8", borderRadius: 1 }} />
-                      User Details
-                    </Typography>
+                    <FormSectionHeader
+                      title="User Details"
+                      color={dialog.mode === "add" ? "#10b981" : "#7d2ae8"}
+                    />
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                       <TextField fullWidth label="Full Name" placeholder="Enter full name" value={dialog.data.name}
-                        onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, name: e.target.value } }))}
-                        variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
+                        onChange={(e) => {
+                          setDialog((d) => ({ ...d, data: { ...d.data, name: e.target.value } }));
+                          if (formErrors.name) setFormErrors((prev) => ({ ...prev, name: null }));
+                        }}
+                        error={!!formErrors.name}
+                        helperText={formErrors.name} />
 
                       <TextField fullWidth label="Username" placeholder="Enter username" value={dialog.data.username}
-                        onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, username: e.target.value } }))}
-                        variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
+                        onChange={(e) => {
+                          setDialog((d) => ({ ...d, data: { ...d.data, username: e.target.value } }));
+                          if (formErrors.username) setFormErrors((prev) => ({ ...prev, username: null }));
+                        }}
+                        error={!!formErrors.username}
+                        helperText={formErrors.username} />
 
                       <TextField fullWidth label="Email" type="email" placeholder="Enter email" value={dialog.data.email}
-                        onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, email: e.target.value } }))}
-                        variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
+                        onChange={(e) => {
+                          setDialog((d) => ({ ...d, data: { ...d.data, email: e.target.value } }));
+                          if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: null }));
+                        }}
+                        error={!!formErrors.email}
+                        helperText={formErrors.email} />
 
                       {dialog.mode === "add" && (
                         <TextField fullWidth label="Password" type="password" placeholder="Enter password" value={dialog.data.password}
-                          onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, password: e.target.value } }))}
-                          variant="outlined" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontFamily: "inherit" } }} />
+                          onChange={(e) => {
+                            setDialog((d) => ({ ...d, data: { ...d.data, password: e.target.value } }));
+                            if (formErrors.password) setFormErrors((prev) => ({ ...prev, password: null }));
+                          }}
+                          error={!!formErrors.password}
+                          helperText={formErrors.password} />
                       )}
 
-                      <FormControl fullWidth variant="outlined">
+                      <FormControl fullWidth variant="outlined" error={!!(formErrors.role || formErrors.roles)}>
                         <Select
                           value={dialog.data.role || "USER"}
-                          onChange={(e) => setDialog((d) => ({ ...d, data: { ...d.data, role: e.target.value } }))}
-                          sx={{ borderRadius: 2, fontFamily: "inherit" }}
+                          onChange={(e) => {
+                            setDialog((d) => ({ ...d, data: { ...d.data, role: e.target.value } }));
+                            if (formErrors.role || formErrors.roles) setFormErrors((prev) => ({ ...prev, role: null, roles: null }));
+                          }}
                         >
                           {ROLES.map((r) => (
                             <MenuItem key={r} value={r} sx={{ fontFamily: "inherit" }}>
@@ -238,6 +224,9 @@ const UserManagement = () => {
                             </MenuItem>
                           ))}
                         </Select>
+                        {(formErrors.role || formErrors.roles) && (
+                          <FormHelperText>{formErrors.role || formErrors.roles}</FormHelperText>
+                        )}
                       </FormControl>
                       <FormControl fullWidth variant="outlined">
                         <Select
@@ -253,7 +242,6 @@ const UserManagement = () => {
                               }
                             }));
                           }}
-                          sx={{ borderRadius: 2, fontFamily: "inherit" }}
                           displayEmpty
                         >
                           <MenuItem value="" sx={{ fontFamily: "inherit", fontStyle: "italic", color: "#94a3b8" }}>No Outlet Assigned</MenuItem>
@@ -291,7 +279,7 @@ const UserManagement = () => {
                 </Grid>
               </Grid>
             </Box>
-          </Paper>
+          </FormContainer>
         </Box>
       ) : (
         <>
@@ -384,25 +372,25 @@ const UserManagement = () => {
                           <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{u.email}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                              <Chip 
-                                size="small" 
-                                label={meta.label} 
-                                sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 600, fontFamily: "inherit", borderRadius: "8px" }} 
+                              <Chip
+                                size="small"
+                                label={meta.label}
+                                sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 600, fontFamily: "inherit", borderRadius: "8px" }}
                               />
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Chip 
-                              size="small" 
-                              label={u.status || "Active"} 
-                              sx={{ 
-                                bgcolor: u.status?.toLowerCase() === "active" ? "#dcfce7" : "#fee2e2", 
-                                color: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444", 
-                                fontWeight: 600, 
+                            <Chip
+                              size="small"
+                              label={u.status || "Active"}
+                              sx={{
+                                bgcolor: u.status?.toLowerCase() === "active" ? "#dcfce7" : "#fee2e2",
+                                color: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444",
+                                fontWeight: 600,
                                 fontFamily: "inherit",
                                 borderRadius: "8px",
                                 "& .MuiChip-label": { px: 1.5 }
-                              }} 
+                              }}
                             />
                           </TableCell>
                           <TableCell>
@@ -466,14 +454,14 @@ const UserManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <ButtonBase onClick={() => setDelDialog({ open: false, id: null, name: "" })} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", border: "1.5px solid #e2e8f0", color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit", fontWeight: 600 }}>
+          <Button variant="outlined" color="inherit" onClick={() => setDelDialog({ open: false, id: null, name: "" })}
+            sx={{ borderRadius: 2, color: "#64748b", borderColor: "#e2e8f0" }}>
             Cancel
-          </ButtonBase>
-          <ButtonBase onClick={handleDelete} disableRipple
-            sx={{ px: 2.5, py: 1, borderRadius: "50px", background: "#ef4444", color: "#fff", fontSize: "0.875rem", fontFamily: "inherit", fontWeight: 600, boxShadow: "0 4px 12px rgba(239,68,68,0.35)" }}>
+          </Button>
+          <Button variant="contained" color="error" onClick={handleDelete}
+            sx={{ borderRadius: 2, boxShadow: "none" }}>
             Delete
-          </ButtonBase>
+          </Button>
         </DialogActions>
       </Dialog>
 

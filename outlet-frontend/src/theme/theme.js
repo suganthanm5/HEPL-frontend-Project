@@ -6,9 +6,9 @@ export const getTheme = () => {
   const compactMode = localStorage.getItem("compactMode") === "true";
   const fontSizePref = localStorage.getItem("fontSize") || "Medium";
 
-  let primaryMain = "#4f46e5"; // Purple
-  let primaryLight = "#818cf8";
-  let primaryDark = "#3730a3";
+  let primaryMain = "#7c3aed"; // Rich Purple/Violet
+  let primaryLight = "#a855f7"; // Vibrant Amethyst Purple
+  let primaryDark = "#5b21b6"; // Deep Imperial Purple
 
   if (themeColor === "Blue") {
     primaryMain = "#2563eb";
@@ -70,7 +70,7 @@ export const getTheme = () => {
       h6: { fontSize: "1rem", fontWeight: 600, letterSpacing: "-0.01em" },
       subtitle1: { fontSize: "0.875rem", fontWeight: 600 },
       subtitle2: { fontSize: "0.8125rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" },
-      body1: { fontSize: "0.875rem" }, 
+      body1: { fontSize: "0.875rem" },
       body2: { fontSize: "0.8125rem", fontWeight: 500 },
       caption: { fontSize: "0.75rem", fontWeight: 600 },
       button: { textTransform: "none", fontWeight: 600, letterSpacing: "0.01em" },
@@ -115,23 +115,88 @@ export const getTheme = () => {
       },
       MuiButton: {
         defaultProps: {
-          size: compactMode ? "small" : "medium",
+          size: "small",
         },
         styleOverrides: {
           root: {
-            borderRadius: compactMode ? 6 : 10,
+            borderRadius: 8,
             boxShadow: "none",
-            padding: compactMode ? "6px 14px" : "8px 20px",
-            transition: "all 0.2s ease",
+            padding: "6px 14px",
+            fontSize: "0.8125rem",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            textTransform: "none",
+            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
             "&:hover": {
-              transform: "translateY(-1px)",
+              transform: "translateY(-1.5px)",
             },
+          },
+          contained: {
+            color: "#ffffff",
+            fontWeight: 700,
           },
           containedPrimary: {
             background: `linear-gradient(135deg, ${primaryLight} 0%, ${primaryMain} 100%)`,
-            boxShadow: `0 4px 12px ${primaryMain}40`,
+            boxShadow: `0 4px 12px ${primaryMain}30`,
             "&:hover": {
-              boxShadow: `0 6px 16px ${primaryMain}60`,
+              background: `linear-gradient(135deg, ${primaryLight} 0%, ${primaryMain} 100%)`,
+              boxShadow: `0 6px 18px ${primaryMain}45`,
+              filter: "brightness(1.05)",
+            }
+          },
+          containedSecondary: {
+            background: "linear-gradient(135deg, #f472b6 0%, #db2777 100%)",
+            boxShadow: "0 4px 12px rgba(219, 39, 119, 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #f472b6 0%, #db2777 100%)",
+              boxShadow: "0 6px 18px rgba(219, 39, 119, 0.45)",
+              filter: "brightness(1.05)",
+            }
+          },
+          containedSuccess: {
+            background: "linear-gradient(135deg, #34d399 0%, #059669 100%)",
+            boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #34d399 0%, #059669 100%)",
+              boxShadow: "0 6px 18px rgba(5, 150, 105, 0.45)",
+              filter: "brightness(1.05)",
+            }
+          },
+          containedError: {
+            background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+            boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+              boxShadow: "0 6px 18px rgba(220, 38, 38, 0.45)",
+              filter: "brightness(1.05)",
+            }
+          },
+          containedWarning: {
+            background: "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
+            boxShadow: "0 4px 12px rgba(217, 119, 6, 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
+              boxShadow: "0 6px 18px rgba(217, 119, 6, 0.45)",
+              filter: "brightness(1.05)",
+            }
+          },
+          containedInfo: {
+            background: "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
+            boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
+              boxShadow: "0 6px 18px rgba(2, 132, 199, 0.45)",
+              filter: "brightness(1.05)",
+            }
+          },
+          outlinedPrimary: {
+            borderWidth: "1.5px",
+            borderColor: `${primaryMain}60`,
+            color: primaryMain,
+            "&:hover": {
+              borderWidth: "1.5px",
+              background: `${primaryMain}0d`,
+              borderColor: primaryMain,
             }
           }
         },
@@ -168,6 +233,103 @@ export const getTheme = () => {
             "&:hover": {
               backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#f8fafc",
             }
+          }
+        }
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: compactMode ? 12 : 20,
+            minWidth: 520,
+          }
+        }
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            fontWeight: 600,
+            fontSize: "11.5px",
+          }
+        }
+      },
+      MuiTextField: {
+        defaultProps: {
+          size: "small",
+          variant: "outlined",
+        }
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: compactMode ? 8 : 10,
+            backgroundColor: isDark ? "#0f172a" : "#f8fafc",
+            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: isDark ? "rgba(255, 255, 255, 0.12)" : "#e2e8f0",
+              borderWidth: "1.5px",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: primaryLight,
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: primaryMain,
+              borderWidth: "2px",
+            },
+            "&.Mui-focused": {
+              boxShadow: `0 0 0 3px ${primaryMain}20`,
+            },
+          },
+          input: {
+            padding: "10px 14px",
+            fontSize: "0.85rem",
+            fontWeight: 500,
+          }
+        }
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            color: isDark ? "#94a3b8" : "#64748b",
+            "&.Mui-focused": {
+              color: primaryMain,
+              fontWeight: 700,
+            }
+          },
+          shrink: {
+            transform: "translate(14px, -7px) scale(0.75)",
+          }
+        }
+      },
+      MuiSelect: {
+        defaultProps: {
+          size: "small",
+        },
+        styleOverrides: {
+          root: {
+            borderRadius: compactMode ? 8 : 10,
+            backgroundColor: isDark ? "#0f172a" : "#f8fafc",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: isDark ? "rgba(255, 255, 255, 0.12)" : "#e2e8f0",
+              borderWidth: "1.5px",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: primaryLight,
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: primaryMain,
+              borderWidth: "2px",
+            },
+            "&.Mui-focused": {
+              boxShadow: `0 0 0 3px ${primaryMain}20`,
+            },
+          },
+          select: {
+            padding: "10px 14px",
+            fontSize: "0.85rem",
+            fontWeight: 500,
           }
         }
       }
