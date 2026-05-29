@@ -17,6 +17,7 @@ import {
 import { stockService } from "../../services/stockService";
 import API from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { useWebSocketContext } from "../../context/WebSocketContext";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
 import TypingText from "../../components/TypingText";
@@ -57,6 +58,7 @@ const Stock = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const { user, role } = useAuth();
+  const { latestStockUpdate } = useWebSocketContext();
   const userOutletId = user?.outletId || "";
   const isAdmin = role === "ADMIN";
   const isOutletUser = (role === "USER" || role === "OUTLET_MANAGER");
@@ -168,6 +170,17 @@ const Stock = () => {
     }, 800);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [loadDynamicData]);
+
+  // Real-time stock update handler via WebSocket
+  useEffect(() => {
+    if (latestStockUpdate) {
+      const isRelevant = isAdmin || 
+                         (latestStockUpdate.outletId && String(latestStockUpdate.outletId) === String(userOutletId));
+      if (isRelevant) {
+        loadDynamicData();
+      }
+    }
+  }, [latestStockUpdate, loadDynamicData, isAdmin, userOutletId]);
 
   const toast = (msg, severity = "success") => setSnack({ open: true, msg, severity });
 
@@ -572,8 +585,8 @@ const Stock = () => {
                             <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.batchNo}</TableCell>
                             <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.product?.name || s.productId}</TableCell>
                             <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1e1b4b", fontFamily: "inherit" }}>{s.quantity}</TableCell>
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>${s.purchasePrice}</TableCell>
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>${s.sellingPrice}</TableCell>
+                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>₹{s.purchasePrice}</TableCell>
+                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>₹{s.sellingPrice}</TableCell>
                             <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.expiryDate}</TableCell>
                             <TableCell>
                               <Box sx={{ display: "flex", gap: 0.75 }}>

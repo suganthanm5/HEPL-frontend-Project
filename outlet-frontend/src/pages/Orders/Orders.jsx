@@ -21,6 +21,7 @@ import { orderService } from "../../services/orderService";
 import { outletService } from "../../services/outletService";
 import { productService } from "../../services/productService";
 import { useAuth } from "../../context/AuthContext";
+import { useWebSocketContext } from "../../context/WebSocketContext";
 import { getCookie } from "../../utils/cookieUtils";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import ExportMenu from "../../components/ExportMenu/ExportMenu";
@@ -65,6 +66,7 @@ const emptyItem = { productId: "", quantity: 1, price: 0 };
 ══════════════════════════════════════════ */
 const Orders = () => {
   const { user, role } = useAuth();
+  const { latestOrder } = useWebSocketContext();
   const userOutletId = user?.outletId || getCookie("outletId") || "";
   const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
@@ -166,6 +168,17 @@ const Orders = () => {
     }, 800);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [loadOrders]);
+
+  // Re-fetch orders list in real-time when a WebSocket event for orders is received
+  useEffect(() => {
+    if (latestOrder) {
+      const isRelevant = isAdmin || isManager || 
+                         (latestOrder.outletId && String(latestOrder.outletId) === String(userOutletId));
+      if (isRelevant) {
+        loadOrders();
+      }
+    }
+  }, [latestOrder, loadOrders, isAdmin, isManager, userOutletId]);
 
   // Ensure filters and new order data reflect the user's outlet
   useEffect(() => {

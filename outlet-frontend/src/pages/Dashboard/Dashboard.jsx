@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchDashboardData } from "../../redux/dashboardSlice";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useWebSocketContext } from "../../context/WebSocketContext";
 import { reportService } from "../../services/reportService";
 import { getCookie } from "../../utils/cookieUtils";
 import API from "../../api/apiClient";
@@ -497,6 +498,7 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { latestOrder, latestStockUpdate, latestAlert } = useWebSocketContext();
   const outlets = useSelector((s) => s.dashboard.outlets);
   const divisions = useSelector((s) => s.dashboard.divisions);
 
@@ -508,6 +510,27 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedOutletId, setSelectedOutletId] = useState("");
   const [selectedDivisionId, setSelectedDivisionId] = useState("");
+
+  const loadLiveDashboardData = useCallback(async () => {
+    try {
+      const transParams = { page: 0, size: 8 };
+      const curOutletId = selectedOutletId || user?.outletId || user?.outlet?.id || getCookie("outletId");
+      if (curOutletId) {
+        transParams.outletId = curOutletId;
+      }
+
+      const isOutletManager = user?.role === "OUTLET_MANAGER" || user?.role === "USER" || role === "USER" || role === "OUTLET_MANAGER";
+
+      const [data, trans] = await Promise.all([
+        reportService.getDashboardSummary(),
+        isOutletManager ? API.get('/api/orders?size=8').then(r => r.data.data) : reportService.getTransactions(transParams),
+      ]);
+      setSummary(data);
+      setTransactions(trans?.content || trans || []);
+    } catch (e) {
+      console.error("Dashboard real-time reload error", e);
+    }
+  }, [user, role, selectedOutletId]);
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -552,6 +575,13 @@ export default function Dashboard() {
       }
     })();
   }, [selectedOutletId]);
+
+  // Real-time re-fetch when WebSocket notifications are received
+  useEffect(() => {
+    if (latestOrder || latestStockUpdate || latestAlert) {
+      loadLiveDashboardData();
+    }
+  }, [latestOrder, latestStockUpdate, latestAlert, loadLiveDashboardData]);
 
   const getFilteredSummary = () => {
     if (!summary) return null;
