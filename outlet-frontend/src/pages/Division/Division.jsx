@@ -89,12 +89,21 @@ const StyledTableCell = styled(TableCell)(() => ({
     textTransform: "uppercase",
     borderBottom: `1px solid ${C.slate200}`,
     padding: "14px 16px",
+    "@media (max-width: 600px)": {
+      fontSize: "0.7rem",
+      padding: "10px 8px",
+      letterSpacing: "0.04em",
+    },
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
     color: C.slate800,
     borderBottom: `1px solid ${C.slate100}`,
     padding: "12px 16px",
+    "@media (max-width: 600px)": {
+      fontSize: "0.8rem",
+      padding: "10px 8px",
+    },
   },
 }));
 
@@ -492,7 +501,7 @@ const Division = () => {
   return (
     <Box>
       {/* ── Page Header ── */}
-      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between", mb: 3, gap: 2 }}>
         <Box>
           <Typography variant="h5" fontWeight={800} sx={{ color: C.slate900, fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>
             <TypingText text="Division Management" />
@@ -501,15 +510,17 @@ const Division = () => {
             Manage and organize your business division units
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1.5}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ width: { xs: "100%", md: "auto" } }}>
           <Button variant="outlined" color="primary" onClick={() => setBulkOpen(true)} startIcon={<UploadFileIcon />}
-            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 600, px: 2.5 }}>
+            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 600, px: 2.5, width: { xs: "100%", sm: "auto" } }}>
             Bulk Upload
           </Button>
-          <ExportMenu getData={() => formatDivisionData(divisions)} filename="divisions" title="Divisions Report" backendType="divisions" />
+          <Box sx={{ width: { xs: "100%", sm: "auto" }, "& > button": { width: "100%", justifyContent: "center" } }}>
+            <ExportMenu getData={() => formatDivisionData(divisions)} filename="divisions" title="Divisions Report" backendType="divisions" />
+          </Box>
           <Button variant="contained" color="primary" onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
             startIcon={<AddIcon />}
-            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, px: 3, boxShadow: "none" }}>
+            sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, px: 3, boxShadow: "none", width: { xs: "100%", sm: "auto" } }}>
             Add Division
           </Button>
         </Stack>

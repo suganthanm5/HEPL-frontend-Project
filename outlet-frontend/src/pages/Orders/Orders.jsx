@@ -505,9 +505,9 @@ const Orders = () => {
             <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ background: "#fafafa" }}>
+                  <TableRow>
                     {["Order No", "Outlet", "Items", "Status", "Date", "Actions"].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>
+                      <TableCell key={h} sx={{ fontFamily: "inherit" }}>
                         {h}
                       </TableCell>
                     ))}
@@ -714,9 +714,9 @@ const Orders = () => {
               <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: "12px", overflow: "hidden", mb: 4 }}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                    <TableRow>
                       {["Product Details", "Quantity", "Price", "Total"].map((h) => (
-                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.5px", borderBottom: "2px solid #e2e8f0" }}>{h}</TableCell>
+                        <TableCell key={h} sx={{ fontFamily: "inherit" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

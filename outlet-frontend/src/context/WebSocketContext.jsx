@@ -19,11 +19,14 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { toast } from 'react-hot-toast';
+import { useAuth } from './AuthContext';
+import { getCookie } from '../utils/cookieUtils';
 
 const WebSocketContext = createContext(null);
 
 export function WebSocketProvider({ children }) {
   const { subscribe, publish, isConnected, disconnect } = useWebSocket();
+  const { role, user } = useAuth();
 
   const [latestOrder, setLatestOrder] = useState(null);
   const [latestStockUpdate, setLatestStockUpdate] = useState(null);
@@ -39,6 +42,15 @@ export function WebSocketProvider({ children }) {
   useEffect(() => {
     // ── Orders topic ─────────────────────────────────────────
     const unsubOrders = subscribe('orders', (event) => {
+      const userOutletId = user?.outletId || getCookie('outletId');
+      const isUserOrOutletManager = role === 'USER' || role === 'OUTLET_MANAGER';
+      
+      // Admin and Manager see all events. Others see only their own outlet's events.
+      const isRelevant = !isUserOrOutletManager || 
+                         (event.outletId && String(event.outletId) === String(userOutletId));
+      
+      if (!isRelevant) return;
+
       setLatestOrder(event);
       addToList(orderEvents, setOrderEvents, event);
 
@@ -59,6 +71,14 @@ export function WebSocketProvider({ children }) {
 
     // ── Stock updates topic ───────────────────────────────────
     const unsubStock = subscribe('stock-updates', (event) => {
+      const userOutletId = user?.outletId || getCookie('outletId');
+      const isUserOrOutletManager = role === 'USER' || role === 'OUTLET_MANAGER';
+      
+      const isRelevant = !isUserOrOutletManager || 
+                         (event.outletId && String(event.outletId) === String(userOutletId));
+
+      if (!isRelevant) return;
+
       setLatestStockUpdate(event);
       toast(`📊 Stock updated: ${event.productName} → ${event.newQuantity} units`, {
         icon: '📦',
@@ -69,6 +89,14 @@ export function WebSocketProvider({ children }) {
 
     // ── Alerts topic ─────────────────────────────────────────
     const unsubAlerts = subscribe('alerts', (event) => {
+      const userOutletId = user?.outletId || getCookie('outletId');
+      const isUserOrOutletManager = role === 'USER' || role === 'OUTLET_MANAGER';
+      
+      const isRelevant = !isUserOrOutletManager || 
+                         (event.outletId && String(event.outletId) === String(userOutletId));
+
+      if (!isRelevant) return;
+
       setLatestAlert(event);
       addToList(alertEvents, setAlertEvents, event);
 
@@ -96,7 +124,7 @@ export function WebSocketProvider({ children }) {
       unsubAlerts();
       unsubNotifs();
     };
-  }, [subscribe]);
+  }, [subscribe, role, user]);
 
   const value = {
     isConnected,

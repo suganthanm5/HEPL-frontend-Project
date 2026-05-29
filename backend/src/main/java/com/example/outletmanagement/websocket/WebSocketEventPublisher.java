@@ -33,11 +33,12 @@ public class WebSocketEventPublisher {
     }
 
     // ── New Order Created ────────────────────────────────────
-    public void publishNewOrder(Long orderId, String orderNo, String outletName, String status) {
+    public void publishNewOrder(Long orderId, String orderNo, Long outletId, String outletName, String status) {
         Map<String, Object> payload = Map.of(
                 "type", "NEW_ORDER",
                 "orderId", orderId,
                 "orderNo", orderNo,
+                "outletId", outletId,
                 "outletName", outletName,
                 "status", status,
                 "timestamp", LocalDateTime.now().toString()
@@ -47,11 +48,13 @@ public class WebSocketEventPublisher {
     }
 
     // ── Order Status Changed ─────────────────────────────────
-    public void publishOrderStatusChange(Long orderId, String orderNo, String newStatus) {
+    public void publishOrderStatusChange(Long orderId, String orderNo, Long outletId, String outletName, String newStatus) {
         Map<String, Object> payload = Map.of(
                 "type", "ORDER_STATUS_CHANGED",
                 "orderId", orderId,
                 "orderNo", orderNo,
+                "outletId", outletId,
+                "outletName", outletName,
                 "status", newStatus,
                 "timestamp", LocalDateTime.now().toString()
         );

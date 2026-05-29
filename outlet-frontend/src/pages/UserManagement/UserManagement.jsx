@@ -332,9 +332,9 @@ const UserManagement = () => {
             <TableContainer>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ background: "#faf5ff" }}>
+                  <TableRow>
                     {["User", "Username", "Email", "Role", "Status", "Actions"].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "inherit", fontSize: "0.78rem", py: 1.5 }}>
+                      <TableCell key={h} sx={{ fontFamily: "inherit" }}>
                         {h}
                       </TableCell>
                     ))}

@@ -1055,7 +1055,7 @@ const Product = () => {
                   <TableHead>
                     <TableRow>
                       {["#", "Image", "Name", "Division", "Code", "UIM Price", "MRP", "Selling Price", "Purchase Price", "Stock", "Actions"].map((h) => (
-                        <TableCell key={h} sx={{ color: "#64748b", fontWeight: 700, fontSize: "12px", borderBottom: "1.5px solid #e8eaf6", py: "16px" }}>{h}</TableCell>
+                        <TableCell key={h}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

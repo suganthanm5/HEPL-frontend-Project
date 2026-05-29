@@ -131,6 +131,7 @@ public class OrderServiceImpl implements OrderService {
         webSocketEventPublisher.publishNewOrder(
                 saved.getId(),
                 saved.getOrderNo(),
+                outlet.getId(),
                 outlet.getOutletName(),
                 saved.getStatus().name()
         );
@@ -186,7 +187,13 @@ public class OrderServiceImpl implements OrderService {
         Order updated = orderRepository.save(order);
 
         // Publish real-time status change event
-        webSocketEventPublisher.publishOrderStatusChange(updated.getId(), updated.getOrderNo(), updated.getStatus().name());
+        webSocketEventPublisher.publishOrderStatusChange(
+                updated.getId(),
+                updated.getOrderNo(),
+                updated.getOutlet().getId(),
+                updated.getOutlet().getOutletName(),
+                updated.getStatus().name()
+        );
 
         return updated;
     }

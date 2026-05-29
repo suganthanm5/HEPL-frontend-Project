@@ -11,6 +11,13 @@ function getWsUrl() {
   if (envUrl && envUrl.includes('8080')) {
       return envUrl.replace('8080', '8081');
   }
+  if (envUrl) {
+      return envUrl;
+  }
+  // Dynamic fallback based on current window location to support multiple clients
+  if (typeof window !== 'undefined' && window.location) {
+      return `http://${window.location.hostname}:8081`;
+  }
   return 'http://localhost:8081';
 }
 

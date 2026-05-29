@@ -467,13 +467,13 @@ const Stock = () => {
               {tab === "stock" ? (
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ background: "#fafafa" }}>
+                    <TableRow>
                       {isOutletUser
                         ? ["Product Name", "Available Stock", "Action"].map((h) => (
-                          <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                          <TableCell key={h} sx={{ fontFamily: "inherit" }}>{h}</TableCell>
                         ))
                         : ["Outlet", "Product", "Available", "Reserved", "Level"].map((h) => (
-                          <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                          <TableCell key={h} sx={{ fontFamily: "inherit" }}>{h}</TableCell>
                         ))
                       }
                     </TableRow>
@@ -551,9 +551,9 @@ const Stock = () => {
               ) : tab === "main" ? (
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ background: "#fafafa" }}>
+                    <TableRow>
                       {["Ref No", "Product", "Available", "Purchase Price", "Selling Price", "Expiry", "Actions"].map((h) => (
-                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                        <TableCell key={h} sx={{ fontFamily: "inherit" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
@@ -639,9 +639,9 @@ const Stock = () => {
               ) : (
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ background: "#fafafa" }}>
+                    <TableRow>
                       {["Type", "Product", "Outlet", "Qty", "By", "Date"].map((h) => (
-                        <TableCell key={h} sx={{ fontWeight: 700, color: "#64748b", fontFamily: "inherit", fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.05em", py: 1.5 }}>{h}</TableCell>
+                        <TableCell key={h} sx={{ fontFamily: "inherit" }}>{h}</TableCell>
                       ))}
                     </TableRow>
                   </TableHead>

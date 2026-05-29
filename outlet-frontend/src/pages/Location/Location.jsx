@@ -176,9 +176,7 @@ const Location = () => {
 
   // ── TABLE HEAD CELL SX ──
   const thSx = {
-    fontWeight: 700, color: "#7d2ae8", fontFamily: "inherit",
-    fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 0.8,
-    py: 1.5, bgcolor: "#faf5ff",
+    fontFamily: "inherit",
   };
 
   return (

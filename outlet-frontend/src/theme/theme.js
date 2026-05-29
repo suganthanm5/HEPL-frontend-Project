@@ -109,7 +109,25 @@ export const getTheme = () => {
         styleOverrides: {
           root: {
             padding: compactMode ? "8px 16px" : "16px",
-            borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(226, 232, 240, 0.8)"}`
+            borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(226, 232, 240, 0.8)"}`,
+            "@media (max-width: 600px)": {
+              padding: "10px 8px",
+              fontSize: "0.8rem",
+            }
+          },
+          head: {
+            backgroundColor: isDark ? "#1e293b" : "#ffffff",
+            color: isDark ? "#94a3b8" : "#475569",
+            fontWeight: 700,
+            fontSize: "0.78rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            borderBottom: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(226, 232, 240, 0.8)"}`,
+            "@media (max-width: 600px)": {
+              fontSize: "0.7rem",
+              padding: "10px 8px",
+              letterSpacing: "0.04em",
+            }
           }
         }
       },
