@@ -81,13 +81,13 @@ const C = {
 ───────────────────────────────────────────── */
 const StyledTableCell = styled(TableCell)(() => ({
   [`&.${tableCellClasses.head}`]: {
-    background: `linear-gradient(135deg, ${C.slate900} 0%, ${C.slate800} 100%)`,
-    color: C.white,
+    background: C.white,
+    color: C.slate600,
     fontWeight: 700,
     fontSize: "0.78rem",
     letterSpacing: "0.08em",
     textTransform: "uppercase",
-    borderBottom: "none",
+    borderBottom: `1px solid ${C.slate200}`,
     padding: "14px 16px",
   },
   [`&.${tableCellClasses.body}`]: {
