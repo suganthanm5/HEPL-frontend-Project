@@ -129,7 +129,6 @@ const Settings = () => {
     localStorage.setItem('refreshInterval', refreshInterval);
     localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
     
-    // Example dynamically translating text
     const testTranslation = async () => {
       if (language !== prevLanguage && languageCodes[language]) {
          const translated = await translateText("Dashboard", languageCodes[language]);
@@ -162,7 +161,7 @@ const Settings = () => {
       setSnackbar({ open: true, message: 'Password must be at least 6 characters long', severity: 'error' });
       return;
     }
-    // Check if password contains at least one number
+   
     if (!/\d/.test(passwordForm.newPassword)) {
       setSnackbar({ open: true, message: 'Password must include at least one number (0-9)', severity: 'error' });
       return;

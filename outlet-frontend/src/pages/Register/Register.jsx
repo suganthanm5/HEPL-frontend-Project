@@ -2,11 +2,82 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
-import { Card } from '../../components/Card';
-import { Input } from '../../components/Input';
-import { Button } from '../../components/Button';
-import { Package } from 'lucide-react';
-import './Rgister.css';
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  InputAdornment,
+  IconButton,
+  Alert,
+  Collapse,
+  ThemeProvider,
+  createTheme
+} from '@mui/material';
+import {
+  PersonRounded,
+  EmailRounded,
+  LockRounded,
+  Visibility,
+  VisibilityOff,
+  InventoryRounded
+} from '@mui/icons-material';
+import bgImage from '../../assets/outlet-bg.jpg';
+import icon from '../../assets/login-icon.png';
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#f59e0b',
+    },
+    background: {
+      default: 'transparent',
+      paper: 'rgba(255, 255, 255, 0.08)',
+    },
+  },
+  typography: {
+    fontFamily: "'Inter', 'Poppins', sans-serif",
+  },
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '12px',
+            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+            transition: 'all 0.3s ease',
+            '& fieldset': {
+              borderColor: 'rgba(255, 255, 255, 0.15)',
+            },
+            '&:hover fieldset': {
+              borderColor: 'rgba(255, 255, 255, 0.3)',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#f59e0b',
+            },
+            '&.Mui-focused': {
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 10px rgba(245, 158, 11, 0.3)',
+            }
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: '#9ca3af',
+          '&.Mui-focused': {
+            color: '#f59e0b',
+          }
+        }
+      }
+    }
+  },
+});
 
 const Register = () => {
   const [userData, setUserData] = useState({
@@ -43,51 +114,178 @@ const Register = () => {
     }
   };
 
-  return (
-    <div className="auth-container animate-fade-in">
-      <div className="auth-branding">
-        <Package size={48} color="var(--color-primary)" />
-        <h1>InventoryPro</h1>
-        <p>Create your new account.</p>
-      </div>
+  const [showPassword, setShowPassword] = useState(false);
 
-      <Card className="auth-card">
-        <h2 className="auth-title">Sign Up</h2>
-        {error && <div className="auth-error">{error}</div>}
-        <form onSubmit={handleRegister}>
-          <Input
-            label="Username"
-            name="username"
-            type="text"
-            value={userData.username}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            value={userData.email}
-            onChange={handleChange}
-            required
-          />
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            value={userData.password}
-            onChange={handleChange}
-            required
-          />
-          <Button fullWidth type="submit" disabled={loading} className="mt-4">
-            {loading ? 'Registering...' : 'Create Account'}
-          </Button>
-        </form>
-        <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign In</Link>
-        </p>
-      </Card>
-    </div>
+  return (
+    <ThemeProvider theme={darkTheme}>
+      <Box sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        padding: 2,
+        perspective: '1200px'
+      }}>
+        <Box sx={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          zIndex: -2
+        }} />
+        <Box sx={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(8px)',
+          zIndex: -1
+        }} />
+
+        <Container maxWidth="xs" sx={{ zIndex: 1 }}>
+          <Box sx={{ textAlign: 'center', mb: 4, mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+              <img src={icon} alt="icon" style={{ width: 65, height: 65, filter: 'drop-shadow(0 0 8px rgba(219, 95, 13, 0.6))' }} />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#ffffff', mt: 1, mb: 1, fontFamily: 'inherit' }}>
+              InventoryPro
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#d1d5db', fontFamily: 'inherit' }}>
+              Create your new account.
+            </Typography>
+          </Box>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, sm: 4.5 },
+              borderRadius: 5,
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.05)',
+              animation: 'flipInYRegister 0.7s cubic-bezier(0.25, 1, 0.5, 1)',
+              backfaceVisibility: 'hidden'
+            }}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 3, textAlign: 'center', color: '#ffffff', fontFamily: 'inherit' }}>
+              Sign Up
+            </Typography>
+
+            <Collapse in={!!error}>
+              {error && (
+                <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                  {error}
+                </Alert>
+              )}
+            </Collapse>
+
+            <form onSubmit={handleRegister}>
+              <Box sx={{ position: 'relative', mb: 2.5 }}>
+                <TextField
+                  label="Username"
+                  name="username"
+                  type="text"
+                  fullWidth
+                  required
+                  value={userData.username}
+                  onChange={handleChange}
+                  InputProps={{
+                    sx: { borderRadius: 2 }
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ position: 'relative', mb: 2.5 }}>
+                <TextField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  fullWidth
+                  required
+                  value={userData.email}
+                  onChange={handleChange}
+                  InputProps={{
+                    sx: { borderRadius: 2 }
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ position: 'relative', mb: 3 }}>
+                <TextField
+                  label="Password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  fullWidth
+                  required
+                  value={userData.password}
+                  onChange={handleChange}
+                  InputProps={{
+                    sx: { borderRadius: 2 }
+                  }}
+                />
+                <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  type="button"
+                  sx={{ 
+                    position: 'absolute', 
+                    right: 8, 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    color: '#94a3b8'
+                  }}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </Box>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={loading}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2,
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                    boxShadow: '0 6px 20px rgba(245, 158, 11, 0.5)',
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                {loading ? 'Registering...' : 'Create Account'}
+              </Button>
+            </form>
+
+            <Box sx={{ mt: 3, textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ color: '#d1d5db' }}>
+                Already have an account?{' '}
+                <Link to="/login" style={{ color: '#f59e0b', fontWeight: 600, textDecoration: 'none' }}>
+                  Sign In
+                </Link>
+              </Typography>
+            </Box>
+          </Paper>
+        </Container>
+        <style>{`
+        @keyframes flipInYRegister {
+            0% { opacity: 0; transform: perspective(1200px) rotateY(90deg); }
+            100% { opacity: 1; transform: perspective(1200px) rotateY(0); }
+        }
+      `}</style>
+      </Box>
+    </ThemeProvider>
   );
 };
 

@@ -49,17 +49,25 @@
 .login-box {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
-  padding: 35px;
-  border-radius: 18px;
-  width: 420px;
+  padding: 45px 40px;
+  border-radius: 20px;
+  width: 440px;
   text-align: center;
   transition: all 0.3s ease;
 
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.3),
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.4),
     inset 0 0 10px rgba(255, 255, 255, 0.05);
 
   border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Inter', 'Poppins', sans-serif;
+  animation: flipInY 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+  backface-visibility: hidden;
+}
+
+@keyframes flipInY {
+  from { opacity: 0; transform: perspective(1200px) rotateY(-90deg); }
+  to { opacity: 1; transform: perspective(1200px) rotateY(0); }
 }
 
 /* Loading state for login box */
