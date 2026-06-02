@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchDashboardData } from "../../redux/dashboardSlice";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ import {
 import TypingText from "../../components/TypingText";
 import "./Dashboard.css";
 
-/* ── Shared helpers ─────────────────────────────────────── */
+
 const fmt = (n) => Number(n || 0).toLocaleString("en-IN");
 const fmtCurrency = (n) => {
   const v = Number(n || 0);

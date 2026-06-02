@@ -9,7 +9,7 @@
   --sidebar-collapsed-width: 90px;
   --navbar-height: 72px;
   --primary-color: #695CFE;
-  
+
   /* Typography */
   --font-header: 'Space Grotesk', sans-serif;
   --font-body: 'Manrope', sans-serif;
@@ -43,12 +43,17 @@ body {
 }
 
 /* Global Font Overrides */
-h1, h2, h3, h4, h5, h6, 
-.page-title, 
-.db-page-title, 
-.prod-hero-title, 
-.user-dialog-title, 
-.transfer-dialog-title, 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.page-title,
+.db-page-title,
+.prod-hero-title,
+.user-dialog-title,
+.transfer-dialog-title,
 .order-detail-header,
 .stat-card-value,
 .db-stat-value,
@@ -70,6 +75,13 @@ html {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

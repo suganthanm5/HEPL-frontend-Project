@@ -8,6 +8,9 @@ import icon from "../../assets/login-icon.png";
 import { loginUser } from "../../services/authService";
 import API from "../../api/apiClient";
 import { useAuth } from "../../context/AuthContext";
+import { Visibility, VisibilityOff, LocalShippingRounded } from "@mui/icons-material";
+import { Alert, Collapse, IconButton, Typography, Box } from "@mui/material";
+import { CloseRounded } from "@mui/icons-material";
 
 const GOOGLE_CLIENT_ID = "589079070564-kdbonslaun7fjlr9t2ru9c0gr2tdmn71.apps.googleusercontent.com";
 
@@ -72,11 +75,15 @@ const Login = () => {
         } catch (err) {
             console.error("❌ Login error:", err.response?.data || err.message);
 
-            let msg = "Cannot connect to backend";
+            let msg = "Cannot connect to backend. Please check your connection.";
             if (err.response?.data) {
                 msg = err.response.data.message || "Invalid username or password";
             }
             setError(msg);
+            toast.error(msg, {
+                icon: "⚠️",
+                style: { borderRadius: "10px", background: "#333", color: "#fff" },
+            });
         } finally {
             setIsLoading(false);
         }
@@ -109,22 +116,31 @@ const Login = () => {
         } catch (err) {
             let msg = "Google sign-in failed. Please try again.";
             if (err.response?.status === 404 || err.response?.status >= 500) {
-                 msg = "Unable to authenticate with Google. Please try again later.";
+                msg = "Unable to authenticate with Google. Please try again later.";
             } else if (err.response?.data?.message) {
-                 // Check if the backend error contains a raw JSON/Stacktrace string and sanitize it
-                 if (err.response.data.message.includes("{") || err.response.data.message.includes("Unauthorized") || err.response.data.message.includes("api/v1")) {
-                     msg = "Invalid Google Credentials. Please try signing in again.";
-                 } else {
-                     msg = err.response.data.message;
-                 }
+                // Check if the backend error contains a raw JSON/Stacktrace string and sanitize it
+                if (err.response.data.message.includes("{") || err.response.data.message.includes("Unauthorized") || err.response.data.message.includes("api/v1")) {
+                    msg = "Invalid Google Credentials. Please try signing in again.";
+                } else {
+                    msg = err.response.data.message;
+                }
             }
-            
+
             setError(msg);
+            toast.error(msg, {
+                icon: "⚠️",
+                style: { borderRadius: "10px", background: "#333", color: "#fff" },
+            });
         }
     };
 
     const handleGoogleError = () => {
-        setError("Google sign-in was cancelled or failed.");
+        const msg = "Google sign-in was cancelled or failed.";
+        setError(msg);
+        toast.error(msg, {
+            icon: "⚠️",
+            style: { borderRadius: "10px", background: "#333", color: "#fff" },
+        });
     };
 
     /* ── JSX ── */
@@ -167,13 +183,13 @@ const Login = () => {
                                 value={password}
                                 onChange={(e) => { setPassword(e.target.value); setError(""); }}
                             />
-                            {error && <p style={{ color: "red", fontSize: "12px", margin: "4px 0 0" }}>{error}</p>}
 
                             <span
                                 className="eye-icon"
                                 onClick={() => setShowPassword(!showPassword)}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
                             >
-                                {showPassword ? "Hide" : "Show"}
+                                {showPassword ? <VisibilityOff sx={{ fontSize: 20 }} /> : <Visibility sx={{ fontSize: 20 }} />}
                             </span>
                         </div>
 
@@ -183,10 +199,15 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="login-btn"
+                            className={`login-btn ${isLoading ? "loading" : ""}`}
                             disabled={isLoading}
                         >
-                            {isLoading ? "Logging in..." : "Login"}
+                            {isLoading ? (
+                                <>
+                                    <span style={{ visibility: "hidden" }}>Login</span>
+                                    <LocalShippingRounded className="truck-animation-full" />
+                                </>
+                            ) : "Login"}
                         </button>
 
                     </form>

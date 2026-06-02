@@ -214,7 +214,15 @@ const UserManagement = () => {
                         <Select
                           value={dialog.data.role || "USER"}
                           onChange={(e) => {
-                            setDialog((d) => ({ ...d, data: { ...d.data, role: e.target.value } }));
+                            const newRole = e.target.value;
+                            setDialog((d) => ({ 
+                                ...d, 
+                                data: { 
+                                    ...d.data, 
+                                    role: newRole,
+                                    ...( (newRole === "ADMIN" || newRole === "MANAGER") ? { outletId: "" } : {} )
+                                } 
+                            }));
                             if (formErrors.role || formErrors.roles) setFormErrors((prev) => ({ ...prev, role: null, roles: null }));
                           }}
                         >
@@ -228,7 +236,7 @@ const UserManagement = () => {
                           <FormHelperText>{formErrors.role || formErrors.roles}</FormHelperText>
                         )}
                       </FormControl>
-                      <FormControl fullWidth variant="outlined">
+                      <FormControl fullWidth variant="outlined" disabled={dialog.data.role === "ADMIN" || dialog.data.role === "MANAGER"}>
                         <Select
                           value={dialog.data.outletId || ""}
                           onChange={(e) => {
@@ -251,6 +259,9 @@ const UserManagement = () => {
                             </MenuItem>
                           ))}
                         </Select>
+                        {(dialog.data.role === "ADMIN" || dialog.data.role === "MANAGER") && (
+                            <FormHelperText>Not applicable for global roles</FormHelperText>
+                        )}
                       </FormControl>
                     </Box>
                   </Box>
@@ -333,7 +344,7 @@ const UserManagement = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    {["User", "Username", "Email", "Role", "Status", "Actions"].map((h) => (
+                    {["User", "Username", "Email", "Role", "Assigned Outlet", "Actions"].map((h) => (
                       <TableCell key={h} sx={{ fontFamily: "inherit" }}>
                         {h}
                       </TableCell>
@@ -380,18 +391,36 @@ const UserManagement = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Chip
-                              size="small"
-                              label={u.status || "Active"}
-                              sx={{
-                                bgcolor: u.status?.toLowerCase() === "active" ? "#dcfce7" : "#fee2e2",
-                                color: u.status?.toLowerCase() === "active" ? "#16a34a" : "#ef4444",
-                                fontWeight: 600,
-                                fontFamily: "inherit",
-                                borderRadius: "8px",
-                                "& .MuiChip-label": { px: 1.5 }
-                              }}
-                            />
+                            {(() => {
+                              const isGlobalRole = u.role === "ADMIN" || u.role === "MANAGER";
+                              if (isGlobalRole) {
+                                return (
+                                  <Typography sx={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic", fontFamily: "inherit" }}>
+                                    Not Applicable
+                                  </Typography>
+                                );
+                              }
+
+                              const outletName = u.outletName || u.outlet?.outletName || u.outlet?.name || (u.outletId ? outlets.find(o => String(o.id) === String(u.outletId))?.outletName || outlets.find(o => String(o.id) === String(u.outletId))?.name : null);
+                              return outletName && outletName !== "—" ? (
+                                <Chip
+                                  size="small"
+                                  label={outletName}
+                                  sx={{
+                                    bgcolor: "#f8fafc",
+                                    color: "#334155",
+                                    fontWeight: 600,
+                                    fontFamily: "inherit",
+                                    borderRadius: "8px",
+                                    border: "1px solid #cbd5e1"
+                                  }}
+                                />
+                              ) : (
+                                <Typography sx={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic", fontFamily: "inherit" }}>
+                                  Not Assigned
+                                </Typography>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: "flex", gap: 0.75 }}>
