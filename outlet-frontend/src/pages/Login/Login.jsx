@@ -75,10 +75,18 @@ const Login = () => {
         } catch (err) {
             console.error("❌ Login error:", err.response?.data || err.message);
 
-            let msg = "Cannot connect to backend. Please check your connection.";
-            if (err.response?.data) {
-                msg = err.response.data.message || "Invalid username or password";
+            let msg = "Invalid username or password";
+            
+            if (err.response?.status === 401) {
+                msg = "Invalid username or password";
+            } else if (err.response?.status === 403) {
+                msg = "Access denied. Please contact administrator.";
+            } else if (!err.response) {
+                msg = "Cannot connect to server. Please check your connection.";
+            } else if (err.response?.data?.message) {
+                msg = err.response.data.message;
             }
+            
             setError(msg);
             toast.error(msg, {
                 icon: "⚠️",
