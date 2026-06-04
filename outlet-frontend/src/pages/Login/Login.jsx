@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import "./Login.css";
 import { toast } from "react-hot-toast";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
@@ -16,31 +17,17 @@ const GOOGLE_CLIENT_ID = "589079070564-kdbonslaun7fjlr9t2ru9c0gr2tdmn71.apps.goo
 
 const Login = () => {
     const { login } = useAuth();
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-
     const navigate = useNavigate();
 
     /* ── Regular username/password login ── */
-    const handleLogin = async (e) => {
-        e.preventDefault();
-
-        if (isLoading) return;
-
-        if (!username || !password) {
-            const msg = "Enter username and password";
-            setError(msg);
-            return;
-        }
-
+    const onSubmit = async (data) => {
         setError("");
-        setIsLoading(true);
 
         try {
-            const res = await loginUser({ username, password });
+            const res = await loginUser(data);
 
             const payload = res.data?.data || res.data;
             const token = payload?.token;
@@ -48,9 +35,9 @@ const Login = () => {
             if (token) {
                 const userData = {
                     id: payload.id,
-                    username: payload.username || username,
+                    username: payload.username || data.username,
                     email: payload.email || "",
-                    name: payload.name || payload.username || username,
+                    name: payload.name || payload.username || data.username,
                     role: payload.role || "USER",
                     outletId: payload.outletId || null,
                 };
@@ -92,8 +79,6 @@ const Login = () => {
                 icon: "⚠️",
                 style: { borderRadius: "10px", background: "#333", color: "#fff" },
             });
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -169,17 +154,16 @@ const Login = () => {
                         Welcome back! Please login to your account.
                     </p>
 
-                    <form onSubmit={handleLogin}>
+                    <form onSubmit={handleSubmit(onSubmit)}>
 
                         <div className="input-field">
                             <label>Username</label>
                             <input
                                 type="text"
                                 placeholder="Enter your username"
-                                required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                {...register("username", { required: "Username is required" })}
                             />
+                            {errors.username && <span style={{ color: '#f43f5e', fontSize: '12px' }}>{errors.username.message}</span>}
                         </div>
 
                         <div className="input-field">
@@ -187,10 +171,9 @@ const Login = () => {
                             <input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter your password"
-                                required
-                                value={password}
-                                onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                                {...register("password", { required: "Password is required" })}
                             />
+                            {errors.password && <span style={{ color: '#f43f5e', fontSize: '12px' }}>{errors.password.message}</span>}
 
                             <span
                                 className="eye-icon"
@@ -207,10 +190,10 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className={`login-btn ${isLoading ? "loading" : ""}`}
-                            disabled={isLoading}
+                            className={`login-btn ${isSubmitting ? "loading" : ""}`}
+                            disabled={isSubmitting}
                         >
-                            {isLoading ? (
+                            {isSubmitting ? (
                                 <>
                                     <span style={{ visibility: "hidden" }}>Login</span>
                                     <LocalShippingRounded className="truck-animation-full" />

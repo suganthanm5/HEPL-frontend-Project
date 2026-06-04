@@ -19,9 +19,20 @@ const ExportMenu = ({ getData, filename = "export", title = "Export", backendTyp
       }
     } else {
       if (!getData) return;
-      const data = getData();
-      if (!data || data.length === 0) { alert("No data to export"); return; }
-      fn(data, `${filename}_${new Date().toISOString().slice(0, 10)}`);
+      setLoading(true);
+      try {
+        const data = await getData();
+        if (!data || data.length === 0) {
+          alert("No data to export");
+          return;
+        }
+        await fn(data, `${filename}_${new Date().toISOString().slice(0, 10)}`);
+      } catch (err) {
+        console.error("Export failed:", err);
+        alert("Export failed: " + err.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

@@ -656,7 +656,7 @@ const Orders = () => {
           <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: "20px", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.08)", mb: 4 }}>
             {/* Elegant Header */}
             <Box sx={{ 
-              background: "linear-gradient(135deg, #111827 0%, #374151 100%)", 
+              background: "linear-gradient(135deg, #7d2ae8 0%, #a855f7 100%)", 
               color: "#fff", 
               p: { xs: 3, md: 5 }, 
               position: "relative" 
@@ -694,10 +694,10 @@ const Orders = () => {
                       <Box sx={{ 
                         width: 56, height: 56, borderRadius: "16px", 
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        background: done ? "linear-gradient(135deg, #111827, #374151)" : "#fff",
+                        background: done ? "linear-gradient(135deg, #7d2ae8, #a855f7)" : "#fff",
                         color: done ? "#fff" : "#cbd5e1",
                         border: done ? "none" : "2px dashed #cbd5e1",
-                        boxShadow: done ? "0 8px 20px rgba(17,24,39,0.3)" : "none",
+                        boxShadow: done ? "0 8px 20px rgba(125,42,232,0.3)" : "none",
                         transition: "all 0.3s ease",
                         transform: active ? "scale(1.1)" : "scale(1)"
                       }}>
@@ -705,7 +705,7 @@ const Orders = () => {
                       </Box>
                       <Typography sx={{ 
                         fontSize: "0.8rem", fontWeight: 800, mt: 2, textTransform: "uppercase", letterSpacing: "0.5px",
-                        color: active ? "#111827" : done ? "#475569" : "#94a3b8" 
+                        color: active ? "#7d2ae8" : done ? "#475569" : "#94a3b8" 
                       }}>
                         {STATUS_META[step]?.label}
                       </Typography>
@@ -713,7 +713,7 @@ const Orders = () => {
                     {i < TIMELINE.length - 1 && (
                       <Box sx={{ 
                         position: "absolute", top: 28, left: "50%", width: "100%", height: "4px",
-                        background: done && timelineIdx(detail.status) > i ? "linear-gradient(90deg, #111827, #374151)" : "#e2e8f0",
+                        background: done && timelineIdx(detail.status) > i ? "linear-gradient(90deg, #7d2ae8, #a855f7)" : "#e2e8f0",
                         transform: "translateY(-50%)", zIndex: 1, borderRadius: "2px"
                       }} />
                     )}

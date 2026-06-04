@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useFormHandler } from "../../hooks/useFormHandler";
 import {
   getDivisions, createDivision, updateDivision, deleteDivision, bulkCreateDivisions,
 } from "../../services/divisionService";
@@ -52,7 +53,7 @@ import LastPageIcon from "@mui/icons-material/LastPage";
 
 /* ─────────────────────────────────────────────
    THEME TOKENS
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const C = {
   indigo: "#4f46e5",
   indigoLight: "#6366f1",
@@ -78,7 +79,7 @@ const C = {
 
 /* ─────────────────────────────────────────────
    STYLED TABLE
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const StyledTableCell = styled(TableCell)(() => ({
   [`&.${tableCellClasses.head}`]: {
     background: C.white,
@@ -118,11 +119,11 @@ const StyledTableRow = styled(TableRow)(() => ({
 
 /* ─────────────────────────────────────────────
    STAT CARD IS NOW IMPORTED VIA CSS
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 
 /* ─────────────────────────────────────────────
    MODAL WRAPPER
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const AppModal = ({ title, subtitle, icon, onClose, children, accent = C.indigo }) => (
   <Dialog open onClose={onClose} fullWidth maxWidth="sm"
     PaperProps={{ sx: { borderRadius: 3, overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.16)" } }}
@@ -156,7 +157,7 @@ const AppModal = ({ title, subtitle, icon, onClose, children, accent = C.indigo 
 
 /* ─────────────────────────────────────────────
    ACTION BUTTON (icon)
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const ActionBtn = ({ title, onClick, icon, color, bg, hoverBg }) => (
   <Tooltip title={title} arrow>
     <IconButton onClick={onClick} size="small" sx={{
@@ -171,7 +172,7 @@ const ActionBtn = ({ title, onClick, icon, color, bg, hoverBg }) => (
 
 /* ─────────────────────────────────────────────
    DIVISION AVATAR
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const DivAvatar = ({ name, size = 36 }) => {
   const colors = [C.indigo, C.sky, C.emerald, C.amber, "#8b5cf6", "#ec4899", "#06b6d4"];
   const idx = (name?.charCodeAt(0) || 0) % colors.length;
@@ -189,20 +190,24 @@ const DivAvatar = ({ name, size = 36 }) => {
 
 /* ─────────────────────────────────────────────
    PAGE SIZES
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const PAGE_SIZES = [5, 10, 25, 50];
 const EMPTY_PROD = { name: "", uimPrice: "", mrp: "", sellingPrice: "", purchasePrice: "" };
 
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
-───────────────────────────────────────────── */
+   ───────────────────────────────────────────── */
 const Division = () => {
   const [divisions, setDivisions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(() => {
+    const stored = localStorage.getItem('itemsPerPage');
+    const parsed = parseInt(stored, 10);
+    return PAGE_SIZES.includes(parsed) ? parsed : 10;
+  });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
@@ -210,9 +215,6 @@ const Division = () => {
   const [editModal, setEditModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
   const [viewModal, setViewModal] = useState(null);
-  const [addName, setAddName] = useState("");
-  const [editName, setEditName] = useState("");
-  const [inlineError, setInlineError] = useState("");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -223,8 +225,15 @@ const Division = () => {
   const [products, setProducts] = useState([]);
   const [prodLoading, setProdLoading] = useState(false);
   const [prodSaving, setProdSaving] = useState(false);
-  const [newProd, setNewProd] = useState(EMPTY_PROD);
   const [existingNames, setExistingNames] = useState([]);
+
+  // Form hook for division form
+  const { register: registerDivision, handleSubmit: handleDivisionSubmit, formState: { errors: divisionErrors }, reset: resetDivision } = useFormHandler({
+    name: ""
+  });
+
+  // Form hook for product form
+  const { register: registerProduct, handleSubmit: handleProductSubmit, formState: { errors: productErrors }, reset: resetProduct } = useFormHandler(EMPTY_PROD);
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
@@ -247,20 +256,14 @@ const Division = () => {
     }
   }, [isFormView]);
 
-  const handleInputChange = (value, setter) => {
-    setter(value);
-    setInlineError("");
-
+  const handleInputChange = (value) => {
     if (/[^a-zA-Z\s,]/.test(value)) {
-      setInlineError("Only letters, spaces, and commas are allowed.");
-      return;
+      return "Only letters, spaces, and commas are allowed.";
     }
     if (value.startsWith(" ") || value.startsWith(",")) {
-      setInlineError("Division name cannot start with a space or comma.");
-      return;
+      return "Division name cannot start with a space or comma.";
     }
 
-    // Check for duplicates dynamically
     const names = value.split(",").map(n => n.trim().toLowerCase()).filter(Boolean);
     const dupes = names.filter(n => {
       if (editModal && editModal.name?.toLowerCase().trim() === n) {
@@ -273,9 +276,14 @@ const Division = () => {
       const dupOriginals = value.split(",")
         .map(n => n.trim())
         .filter(n => dupes.includes(n.toLowerCase()));
-      setInlineError(`Division already exists: ${dupOriginals.join(", ")}`);
+      return `Division already exists: ${dupOriginals.join(", ")}`;
     }
+    return true;
   };
+
+  useEffect(() => {
+    localStorage.setItem('itemsPerPage', pageSize.toString());
+  }, [pageSize]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -309,19 +317,17 @@ const Division = () => {
     } finally { setLoading(false); }
   };
 
-  const handleAdd = async () => {
-    if (!addName.trim()) return;
-    const names = addName.split(",").map(n => n.trim()).filter(Boolean);
+  const handleAdd = async (data) => {
+    const names = data.name.split(",").map(n => n.trim()).filter(Boolean);
     if (!names.length) { showToast("Enter at least one valid name.", "warning"); return; }
     
     const dupes = names.filter(n => existingNames.includes(n.toLowerCase()));
     if (dupes.length) {
       showToast(`Already exists: ${dupes.join(", ")}`, "warning");
-      setInlineError(`Division already exists: ${dupes.join(", ")}`);
       return;
     }
 
-    const unique = [...new Set(names.filter(n => !dupes.includes(n)))];
+    const unique = [...new Set(names)];
     if (!unique.length) return;
     setSaving(true);
     let ok = 0; const failed = [];
@@ -331,29 +337,19 @@ const Division = () => {
       }
       if (ok) showToast(ok === 1 ? `"${unique[0]}" added!` : `${ok} divisions added!`, "success");
       if (failed.length) showToast(`Failed: ${failed.join(", ")}`, "error");
-      setAddName(""); setIsFormView(false);
+      resetDivision();
+      setIsFormView(false);
       page === 1 ? fetchDivisions() : setPage(1);
     } catch (e) {
-      let errMsg = e.response?.data?.message || e.message;
-      if (e.response?.data?.data && typeof e.response.data.data === 'object') {
-        const validationErrors = Object.values(e.response.data.data).join(", ");
-        if (validationErrors) errMsg += `: ${validationErrors}`;
-      }
-      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
-        setInlineError(errMsg);
-      }
-      showToast("Error: " + errMsg);
-    }
-    finally { setSaving(false); }
+      showToast("Error: " + (e.response?.data?.message || e.message));
+    } finally { setSaving(false); }
   };
 
-  const handleUpdate = async () => {
-    if (!editName.trim()) return;
-    const trimmed = editName.trim();
+  const handleUpdate = async (data) => {
+    const trimmed = data.name.trim();
     if (editModal && editModal.name?.toLowerCase().trim() !== trimmed.toLowerCase()) {
       if (existingNames.includes(trimmed.toLowerCase())) {
         showToast(`Division "${trimmed}" already exists.`, "warning");
-        setInlineError(`Division already exists: ${trimmed}`);
         return;
       }
     }
@@ -363,17 +359,8 @@ const Division = () => {
       await updateDivision(editModal.id, { name: trimmed });
       setEditModal(null); setIsFormView(false); fetchDivisions();
     } catch (e) {
-      let errMsg = e.response?.data?.message || e.message;
-      if (e.response?.data?.data && typeof e.response.data.data === 'object') {
-        const validationErrors = Object.values(e.response.data.data).join(", ");
-        if (validationErrors) errMsg += `: ${validationErrors}`;
-      }
-      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
-        setInlineError(errMsg);
-      }
-      showToast("Update failed: " + errMsg);
-    }
-    finally { setSaving(false); }
+      showToast("Update failed: " + (e.response?.data?.message || e.message));
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -387,7 +374,7 @@ const Division = () => {
   };
 
   const openProducts = async (d) => {
-    setProductModal(d); setNewProd(EMPTY_PROD); setProdLoading(true);
+    setProductModal(d); resetProduct(EMPTY_PROD); setProdLoading(true);
     try {
       const res = await getProductsByDivision(d.id);
       const data = res?.data;
@@ -404,21 +391,20 @@ const Division = () => {
     return code;
   };
 
-  const handleAddProduct = async () => {
-    if (!newProd.name.trim()) return;
+  const handleAddProduct = async (data) => {
     setProdSaving(true);
     try {
       const payload = {
-        name: newProd.name.trim(), productCode: generateProductCode(),
-        uimPrice: Number(newProd.uimPrice) || 0, mrp: Number(newProd.mrp) || 0,
-        sellingPrice: Number(newProd.sellingPrice) || 0, purchasePrice: Number(newProd.purchasePrice) || 0,
+        name: data.name.trim(), productCode: generateProductCode(),
+        uimPrice: Number(data.uimPrice) || 0, mrp: Number(data.mrp) || 0,
+        sellingPrice: Number(data.sellingPrice) || 0, purchasePrice: Number(data.purchasePrice) || 0,
       };
       const res = await createProduct(productModal.id, payload);
       const p = res?.data?.data ?? res?.data;
       const updated = [...products, p];
       setProducts(updated);
       setDivisions(prev => prev.map(d => d.id === productModal.id ? { ...d, products: updated } : d));
-      setNewProd(EMPTY_PROD);
+      resetProduct();
     } catch (e) { showToast("Failed to add product: " + (e.response?.data?.message || e.message)); }
     finally { setProdSaving(false); }
   };
@@ -432,7 +418,11 @@ const Division = () => {
     } catch (e) { showToast("Failed to delete: " + (e.response?.data?.message || e.message)); }
   };
 
-  const openEdit = d => { setEditModal(d); setEditName(d.name); setIsFormView(true); };
+  const openEdit = d => { 
+    setEditModal(d); 
+    resetDivision({ name: d.name }); 
+    setIsFormView(true); 
+  };
   const safePage = Math.min(page, totalPages || 1);
   const hasActiveFilters = productCountFilter || dateFilter || search;
 
@@ -443,10 +433,10 @@ const Division = () => {
         <FormHeader
           title={editModal ? "Edit Division" : "Add New Division"}
           subtitle={editModal ? `Updating: ${editModal.name}` : "Create one or multiple divisions at once"}
-          onClose={() => { setIsFormView(false); setEditModal(null); setAddName(""); }}
-          onSave={editModal ? handleUpdate : handleAdd}
+          onClose={() => { setIsFormView(false); setEditModal(null); resetDivision(); }}
+          onSave={handleDivisionSubmit(editModal ? handleUpdate : handleAdd)}
           saving={saving}
-          saveDisabled={!!inlineError || (editModal ? !editName.trim() : !addName.trim())}
+          saveDisabled={!!divisionErrors.name}
           saveLabel={editModal ? "Save Changes" : "Create Division"}
           saveIcon={editModal ? <EditIcon /> : <AddIcon />}
           colorAccent="primary"
@@ -464,11 +454,13 @@ const Division = () => {
                 fullWidth
                 label="Division Name *"
                 variant="outlined"
-                value={editModal ? editName : addName}
-                onChange={(e) => handleInputChange(e.target.value, editModal ? setEditName : setAddName)}
+                {...registerDivision("name", {
+                  required: "Division name is required",
+                  validate: handleInputChange
+                })}
+                error={!!divisionErrors.name}
+                helperText={divisionErrors.name?.message || (!editModal ? "Separate multiple division names with commas to add them at once" : "")}
                 placeholder={editModal ? "" : "e.g. Dairy, Electronics (comma-separated)"}
-                error={!!inlineError}
-                helperText={inlineError || (!editModal ? "Separate multiple division names with commas to add them at once" : "")}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -518,7 +510,7 @@ const Division = () => {
           <Box sx={{ width: { xs: "100%", sm: "auto" }, "& > button": { width: "100%", justifyContent: "center" } }}>
             <ExportMenu getData={() => formatDivisionData(divisions)} filename="divisions" title="Divisions Report" backendType="divisions" />
           </Box>
-          <Button variant="contained" color="primary" onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
+          <Button variant="contained" color="primary" onClick={() => { resetDivision({ name: "" }); setIsFormView(true); setEditModal(null); }}
             startIcon={<AddIcon />}
             sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, px: 3, boxShadow: "none", width: { xs: "100%", sm: "auto" } }}>
             Add Division
@@ -662,7 +654,7 @@ const Division = () => {
                           {searchTerm ? "Try adjusting your filters" : "Create your first division to get started"}
                         </Typography>
                         {!searchTerm && (
-                          <Button onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
+                          <Button onClick={() => { resetDivision({ name: "" }); setIsFormView(true); setEditModal(null); }}
                             variant="contained" color="primary" startIcon={<AddIcon />}
                             sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, boxShadow: "none" }}>
                             Add First Division
@@ -730,7 +722,7 @@ const Division = () => {
                   {searchTerm ? "No divisions match" : "No divisions yet"}
                 </Typography>
                 {!searchTerm && (
-                  <Button onClick={() => { setAddName(""); setIsFormView(true); setEditModal(null); }}
+                  <Button onClick={() => { resetDivision({ name: "" }); setIsFormView(true); setEditModal(null); }}
                     variant="contained" color="primary" startIcon={<AddIcon />}
                     sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 700, boxShadow: "none" }}>
                     Add First Division
@@ -883,27 +875,30 @@ const Division = () => {
         <AppModal title={`Products — ${productModal.name}`} subtitle="Manage products in this division" icon={<InventoryIcon />} onClose={() => setProductModal(null)} accent={C.emerald}>
           <Stack spacing={2}>
             {/* Add product form */}
-            <Box sx={{ p: 2.5, bgcolor: C.slate50, borderRadius: 2.5, border: `1px solid ${C.slate200}` }}>
+            <Box sx={{ p: 2.5, bgcolor: C.slate50, borderRadius: 2.5, border: `1px solid ${C.slate200}` }} component="form" onSubmit={handleProductSubmit(handleAddProduct)}>
               <Typography variant="subtitle2" fontWeight={700} sx={{ color: C.slate800, mb: 2 }}>Add New Product</Typography>
               <Stack spacing={1.5}>
                 <TextField fullWidth size="small" label="Product Name *" placeholder="e.g. Cheese 500g"
-                  value={newProd.name} onChange={e => setNewProd(f => ({ ...f, name: e.target.value }))}
-                  onKeyDown={e => e.key === "Enter" && handleAddProduct()}
+                  {...registerProduct("name", { required: "Product name is required" })}
+                  error={!!productErrors.name}
+                  helperText={productErrors.name?.message}
                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: C.white } }} />
                 <Grid container spacing={1.5}>
                   {[["uimPrice", "UIM Price"], ["mrp", "MRP"], ["sellingPrice", "Selling Price"], ["purchasePrice", "Purchase Price"]].map(([key, label]) => (
                     <Grid item xs={6} key={key}>
                       <TextField fullWidth size="small" label={label} type="number" placeholder="0"
-                        value={newProd[key]} onChange={e => setNewProd(f => ({ ...f, [key]: e.target.value }))}
+                        {...registerProduct(key, { required: `${label} is required`, min: { value: 0, message: "Must be positive" } })}
+                        error={!!productErrors[key]}
+                        helperText={productErrors[key]?.message}
                         InputProps={{ startAdornment: <InputAdornment position="start"><Typography variant="caption" sx={{ color: C.slate400 }}>₹</Typography></InputAdornment> }}
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: C.white } }} />
                     </Grid>
                   ))}
                 </Grid>
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
-                  <Button size="small" onClick={() => setNewProd(EMPTY_PROD)} sx={{ textTransform: "none", color: C.slate400 }}>Clear</Button>
-                  <Button size="small" variant="contained" color="primary" onClick={handleAddProduct}
-                    disabled={prodSaving || !newProd.name.trim()}
+                  <Button size="small" type="button" onClick={() => resetProduct()} sx={{ textTransform: "none", color: C.slate400 }}>Clear</Button>
+                  <Button size="small" type="submit" variant="contained" color="primary"
+                    disabled={prodSaving}
                     startIcon={prodSaving ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
                     sx={{ textTransform: "none", borderRadius: 2, boxShadow: "none", fontWeight: 700 }}>
                     {prodSaving ? "Adding…" : "Add Product"}

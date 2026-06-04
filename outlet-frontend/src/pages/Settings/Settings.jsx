@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 import userService from '../../api/userService';
 import {
@@ -68,10 +69,12 @@ import './Settings.css';
 const Settings = () => {
   const { role } = useAuth();
   const navigate = useNavigate();
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
+    defaultValues: { newPassword: '', confirmPassword: '' }
+  });
   const [activeTab, setActiveTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState({ new: false, confirm: false });
 
   // General Settings
@@ -148,31 +151,19 @@ const Settings = () => {
     window.dispatchEvent(new Event('openProfileDrawer'));
   };
 
-  const handlePasswordChange = async () => {
-    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
-      setSnackbar({ open: true, message: 'Both password fields are required', severity: 'error' });
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+  const handlePasswordChange = async (data) => {
+    if (data.newPassword !== data.confirmPassword) {
       setSnackbar({ open: true, message: 'New passwords do not match', severity: 'error' });
       return;
     }
-    if (passwordForm.newPassword.length < 6) {
-      setSnackbar({ open: true, message: 'Password must be at least 6 characters long', severity: 'error' });
-      return;
-    }
-   
-    if (!/\d/.test(passwordForm.newPassword)) {
-      setSnackbar({ open: true, message: 'Password must include at least one number (0-9)', severity: 'error' });
-      return;
-    }
+    
     setLoading(true);
     try {
       await userService.changePassword({
-        newPassword: passwordForm.newPassword,
+        newPassword: data.newPassword,
       });
       setSnackbar({ open: true, message: 'Password changed successfully!', severity: 'success' });
-      setPasswordForm({ newPassword: '', confirmPassword: '' });
+      reset();
       setShowPassword({ new: false, confirm: false });
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Failed to change password';
@@ -344,12 +335,23 @@ const Settings = () => {
                         Password must be at least 6 characters long and include numbers for better security.
                       </Typography>
                       
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }} component="form" onSubmit={handleSubmit(handlePasswordChange)}>
                         <TextField
                           label="New Password"
                           type={showPassword.new ? 'text' : 'password'}
-                          value={passwordForm.newPassword}
-                          onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                          {...register("newPassword", {
+                            required: "Password is required",
+                            minLength: {
+                              value: 6,
+                              message: "Password must be at least 6 characters"
+                            },
+                            pattern: {
+                              value: /\d/,
+                              message: "Password must include at least one number"
+                            }
+                          })}
+                          error={!!errors.newPassword}
+                          helperText={errors.newPassword?.message}
                           fullWidth
                           size="small"
                           InputProps={{
@@ -363,8 +365,11 @@ const Settings = () => {
                         <TextField
                           label="Confirm New Password"
                           type={showPassword.confirm ? 'text' : 'password'}
-                          value={passwordForm.confirmPassword}
-                          onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                          {...register("confirmPassword", {
+                            required: "Please confirm password"
+                          })}
+                          error={!!errors.confirmPassword}
+                          helperText={errors.confirmPassword?.message}
                           fullWidth
                           size="small"
                           InputProps={{
@@ -376,9 +381,9 @@ const Settings = () => {
                           }}
                         />
                         <Button 
+                          type="submit"
                           variant="contained" 
                           color="primary"
-                          onClick={handlePasswordChange}
                           disabled={loading}
                           sx={{ mt: 1 }} 
                           disableElevation

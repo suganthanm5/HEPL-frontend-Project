@@ -9,6 +9,8 @@ import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.*;
 import com.example.outletmanagement.service.OutletService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,7 @@ public class OutletServiceImpl implements OutletService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "outlets", allEntries = true)
     public OutletResponse createOutlet(OutletRequest request) {
         Location location = locationRepository.findById(request.getLocationId())
                 .orElseThrow(() -> new RuntimeException("Location not found"));
@@ -66,6 +69,7 @@ public class OutletServiceImpl implements OutletService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "outlets", key = "T(java.util.Objects).hash(#search, #locationId, #type, #divisionId, #pageable.pageNumber, #pageable.pageSize)")
     public Page<OutletResponse> getAllOutlets(String search, Long locationId, String type, Long divisionId,
             Pageable pageable) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -92,6 +96,7 @@ public class OutletServiceImpl implements OutletService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "outlets", allEntries = true)
     public OutletResponse updateOutlet(Long id, OutletRequest request) {
         Outlet outlet = outletRepository.findByIdWithMappings(id)
                 .orElseThrow(() -> new RuntimeException("Outlet not found"));
@@ -131,6 +136,7 @@ public class OutletServiceImpl implements OutletService {
     }
 
     @Override
+    @CacheEvict(value = "outlets", allEntries = true)
     public BulkUploadResult bulkCreateOutlets(List<OutletRequest> requests) {
         List<BulkUploadResult.RowResult> results = new ArrayList<>();
         int success = 0, failure = 0;
@@ -157,6 +163,7 @@ public class OutletServiceImpl implements OutletService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "outlets", allEntries = true)
     public void deleteOutlet(Long id) {
         outletRepository.deleteById(id);
     }
@@ -192,6 +199,7 @@ public class OutletServiceImpl implements OutletService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "outlets", key = "#id")
     public OutletResponse getOutletById(Long id) {
         Outlet outlet = outletRepository.findByIdWithMappings(id)
                 .orElseThrow(() -> new RuntimeException("Outlet not found with id: " + id));

@@ -1,6 +1,4 @@
-/* ══════════════════════════════════════════
-   Orders Page CSS
-══════════════════════════════════════════ */
+
 .orders-page {
   font-family: var(--font-body);
   padding: 8px 0;
@@ -23,7 +21,6 @@
 .order-status.rejected  { background: #fee2e2; color: #ef4444; }
 .order-status.completed { background: #e0f2fe; color: #0284c7; }
 
-/* Order detail panel */
 .order-detail-header {
   background: linear-gradient(135deg, #7d2ae8, #a855f7);
   color: #fff;

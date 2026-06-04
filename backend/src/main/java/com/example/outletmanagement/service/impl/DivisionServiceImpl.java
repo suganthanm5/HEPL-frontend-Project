@@ -3,7 +3,6 @@ package com.example.outletmanagement.service.impl;
 import com.example.outletmanagement.entity.Division;
 import com.example.outletmanagement.payload.dto.request.DivisionRequest;
 import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
-import com.example.outletmanagement.payload.dto.response.BulkUploadResult;
 import com.example.outletmanagement.payload.dto.response.DivisionResponse;
 import com.example.outletmanagement.payload.dto.response.ProductResponse;
 import com.example.outletmanagement.repository.DivisionRepository;
@@ -11,6 +10,8 @@ import com.example.outletmanagement.service.DivisionService;
 import com.example.outletmanagement.specification.DivisionSpecification;
 import com.example.outletmanagement.exception.ResourceAlreadyExistsException;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ public class DivisionServiceImpl implements DivisionService {
     private final DivisionRepository divisionRepository;
 
     @Override
+    @CacheEvict(value = "divisions", allEntries = true)
     public DivisionResponse createDivision(DivisionRequest request) {
         java.util.Optional<Division> existingOpt = divisionRepository.findByNameIncludingDeleted(request.getName());
         if (existingOpt.isPresent()) {
@@ -49,6 +51,7 @@ public class DivisionServiceImpl implements DivisionService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "divisions", key = "T(java.util.Objects).hash(#search, #minProducts, #maxProducts, #daysAgo, #pageable.pageNumber, #pageable.pageSize)")
     public Page<DivisionResponse> getAllDivisions(String search, Integer minProducts, Integer maxProducts, Integer daysAgo, Pageable pageable) {
         org.springframework.data.jpa.domain.Specification<com.example.outletmanagement.entity.Division> spec = 
                 com.example.outletmanagement.specification.DivisionSpecification.searchAndFilter(search, minProducts, maxProducts, daysAgo);
@@ -57,6 +60,7 @@ public class DivisionServiceImpl implements DivisionService {
     }
 
     @Override
+    @CacheEvict(value = "divisions", allEntries = true)
     public DivisionResponse updateDivision(Long id, DivisionRequest request) {
         Division division = divisionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + id));
@@ -80,6 +84,7 @@ public class DivisionServiceImpl implements DivisionService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "divisions", key = "#id")
     public DivisionResponse getDivisionById(Long id) {
         Division division = divisionRepository.findByIdWithProducts(id)
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + id));
@@ -88,6 +93,7 @@ public class DivisionServiceImpl implements DivisionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "divisions", allEntries = true)
     public void deleteDivision(Long id) {
         if (!divisionRepository.existsById(id)) {
             throw new RuntimeException("Division not found with id: " + id);
@@ -96,6 +102,7 @@ public class DivisionServiceImpl implements DivisionService {
     }
 
     @Override
+    @CacheEvict(value = "divisions", allEntries = true)
     public BulkUploadResult bulkCreateDivisions(List<DivisionRequest> requests) {
         List<BulkUploadResult.RowResult> results = new ArrayList<>();
         int success = 0, failure = 0;

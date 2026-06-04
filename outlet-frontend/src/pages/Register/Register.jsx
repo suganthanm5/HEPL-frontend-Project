@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { registerUser } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -80,41 +81,27 @@ const darkTheme = createTheme({
 });
 
 const Register = () => {
-  const [userData, setUserData] = useState({
-    username: '',
-    password: '',
-    email: ''
-  });
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleChange = (e) => {
-    setUserData({ ...userData, [e.target.name]: e.target.value });
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const onSubmit = async (data) => {
     setError('');
 
     try {
-      const res = await registerUser(userData);
+      const res = await registerUser(data);
       const token = res.data?.token || res.data?.data?.token || res.data?.accessToken || res.data?.data?.accessToken;
-      const user = res.data?.user || res.data?.data?.user || { username: userData.username, email: userData.email, role: 'USER' };
+      const user = res.data?.user || res.data?.data?.user || { username: data.username, email: data.email, role: 'USER' };
       if (token) {
         login(user, token);
         navigate('/dashboard');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
-
-  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -183,16 +170,16 @@ const Register = () => {
               )}
             </Collapse>
 
-            <form onSubmit={handleRegister}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <Box sx={{ position: 'relative', mb: 2.5 }}>
                 <TextField
                   label="Username"
                   name="username"
                   type="text"
                   fullWidth
-                  required
-                  value={userData.username}
-                  onChange={handleChange}
+                  {...register("username", { required: "Username is required" })}
+                  error={!!errors.username}
+                  helperText={errors.username?.message}
                   InputProps={{
                     sx: { borderRadius: 2 }
                   }}
@@ -205,9 +192,15 @@ const Register = () => {
                   name="email"
                   type="email"
                   fullWidth
-                  required
-                  value={userData.email}
-                  onChange={handleChange}
+                  {...register("email", { 
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address"
+                    }
+                  })}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
                   InputProps={{
                     sx: { borderRadius: 2 }
                   }}
@@ -220,9 +213,15 @@ const Register = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   fullWidth
-                  required
-                  value={userData.password}
-                  onChange={handleChange}
+                  {...register("password", { 
+                    required: "Password is required",
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters"
+                    }
+                  })}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
                   InputProps={{
                     sx: { borderRadius: 2 }
                   }}
@@ -247,7 +246,7 @@ const Register = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                disabled={loading}
+                disabled={isSubmitting}
                 sx={{
                   py: 1.5,
                   borderRadius: 2,
@@ -264,7 +263,7 @@ const Register = () => {
                   transition: 'all 0.2s ease-in-out'
                 }}
               >
-                {loading ? 'Registering...' : 'Create Account'}
+                {isSubmitting ? 'Registering...' : 'Create Account'}
               </Button>
             </form>
 

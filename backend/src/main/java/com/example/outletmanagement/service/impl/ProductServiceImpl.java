@@ -8,6 +8,8 @@ import com.example.outletmanagement.repository.*;
 import com.example.outletmanagement.service.ProductService;
 import com.example.outletmanagement.exception.ResourceAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class ProductServiceImpl implements ProductService {
     private final OutletStockRepository outletStockRepository;
 
     @Override
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse createProduct(ProductRequest request) {
         Division division = divisionRepository.findById(request.getDivisionId())
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + request.getDivisionId()));
@@ -50,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "T(java.util.Objects).hash(#search, #divisionId, #minSellingPrice, #maxSellingPrice, #minPurchasePrice, #maxPurchasePrice, #pageable.pageNumber, #pageable.pageSize)")
     public Page<ProductResponse> getAllProducts(String search, Long divisionId, BigDecimal minSellingPrice, BigDecimal maxSellingPrice, BigDecimal minPurchasePrice, BigDecimal maxPurchasePrice, Pageable pageable) {
         org.springframework.data.jpa.domain.Specification<Product> spec = 
                 com.example.outletmanagement.specification.ProductSpecification.searchAndFilter(
@@ -59,6 +63,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
@@ -87,6 +92,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
@@ -95,6 +101,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new RuntimeException("Product not found with id: " + id);
@@ -123,6 +130,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "products", allEntries = true)
     public BulkUploadResult bulkCreateProducts(List<ProductRequest> requests) {
         List<BulkUploadResult.RowResult> results = new ArrayList<>();
         int success = 0, failure = 0;

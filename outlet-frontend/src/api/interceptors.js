@@ -55,10 +55,7 @@ export const setupInterceptors = (axiosInstance) => {
       // Network Error
       if (!error.response) {
         console.error('Network Error:', error.message);
-        return Promise.reject({
-          message: 'Network error. Please check your connection.',
-          type: 'network_error'
-        });
+        return Promise.reject(error);
       }
 
       // Handle 401 Unauthorized
@@ -96,36 +93,20 @@ export const setupInterceptors = (axiosInstance) => {
       // Handle 403 Forbidden
       if (error.response.status === 403) {
         console.error('Access Denied:', error.response.data?.message);
-        return Promise.reject({
-          message: error.response.data?.message || 'Access denied',
-          type: 'forbidden'
-        });
       }
 
       // Handle 404 Not Found
       if (error.response.status === 404) {
-        return Promise.reject({
-          message: error.response.data?.message || 'Resource not found',
-          type: 'not_found'
-        });
+        console.warn('Resource not found:', error.response.data?.message);
       }
 
       // Handle 500 Server Error
       if (error.response.status >= 500) {
         console.error('Server Error:', error.response.status);
-        return Promise.reject({
-          message: 'Server error. Please try again later.',
-          type: 'server_error'
-        });
       }
 
-      // Handle other errors
-      return Promise.reject({
-        message: error.response.data?.message || 'An error occurred',
-        type: 'api_error',
-        status: error.response.status,
-        data: error.response.data
-      });
+      // Return original error to preserve error.response structure
+      return Promise.reject(error);
     }
   );
 };

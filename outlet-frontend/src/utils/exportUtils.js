@@ -72,23 +72,40 @@ export const exportToExcel = async (data, filename = 'export.xlsx') => {
     const imageHeaderIndex = headers.findIndex(h => h.toLowerCase() === 'image');
     if (imageHeaderIndex !== -1 && rowData[headers[imageHeaderIndex]]) {
       try {
-        const base64Data = rowData[headers[imageHeaderIndex]];
-        // Extract base64 content if it includes the data:image prefix
-        const base64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
-        const extension = base64Data.includes('image/png') ? 'png' : 
-                         base64Data.includes('image/jpeg') ? 'jpeg' : 
-                         base64Data.includes('image/gif') ? 'gif' : 'png';
+        const rawImage = rowData[headers[imageHeaderIndex]];
+        const pngDataUrl = await new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth || img.width || 40;
+              canvas.height = img.naturalHeight || img.height || 40;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL("image/png"));
+            } catch (e) {
+              console.error("Canvas draw failed", e);
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+          img.src = rawImage;
+        });
 
-        const imageId = workbook.addImage({
-          base64: base64,
-          extension: extension,
-        });
-        
-        worksheet.addImage(imageId, {
-          tl: { col: imageHeaderIndex, row: i + 1 }, // 0-indexed column, 0-indexed row (header is 0)
-          ext: { width: 40, height: 40 },
-          editAs: 'oneCell'
-        });
+        if (pngDataUrl) {
+          const base64 = pngDataUrl.split(',')[1];
+          const imageId = workbook.addImage({
+            base64: base64,
+            extension: 'png',
+          });
+          
+          worksheet.addImage(imageId, {
+            tl: { col: imageHeaderIndex, row: i + 1 }, // 0-indexed column, 0-indexed row (header is 0)
+            ext: { width: 40, height: 40 },
+            editAs: 'oneCell'
+          });
+        }
       } catch (e) {
         console.error('Error embedding image in Excel:', e);
       }

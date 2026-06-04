@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useFormHandler } from "../../hooks/useFormHandler";
 import SearchableSelect from "../../components/SearchableSelect/SearchableSelect";
 import { getProducts, addProduct, updateProduct, deleteProduct, bulkCreateProducts } from "../../services/productService";
 import { getDivisions } from "../../services/divisionService";
@@ -49,7 +50,7 @@ import {
   CardContent,
   CardActions,
 } from "@mui/material";
-import { styled, alpha } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 
 // Material UI Icons
 import AddIcon from "@mui/icons-material/Add";
@@ -67,7 +68,6 @@ import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import BulkUploadModal from "../../components/BulkUploadModal";
-import { reportService } from "../../services/reportService";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip as ReChartsTooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Legend, LineChart, Line, ComposedChart,
@@ -143,7 +143,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 
 /* ── Styled Components ── */
-const GlassCard = styled(Paper)(({ theme }) => ({
+const GlassCard = styled(Paper)(() => ({
   background: "#ffffff",
   borderRadius: "20px",
   border: "1.5px solid #e8eaf6",
@@ -158,7 +158,7 @@ const GlassCard = styled(Paper)(({ theme }) => ({
   },
 }));
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
+const StyledTableRow = styled(TableRow)(() => ({
   transition: "all 0.2s ease",
   "&:hover": {
     backgroundColor: "#f8fafc",
@@ -231,15 +231,17 @@ const Product = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
-  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
+  const [pageSize, setPageSize] = useState(() => {
+    const stored = localStorage.getItem('itemsPerPage');
+    const parsed = parseInt(stored, 10);
+    return PAGE_SIZES.includes(parsed) ? parsed : 10;
+  });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [view, setView] = useState("table");
-  const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [divisions, setDivisions] = useState([]);
   const [viewModal, setViewModal] = useState(null);
@@ -249,31 +251,17 @@ const Product = () => {
   const [priceRangeFilter, setPriceRangeFilter] = useState("");
   const [isFormView, setIsFormView] = useState(false);
   const [existingProductNames, setExistingProductNames] = useState([]);
-  const [inlineError, setInlineError] = useState("");
-  const [summary, setSummary] = useState(null);
   const [trendPeriod, setTrendPeriod] = useState("Weekly");
+
+  const { register, handleSubmit, formState: { errors: formErrors }, reset, setValue, getValues, watch } = useFormHandler(EMPTY_FORM);
+
+  useEffect(() => {
+    register("divisionId", { required: "Division is required" });
+    register("image");
+  }, [register]);
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
-  };
-
-  const validateForm = () => {
-    if (!form.name.trim()) { showToast("Product Name is required", "error"); return false; }
-    if (!form.divisionId) { showToast("Division is required", "error"); return false; }
-    
-    const mrp = Number(form.mrp) || 0;
-    const sellingPrice = Number(form.sellingPrice) || 0;
-    const purchasePrice = Number(form.purchasePrice) || 0;
-    const uimPrice = Number(form.uimPrice) || 0;
-
-    if (mrp <= 0) { showToast("MRP must be greater than 0", "error"); return false; }
-    if (sellingPrice <= 0) { showToast("Selling Price must be greater than 0", "error"); return false; }
-    if (purchasePrice <= 0) { showToast("Purchase Price must be greater than 0", "error"); return false; }
-    if (uimPrice <= 0) { showToast("UIM Price must be greater than 0", "error"); return false; }
-
-    if (sellingPrice > mrp) { showToast("Selling price should be smaller than MRP", "error"); return false; }
-    if (purchasePrice > mrp) { showToast("Purchase price should be smaller than MRP", "error"); return false; }
-    return true;
   };
 
   const fetchAllProductNames = async () => {
@@ -287,9 +275,12 @@ const Product = () => {
   };
 
   useEffect(() => {
+    localStorage.setItem('itemsPerPage', pageSize.toString());
+  }, [pageSize]);
+
+  useEffect(() => {
     if (isFormView) {
       fetchAllProductNames();
-      setInlineError("");
     }
   }, [isFormView]);
 
@@ -307,15 +298,13 @@ const Product = () => {
 
   const fetchMetadata = async (signal) => {
     try {
-      const [divRes, summRes, orderData] = await Promise.all([
+      const [divRes, orderData] = await Promise.all([
         getDivisions(0, 200, "", null, null, null, signal),
-        reportService.getDashboardSummary().catch(() => null),
-        orderService.getAll({ size: 1000 }, signal).catch(err => [])
+        orderService.getAll({ size: 1000 }, signal).catch(() => [])
       ]);
 
       const divList = divRes?.content ?? [];
       setDivisions(divList);
-      setSummary(summRes);
 
       let orderList = [];
       if (Array.isArray(orderData)) orderList = orderData;
@@ -390,50 +379,25 @@ const Product = () => {
   const divMap = useMemo(() => Object.fromEntries(divisions.map((d) => [d.id, d.name])), [divisions]);
   const divNameOf = (p) => p.divisionName ?? p.division?.name ?? divMap[p.divisionId] ?? "—";
   const fmt = (v) => (v == null || v === "" ? "—" : Number(v).toLocaleString());
-  const numField = (v) => (v === "" ? 0 : Number(v));
 
-  const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
-  const handleNameChange = (e) => {
-    const val = e.target.value;
-    setForm(f => ({ ...f, name: val }));
-    setInlineError("");
-
-    if (!val.trim()) return;
-
-    if (existingProductNames.includes(val.trim().toLowerCase())) {
-      if (editModal && editModal.name?.toLowerCase().trim() === val.trim().toLowerCase()) {
-        return;
-      }
-      setInlineError(`Product already exists: ${val.trim()}`);
-    }
-  };
-
-  const buildPayload = () => ({
-    name: form.name.trim(),
-    productCode: form.productCode.trim(),
-    uimPrice: numField(form.uimPrice),
-    mrp: numField(form.mrp),
-    sellingPrice: numField(form.sellingPrice),
-    purchasePrice: numField(form.purchasePrice),
-    image: form.image,
-    ...(form.divisionId ? { divisionId: Number(form.divisionId), division: { id: Number(form.divisionId) } } : {}),
+  const buildPayload = (data) => ({
+    name: data.name.trim(),
+    productCode: (data.productCode || "").trim(),
+    uimPrice: Number(data.uimPrice) || 0,
+    mrp: Number(data.mrp) || 0,
+    sellingPrice: Number(data.sellingPrice) || 0,
+    purchasePrice: Number(data.purchasePrice) || 0,
+    image: data.image || "",
+    ...(data.divisionId ? { divisionId: Number(data.divisionId), division: { id: Number(data.divisionId) } } : {}),
   });
 
-  const handleAdd = async () => {
-    if (!validateForm()) return;
-    
-    if (existingProductNames.includes(form.name.trim().toLowerCase())) {
-      showToast(`Product "${form.name.trim()}" already exists.`, "warning");
-      setInlineError(`Product already exists: ${form.name.trim()}`);
-      return;
-    }
-
+  const handleAdd = async (data) => {
     setSaving(true);
     try {
-      await addProduct({ ...buildPayload(), productCode: generateProductCode() });
+      await addProduct({ ...buildPayload(data), productCode: generateProductCode() });
       await fetchProducts();
-      setIsFormView(false); setForm(EMPTY_FORM);
+      setIsFormView(false);
+      reset(EMPTY_FORM);
       showToast("Product added successfully!", "success");
     } catch (e) {
       let errMsg = e.response?.data?.message || e.message;
@@ -441,15 +405,12 @@ const Product = () => {
         const validationErrors = Object.values(e.response.data.data).join(", ");
         if (validationErrors) errMsg = `${errMsg}: ${validationErrors}`;
       }
-      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
-        setInlineError(errMsg);
-      }
       showToast("Failed to add product: " + errMsg, "error");
     } finally { setSaving(false); }
   };
 
   const openEdit = (p) => {
-    setForm({
+    reset({
       name: p.name ?? "",
       productCode: p.productCode ?? "",
       uimPrice: p.uimPrice ?? "",
@@ -463,31 +424,20 @@ const Product = () => {
     setIsFormView(true);
   };
 
-  const handleUpdate = async () => {
-    if (!validateForm()) return;
-
-    if (editModal && editModal.name?.toLowerCase().trim() !== form.name.trim().toLowerCase()) {
-      if (existingProductNames.includes(form.name.trim().toLowerCase())) {
-        showToast(`Product "${form.name.trim()}" already exists.`, "warning");
-        setInlineError(`Product already exists: ${form.name.trim()}`);
-        return;
-      }
-    }
-
+  const handleUpdate = async (data) => {
     setSaving(true);
     try {
-      await updateProduct(editModal.id, buildPayload());
+      await updateProduct(editModal.id, buildPayload(data));
       await fetchProducts();
-      setEditModal(null); setIsFormView(false); setForm(EMPTY_FORM);
+      setEditModal(null);
+      setIsFormView(false);
+      reset(EMPTY_FORM);
       showToast("Product updated successfully!", "success");
     } catch (e) {
       let errMsg = e.response?.data?.message || e.message;
       if (e.response?.data?.data && typeof e.response.data.data === 'object') {
         const validationErrors = Object.values(e.response.data.data).join(", ");
         if (validationErrors) errMsg = `${errMsg}: ${validationErrors}`;
-      }
-      if (errMsg.toLowerCase().includes("already exists") || errMsg.toLowerCase().includes("duplicate")) {
-        setInlineError(errMsg);
       }
       showToast("Failed to update product: " + errMsg, "error");
     } finally { setSaving(false); }
@@ -610,116 +560,7 @@ const Product = () => {
     }));
   }, [orders, products, divisionFilter, priceRangeFilter, search, trendPeriod]);
 
-  /* ── Form Fields (shared between Add & Edit modals) ── */
-  const renderFormFields = (isEdit = false) => (
-    <Stack spacing={2} sx={{ pt: 1 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={isEdit ? 6 : 12}>
-          <TextField
-            autoFocus fullWidth size="small" label="Product Name" required
-            name="name" value={form.name} onChange={handleChange} placeholder="e.g. Milk 1L"
-          />
-        </Grid>
-        {isEdit && (
-          <Grid item xs={6}>
-            <TextField
-              fullWidth size="small" label="Product Code"
-              name="productCode" value={form.productCode}
-              InputProps={{ readOnly: true }}
-              sx={{ "& .MuiInputBase-input": { bgcolor: "#f5f5f5", cursor: "not-allowed" } }}
-            />
-          </Grid>
-        )}
-      </Grid>
 
-      {/* Division SearchableSelect — kept as-is to preserve custom component */}
-      <Box>
-        <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 0.5, display: "block" }}>Division</Typography>
-        <SearchableSelect
-          options={divisions}
-          value={form.divisionId}
-          onChange={(id) => setForm((f) => ({ ...f, divisionId: id }))}
-          placeholder="— Select division —"
-          searchPlaceholder="Search divisions..."
-        />
-      </Box>
-
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <TextField fullWidth size="small" label="UIM Price" type="number" inputProps={{ min: 0 }}
-            name="uimPrice" value={form.uimPrice} onChange={handleChange} placeholder="0" />
-        </Grid>
-        <Grid item xs={6}>
-          <TextField fullWidth size="small" label="MRP" type="number" inputProps={{ min: 0 }}
-            name="mrp" value={form.mrp} onChange={handleChange} placeholder="0" />
-        </Grid>
-      </Grid>
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <TextField fullWidth size="small" label="Selling Price" type="number" inputProps={{ min: 0 }}
-            name="sellingPrice" value={form.sellingPrice} onChange={handleChange} placeholder="0" />
-        </Grid>
-        <Grid item xs={6}>
-          <TextField fullWidth size="small" label="Purchase Price" type="number" inputProps={{ min: 0 }}
-            name="purchasePrice" value={form.purchasePrice} onChange={handleChange} placeholder="0" />
-        </Grid>
-      </Grid>
-
-      <Box>
-        <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500, mb: 1, display: "block" }}>Product Photo</Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Avatar
-            variant="rounded"
-            src={form.image}
-            sx={{ width: 80, height: 80, bgcolor: "#f8fafc", border: "1px dashed #e2e8f0" }}
-          >
-            <PhotoCameraIcon sx={{ color: "#94a3b8" }} />
-          </Avatar>
-          <Box>
-            <Button
-              variant="outlined"
-              component="label"
-              size="small"
-              startIcon={<PhotoCameraIcon />}
-              sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
-            >
-              Upload Photo
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    if (file.size > 1024 * 1024) {
-                      showToast("Image size should be less than 1MB", "error");
-                      return;
-                    }
-                    const reader = new FileReader();
-                    reader.onloadend = () => setForm(f => ({ ...f, image: reader.result }));
-                    reader.readAsDataURL(file);
-                  }
-                }}
-              />
-            </Button>
-            {form.image && (
-              <Button
-                size="small"
-                color="error"
-                sx={{ ml: 1, textTransform: "none" }}
-                onClick={() => setForm(f => ({ ...f, image: "" }))}
-              >
-                Remove
-              </Button>
-            )}
-            <Typography variant="caption" sx={{ display: "block", color: "#94a3b8", mt: 0.5 }}>
-              JPG, PNG or GIF. Max 1MB.
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Stack>
-  );
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -734,9 +575,24 @@ const Product = () => {
               onClick={() => setBulkOpen(true)}>
               Bulk Upload
             </Button>
-            <ExportMenu getData={() => formatProductData(filtered)} filename="products" title="Products Report" />
+            <ExportMenu
+              getData={async () => {
+                const filters = {};
+                if (divisionFilter) filters.divisionId = divisionFilter;
+                if (priceRangeFilter) {
+                  if (priceRangeFilter === "0-100") { filters.minSellingPrice = 0; filters.maxSellingPrice = 100; }
+                  else if (priceRangeFilter === "101-500") { filters.minSellingPrice = 101; filters.maxSellingPrice = 500; }
+                  else if (priceRangeFilter === "501-1000") { filters.minSellingPrice = 501; filters.maxSellingPrice = 1000; }
+                  else if (priceRangeFilter === "1000+") { filters.minSellingPrice = 1001; }
+                }
+                const res = await getProducts(0, 10000, activeSearch, filters);
+                return formatProductData(res?.content ?? []);
+              }}
+              filename="products"
+              title="Products Report"
+            />
             <Button variant="contained" color="primary" startIcon={<AddIcon />}
-              onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
+              onClick={() => { reset(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
               Add Product
             </Button>
           </Box>
@@ -749,10 +605,10 @@ const Product = () => {
               <FormHeader
                 title={editModal ? "Edit Product" : "Add New Product"}
                 subtitle={editModal ? `Updating details for ${editModal.name}` : "Fill in the details to create a new product"}
-                onClose={() => { setIsFormView(false); setEditModal(null); setForm(EMPTY_FORM); }}
-                onSave={editModal ? handleUpdate : handleAdd}
+                onClose={() => { setIsFormView(false); setEditModal(null); reset(EMPTY_FORM); }}
+                onSave={handleSubmit(editModal ? handleUpdate : handleAdd)}
                 saving={saving}
-                saveDisabled={!form.name.trim() || !form.divisionId || !form.mrp || !form.sellingPrice || !form.purchasePrice || !form.uimPrice || !!inlineError}
+                saveDisabled={false}
                 saveLabel={editModal ? "Save Changes" : "Create Product"}
                 saveIcon={editModal ? <EditIcon /> : <AddIcon />}
                 colorAccent={editModal ? "primary" : "success"}
@@ -780,9 +636,9 @@ const Product = () => {
                           transition: "all 0.3s",
                           "&:hover": { borderColor: "#f59e0b", bgcolor: "#fffbeb" }
                         }}>
-                          {form.image ? (
+                          {watch("image") ? (
                             <>
-                              <img src={form.image} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              <img src={watch("image")} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               <Box sx={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 1 }}>
                                 <IconButton size="small" component="label" sx={{ bgcolor: "rgba(255,255,255,0.9)", "&:hover": { bgcolor: "#fff" } }}>
                                   <EditIcon fontSize="small" />
@@ -791,12 +647,12 @@ const Product = () => {
                                     if (file) {
                                       if (file.size > 1024 * 1024) { showToast("Max size 1MB", "error"); return; }
                                       const reader = new FileReader();
-                                      reader.onloadend = () => setForm(f => ({ ...f, image: reader.result }));
+                                      reader.onloadend = () => setValue("image", reader.result);
                                       reader.readAsDataURL(file);
                                     }
                                   }} />
                                 </IconButton>
-                                <IconButton size="small" onClick={() => setForm(f => ({ ...f, image: "" }))} sx={{ bgcolor: "rgba(255,255,255,0.9)", color: "#ef4444", "&:hover": { bgcolor: "#fee2e2" } }}>
+                                <IconButton size="small" onClick={() => setValue("image", "")} sx={{ bgcolor: "rgba(255,255,255,0.9)", color: "#ef4444", "&:hover": { bgcolor: "#fee2e2" } }}>
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </Box>
@@ -815,7 +671,7 @@ const Product = () => {
                                   if (file) {
                                     if (file.size > 1024 * 1024) { showToast("Max size 1MB", "error"); return; }
                                     const reader = new FileReader();
-                                    reader.onloadend = () => setForm(f => ({ ...f, image: reader.result }));
+                                    reader.onloadend = () => setValue("image", reader.result);
                                     reader.readAsDataURL(file);
                                   }
                                 }} />
@@ -834,16 +690,47 @@ const Product = () => {
                         <FormSectionHeader title="Basic Information" color="#f59e0b" />
                         <Grid container spacing={2.5}>
                           <Grid item xs={12} sm={editModal ? 6 : 12}>
-                            <TextField fullWidth label="Product Name" name="name" value={form.name} onChange={handleNameChange} required placeholder="e.g. Milk 1L" error={!!inlineError} helperText={inlineError} />
+                            <TextField
+                              fullWidth
+                              label="Product Name"
+                              {...register("name", {
+                                required: "Product Name is required",
+                                validate: (val) => {
+                                  if (!val.trim()) return "Product Name is required";
+                                  const trimLower = val.trim().toLowerCase();
+                                  if (existingProductNames.includes(trimLower)) {
+                                    if (editModal && editModal.name?.toLowerCase().trim() === trimLower) {
+                                      return true;
+                                    }
+                                    return `Product already exists: ${val.trim()}`;
+                                  }
+                                  return true;
+                                }
+                              })}
+                              required
+                              placeholder="e.g. Milk 1L"
+                              error={!!formErrors.name}
+                              helperText={formErrors.name?.message}
+                            />
                           </Grid>
                           {editModal && (
                             <Grid item xs={12} sm={6}>
-                              <TextField fullWidth label="Product Code" value={form.productCode} disabled sx={{ bgcolor: "#f8fafc" }} />
+                              <TextField fullWidth label="Product Code" value={watch("productCode")} disabled sx={{ bgcolor: "#f8fafc" }} />
                             </Grid>
                           )}
                           <Grid item xs={12}>
                             <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 1, display: "block" }}>Division *</Typography>
-                            <SearchableSelect options={divisions} value={form.divisionId} onChange={(id) => setForm(f => ({ ...f, divisionId: id }))} placeholder="Select Division" />
+                            <SearchableSelect
+                              options={divisions}
+                              value={watch("divisionId")}
+                              onChange={(id) => setValue("divisionId", id, { shouldValidate: true })}
+                              placeholder="Select Division"
+                            />
+                            {formErrors.divisionId && (
+                              <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                                {formErrors.divisionId.message}
+                              </Typography>
+                            )}
                           </Grid>
                         </Grid>
                       </Box>
@@ -854,16 +741,66 @@ const Product = () => {
                         <FormSectionHeader title="Pricing & Inventory" color="#10b981" />
                         <Grid container spacing={2.5}>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="MRP" name="mrp" value={form.mrp} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="MRP"
+                              {...register("mrp", {
+                                required: "MRP is required",
+                                min: { value: 0.01, message: "MRP must be greater than 0" }
+                              })}
+                              required
+                              InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
+                              error={!!formErrors.mrp}
+                              helperText={formErrors.mrp?.message}
+                            />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="Selling Price" name="sellingPrice" value={form.sellingPrice} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Selling Price"
+                              {...register("sellingPrice", {
+                                required: "Selling Price is required",
+                                min: { value: 0.01, message: "Selling Price must be greater than 0" },
+                                validate: (value) => Number(value) <= Number(getValues("mrp")) || "Selling price should be smaller than MRP"
+                              })}
+                              required
+                              InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
+                              error={!!formErrors.sellingPrice}
+                              helperText={formErrors.sellingPrice?.message}
+                            />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="Purchase Price" name="purchasePrice" value={form.purchasePrice} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Purchase Price"
+                              {...register("purchasePrice", {
+                                required: "Purchase Price is required",
+                                min: { value: 0.01, message: "Purchase Price must be greater than 0" },
+                                validate: (value) => Number(value) <= Number(getValues("mrp")) || "Purchase price should be smaller than MRP"
+                              })}
+                              required
+                              InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
+                              error={!!formErrors.purchasePrice}
+                              helperText={formErrors.purchasePrice?.message}
+                            />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField fullWidth type="number" label="UIM Price" name="uimPrice" value={form.uimPrice} onChange={handleChange} required InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="UIM Price"
+                              {...register("uimPrice", {
+                                required: "UIM Price is required",
+                                min: { value: 0.01, message: "UIM Price must be greater than 0" }
+                              })}
+                              required
+                              InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
+                              error={!!formErrors.uimPrice}
+                              helperText={formErrors.uimPrice?.message}
+                            />
                           </Grid>
                         </Grid>
                       </Box>
@@ -1079,7 +1016,7 @@ const Product = () => {
                             {!activeSearch && (
                               <Button variant="contained" color="primary" size="small" startIcon={<AddIcon />}
                                 sx={{ borderRadius: "10px", boxShadow: "none" }}
-                                onClick={() => { setForm(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
+                                onClick={() => { reset(EMPTY_FORM); setEditModal(null); setIsFormView(true); }}>
                                 Add First Product
                               </Button>
                             )}
