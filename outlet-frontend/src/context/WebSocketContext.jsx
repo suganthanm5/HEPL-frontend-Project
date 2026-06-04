@@ -116,6 +116,26 @@ export function WebSocketProvider({ children }) {
         style: { borderRadius: '10px', background: '#1e293b', color: '#f8fafc' },
         duration: 4000,
       });
+
+      // Save to localStorage so they persist in Notification Page
+      try {
+        const savedNotifs = localStorage.getItem('realtime_notifications');
+        const notifsList = savedNotifs ? JSON.parse(savedNotifs) : [];
+        
+        // Add new notification to the beginning
+        const newNotif = {
+          id: `realtime-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: event.type,
+          message: event.message,
+          timestamp: event.timestamp || new Date().toISOString()
+        };
+        
+        // Keep last 50 notifications
+        const updatedList = [newNotif, ...notifsList].slice(0, 50);
+        localStorage.setItem('realtime_notifications', JSON.stringify(updatedList));
+      } catch (err) {
+        console.error('Failed to store realtime notification', err);
+      }
     });
 
     return () => {

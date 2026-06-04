@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.outletmanagement.websocket.WebSocketEventPublisher;
+
 @Service
 @RequiredArgsConstructor
 public class OutletServiceImpl implements OutletService {
@@ -29,6 +31,7 @@ public class OutletServiceImpl implements OutletService {
     private final ProductRepository productRepository;
     private final OutletDivisionProductRepository mappingRepository;
     private final UserRepository userRepository;
+    private final WebSocketEventPublisher webSocketEventPublisher;
 
     @Override
     @Transactional
@@ -165,7 +168,15 @@ public class OutletServiceImpl implements OutletService {
     @Transactional
     @CacheEvict(value = "outlets", allEntries = true)
     public void deleteOutlet(Long id) {
+        Outlet outlet = outletRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Outlet not found with id: " + id));
         outletRepository.deleteById(id);
+
+        try {
+            webSocketEventPublisher.publishNotification("Outlet deleted: " + outlet.getOutletName(), "OUTLET_DELETED");
+        } catch (Exception e) {
+            // Log warning but do not fail the transaction
+        }
     }
 
     private OutletResponse mapToResponse(Outlet outlet) {

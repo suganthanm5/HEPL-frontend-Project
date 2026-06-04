@@ -13,6 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.outletmanagement.websocket.WebSocketEventPublisher;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -20,6 +22,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final WebSocketEventPublisher webSocketEventPublisher;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -37,6 +40,13 @@ public class AuthServiceImpl implements AuthService {
                 .role(User.Role.USER)
                 .build();
         userRepository.save(user);
+
+        try {
+            webSocketEventPublisher.publishNotification("New user registered: " + user.getUsername(), "USER_REGISTERED");
+        } catch (Exception e) {
+            // Log warning but do not fail the registration transaction
+        }
+
         String token = jwtService.generateToken(user);
         return AuthResponse.builder()
                 .token(token)
@@ -96,6 +106,12 @@ public class AuthServiceImpl implements AuthService {
                             .role(User.Role.USER)
                             .build();
                     userRepository.save(user);
+
+                    try {
+                        webSocketEventPublisher.publishNotification("New user registered: " + user.getUsername(), "USER_REGISTERED");
+                    } catch (Exception e) {
+                        // Log warning but do not fail the registration transaction
+                    }
                 }
 
                 String jwtToken = jwtService.generateToken(user);

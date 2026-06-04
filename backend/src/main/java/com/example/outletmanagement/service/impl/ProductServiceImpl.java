@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.outletmanagement.websocket.WebSocketEventPublisher;
+
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -26,6 +28,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductBatchRepository productBatchRepository;
     private final OutletDivisionProductRepository outletDivisionProductRepository;
     private final OutletStockRepository outletStockRepository;
+    private final WebSocketEventPublisher webSocketEventPublisher;
 
     @Override
     @CacheEvict(value = "products", allEntries = true)
@@ -103,9 +106,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Product not found with id: " + id);
-        }
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
 
         // 1. Soft-delete related batches
         List<ProductBatch> batches = productBatchRepository.findByProductId(id);
@@ -127,6 +129,12 @@ public class ProductServiceImpl implements ProductService {
 
         // 4. Soft-delete the product itself
         productRepository.deleteById(id);
+
+        try {
+            webSocketEventPublisher.publishNotification("Product deleted: " + product.getName(), "PRODUCT_DELETED");
+        } catch (Exception e) {
+            // Log warning but do not fail the transaction
+        }
     }
 
     @Override

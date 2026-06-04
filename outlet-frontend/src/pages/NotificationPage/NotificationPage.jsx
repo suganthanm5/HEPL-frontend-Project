@@ -42,10 +42,12 @@ import { getLocations } from "../../services/locationService";
 import { getProducts } from "../../services/productService";
 import { outletService } from "../../services/outletService";
 import { orderService } from "../../services/orderService";
+import { useWebSocketContext } from "../../context/WebSocketContext";
 import "./NotificationPage.css";
 
 const NotificationPage = () => {
   const navigate = useNavigate();
+  const { latestNotification } = useWebSocketContext();
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(0); // 0: All, 1: Orders, 2: Stock, 3: Outlets & Locations, 4: Products
@@ -240,6 +242,61 @@ const NotificationPage = () => {
       });
     });
 
+    // 7. Stored Real-time notifications
+    try {
+      const savedRealtime = localStorage.getItem("realtime_notifications");
+      if (savedRealtime) {
+        const realtimeList = JSON.parse(savedRealtime);
+        realtimeList.forEach((notif) => {
+          let category = "notifications";
+          let Icon = NotificationsRounded;
+          let color = "#7d2ae8";
+          let badge = "System Update";
+
+          if (notif.type === "USER_REGISTERED") {
+            category = "outlets";
+            Icon = NotificationsRounded;
+            color = "#10b981";
+            badge = "New User";
+          } else if (notif.type === "PRODUCT_DELETED") {
+            category = "products";
+            Icon = AccountTreeRounded;
+            color = "#ef4444";
+            badge = "Product Removed";
+          } else if (notif.type === "OUTLET_DELETED") {
+            category = "outlets";
+            Icon = StoreRounded;
+            color = "#ef4444";
+            badge = "Outlet Removed";
+          } else if (notif.type === "LOCATION_DELETED") {
+            category = "outlets";
+            Icon = PlaceRounded;
+            color = "#ef4444";
+            badge = "Location Removed";
+          } else if (notif.type === "DIVISION_DELETED") {
+            category = "products";
+            Icon = AccountTreeRounded;
+            color = "#ef4444";
+            badge = "Division Removed";
+          }
+
+          list.push({
+            id: notif.id,
+            category,
+            Icon,
+            title: notif.message,
+            text: `Recorded: ${new Date(notif.timestamp).toLocaleString()}`,
+            time: "System Log",
+            color,
+            badge,
+            onClick: null
+          });
+        });
+      }
+    } catch (e) {
+      console.error("Failed to load real-time notifications history", e);
+    }
+
     // Deduplicate by ID and exclude dismissed notifications
     const seen = new Set();
     return list.filter((item) => {
@@ -247,7 +304,7 @@ const NotificationPage = () => {
       seen.add(item.id);
       return !dismissedIds.includes(item.id);
     });
-  }, [summary, ordersList, outletsList, locationsList, productsList, dismissedIds, navigate]);
+  }, [summary, ordersList, outletsList, locationsList, productsList, dismissedIds, navigate, latestNotification]);
 
   /* Filter and search operations */
   const filteredNotificationsList = useMemo(() => {

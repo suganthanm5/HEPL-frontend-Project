@@ -22,10 +22,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.outletmanagement.websocket.WebSocketEventPublisher;
+
 @Service
 @RequiredArgsConstructor
 public class DivisionServiceImpl implements DivisionService {
     private final DivisionRepository divisionRepository;
+    private final WebSocketEventPublisher webSocketEventPublisher;
 
     @Override
     @CacheEvict(value = "divisions", allEntries = true)
@@ -95,10 +98,15 @@ public class DivisionServiceImpl implements DivisionService {
     @Transactional
     @CacheEvict(value = "divisions", allEntries = true)
     public void deleteDivision(Long id) {
-        if (!divisionRepository.existsById(id)) {
-            throw new RuntimeException("Division not found with id: " + id);
-        }
+        Division division = divisionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Division not found with id: " + id));
         divisionRepository.deleteById(id);
+
+        try {
+            webSocketEventPublisher.publishNotification("Division deleted: " + division.getName(), "DIVISION_DELETED");
+        } catch (Exception e) {
+            // Log warning but do not fail the transaction
+        }
     }
 
     @Override

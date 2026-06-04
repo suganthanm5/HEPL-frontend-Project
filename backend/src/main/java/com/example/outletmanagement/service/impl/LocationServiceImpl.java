@@ -14,10 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.outletmanagement.websocket.WebSocketEventPublisher;
+
 @Service
 @RequiredArgsConstructor
 public class LocationServiceImpl implements LocationService {
     private final LocationRepository locationRepository;
+    private final WebSocketEventPublisher webSocketEventPublisher;
 
     @Override
     public LocationResponse createLocation(LocationRequest request) {
@@ -79,7 +82,15 @@ public class LocationServiceImpl implements LocationService {
     @Override
     @Transactional
     public void deleteLocation(Long id) {
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
         locationRepository.deleteById(id);
+
+        try {
+            webSocketEventPublisher.publishNotification("Location deleted: " + location.getName(), "LOCATION_DELETED");
+        } catch (Exception e) {
+            // Log warning but do not fail the transaction
+        }
     }
 
     @Override
