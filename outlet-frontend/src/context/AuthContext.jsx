@@ -61,12 +61,16 @@ export const AuthProvider = ({ children }) => {
       setCookie("email", userData.email || "");
       if (userData.outletId) {
         setCookie("outletId", userData.outletId);
+      } else {
+        deleteCookie("outletId");
       }
     } else if (!userData && token) {
       deleteCookie('token');
     }
     setIsLoading(false);
   }, []);
+
+  const [isImpersonating, setIsImpersonating] = useState(() => !!getCookie("impersonatorToken"));
 
   /** Call this after a successful login response */
   const login = useCallback((userData, token) => {
@@ -79,10 +83,37 @@ export const AuthProvider = ({ children }) => {
     setCookie("role", normalizedUserData.role);
     if (normalizedUserData.outletId) {
       setCookie("outletId", normalizedUserData.outletId);
+    } else {
+      deleteCookie("outletId");
     }
     setUser(normalizedUserData);
     window.dispatchEvent(new Event('storage'));
   }, []);
+
+  const impersonate = useCallback((targetUserData, targetToken) => {
+    const originalToken = getCookie("token");
+    const originalUser = getCookie("user");
+    
+    if (!getCookie("impersonatorToken")) {
+      setCookie("impersonatorToken", originalToken);
+      setCookie("impersonatorUser", originalUser);
+    }
+    
+    login(targetUserData, targetToken);
+    setIsImpersonating(true);
+  }, [login]);
+
+  const stopImpersonating = useCallback(() => {
+    const originalToken = getCookie("impersonatorToken");
+    const originalUser = getCookie("impersonatorUser");
+    
+    if (originalToken && originalUser) {
+      deleteCookie("impersonatorToken");
+      deleteCookie("impersonatorUser");
+      login(JSON.parse(originalUser), originalToken);
+    }
+    setIsImpersonating(false);
+  }, [login]);
 
   /** Call this on logout */
   const logout = useCallback(() => {
@@ -92,7 +123,10 @@ export const AuthProvider = ({ children }) => {
     deleteCookie("email");
     deleteCookie("role");
     deleteCookie("outletId");
+    deleteCookie("impersonatorToken");
+    deleteCookie("impersonatorUser");
     setUser(null);
+    setIsImpersonating(false);
     window.dispatchEvent(new Event('storage'));
   }, []);
 
@@ -101,6 +135,7 @@ export const AuthProvider = ({ children }) => {
     const handleStorageChange = () => {
       const userData = loadUser();
       setUser(userData);
+      setIsImpersonating(!!getCookie("impersonatorToken"));
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -110,7 +145,7 @@ export const AuthProvider = ({ children }) => {
   const role = user?.role || null;
 
   return (
-    <AuthContext.Provider value={{ user, role, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, role, login, logout, isLoading, isImpersonating, impersonate, stopImpersonating }}>
       {children}
     </AuthContext.Provider>
   );

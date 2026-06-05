@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   Box, Typography, Button, ButtonBase, IconButton, InputBase, Avatar,
   Table, TableBody, TableCell, TableContainer,
@@ -11,7 +13,7 @@ import {
   PersonAddRounded, SearchRounded, EditRounded,
   DeleteRounded, PeopleRounded, AdminPanelSettingsRounded,
   ManageAccountsRounded, PersonRounded, CloseRounded,
-  CheckRounded,
+  CheckRounded, SwitchAccountRounded,
 } from "@mui/icons-material";
 import { userService } from "../../services/userService";
 import { outletService } from "../../services/outletService";
@@ -39,6 +41,8 @@ const initials = (name = "") =>
 const emptyForm = { name: "", username: "", email: "", password: "", roles: ["USER"], status: "ACTIVE", outletId: "" };
 
 const UserManagement = () => {
+  const navigate = useNavigate();
+  const { user: currentUser, impersonate } = useAuth();
   const [users, setUsers] = useState([]);
   const [outlets, setOutlets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +135,22 @@ const UserManagement = () => {
       load();
     } catch {
       toast("Delete failed", "error");
+    }
+  };
+
+  const handleImpersonate = async (targetUser) => {
+    try {
+      const response = await userService.impersonateUser(targetUser.id);
+      if (response && response.token) {
+        impersonate(response, response.token);
+        toast(`Successfully logged in as ${targetUser.name || targetUser.username}`);
+        navigate("/dashboard");
+      } else {
+        toast("Invalid token received from server", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast(err.response?.data?.message || err.message || "Impersonation failed", "error");
     }
   };
 

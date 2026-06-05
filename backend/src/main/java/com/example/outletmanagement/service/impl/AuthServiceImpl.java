@@ -141,4 +141,19 @@ public class AuthServiceImpl implements AuthService {
             return false;
         }
     }
+
+    @Override
+    public AuthResponse impersonate(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        String token = jwtService.generateToken(user);
+        return AuthResponse.builder()
+                .token(token)
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole() != null ? user.getRole().name() : "USER")
+                .name(user.getName())
+                .outletId(user.getOutlet() != null ? user.getOutlet().getId() : null)
+                .build();
+    }
 }

@@ -453,8 +453,8 @@ const Orders = () => {
                 </Typography>
                 <ExportMenu getData={() => formatOrderData(filtered)} filename="orders" title="Orders Report" backendType="orders" />
 
-                {/* Outlet Filter - Only for Admin */}
-                {isAdmin && (
+                {/* Outlet Filter - Admin or global Manager */}
+                {(isAdmin || (isManager && !userOutletId)) && (
                   <Select
                     size="small" displayEmpty value={filters.outletId}
                     onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}

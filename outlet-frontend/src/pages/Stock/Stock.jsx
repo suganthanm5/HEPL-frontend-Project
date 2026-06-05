@@ -458,10 +458,10 @@ const Stock = () => {
                     <Select
                       size="small" displayEmpty value={filters.outletId}
                       onChange={(e) => setFilters(f => ({ ...f, outletId: e.target.value }))}
-                      disabled={!isAdmin}
+                      disabled={!(isAdmin || (role === "MANAGER" && !userOutletId))}
                       sx={{ minWidth: 140, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit" }}
                     >
-                      <MenuItem value="">{isAdmin ? "All Outlets" : "Select Outlet"}</MenuItem>
+                      <MenuItem value="">{(isAdmin || (role === "MANAGER" && !userOutletId)) ? "All Outlets" : "Select Outlet"}</MenuItem>
                       {outlets.map(ot => <MenuItem key={ot.id} value={ot.id}>{ot.outletName}</MenuItem>)}
                     </Select>
 

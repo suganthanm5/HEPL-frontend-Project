@@ -34,7 +34,7 @@ public class Outlet extends BaseAuditEntity {
 
     private String outletType;
     private String ownerName;
-    
+
     @Column(columnDefinition = "TEXT")
     private String address;
 

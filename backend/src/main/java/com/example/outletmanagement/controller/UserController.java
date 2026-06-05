@@ -5,6 +5,8 @@ import com.example.outletmanagement.payload.dto.request.RegisterRequest;
 import com.example.outletmanagement.payload.dto.request.UserCreationDto;
 import com.example.outletmanagement.payload.dto.response.UserResponse;
 import com.example.outletmanagement.service.UserService;
+import com.example.outletmanagement.service.AuthService;
+import com.example.outletmanagement.payload.dto.response.AuthResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -153,6 +156,17 @@ public class UserController {
                 .httpStatus(HttpStatus.OK.value())
                 .message("Profile picture uploaded successfully")
                 .data(java.util.Map.of("profilePictureUrl", picturePath))
+                .build());
+    }
+
+    @PostMapping("/{id}/impersonate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> impersonateUser(@PathVariable Long id) {
+        AuthResponse response = authService.impersonate(id);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Impersonation successful")
+                .data(response)
                 .build());
     }
 }

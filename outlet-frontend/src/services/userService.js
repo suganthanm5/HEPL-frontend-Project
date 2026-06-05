@@ -31,5 +31,10 @@ export const userService = {
   assignRoles: async (id, roles) => {
     const response = await apiClient.post(`/api/users/${id}/roles`, roles);
     return response.data?.data || response.data;
+  },
+
+  impersonateUser: async (id) => {
+    const response = await apiClient.post(`/api/users/${id}/impersonate`);
+    return response.data?.data || response.data;
   }
 };

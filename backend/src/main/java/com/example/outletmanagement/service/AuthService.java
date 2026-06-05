@@ -9,4 +9,5 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
     AuthResponse googleLogin(String token);
     boolean validateToken(String token);
+    AuthResponse impersonate(Long userId);
 }

@@ -30,6 +30,27 @@ const fmtCurrency = (n) => {
   return `₹${v}`;
 };
 
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+  } catch (e) {
+    return "";
+  }
+};
+
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#a855f7", "#3b82f6", "#ec4899"];
 
 const StatCard = ({ icon, label, value, sub, color = "indigo", trend, delay = 0 }) => (
@@ -246,28 +267,33 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
         </SectionCard>
 
         <SectionCard title="Order Insights" subtitle="Current status breakdown" delay={380}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={orderStatusData} innerRadius={52} outerRadius={76} paddingAngle={8} dataKey="value" stroke="none" labelLine={false}>
-                {orderStatusData.map((e, i) => <Cell key={i} fill={e.color} />)}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={36} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="db-activity-list mt-3">
-            <div className="db-activity-item">
-              <span className="db-activity-icon orange"><PendingActionsRounded sx={{ fontSize: 20 }} /></span>
-              <div className="db-activity-info">
-                <span className="db-activity-title">Pending Orders</span>
-                <span className="db-activity-sub">{summary?.pendingOrdersCount || 0} orders awaiting approval</span>
+          <div className="db-chart-relative" style={{ position: "relative", width: "100%", height: 180, display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={orderStatusData} innerRadius={55} outerRadius={72} paddingAngle={4} dataKey="value" stroke="none" labelLine={false}>
+                  {orderStatusData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="db-donut-center" style={{ position: "absolute", textAlign: "center", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
+              <span className="db-donut-val" style={{ fontSize: "24px", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{summary?.totalOrders || 0}</span>
+              <span className="db-donut-lbl" style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginTop: "2px" }}>Orders</span>
+            </div>
+          </div>
+          <div className="db-order-insights-list">
+            <div className="db-order-insights-card">
+              <span className="db-order-insights-icon-wrap orange"><PendingActionsRounded sx={{ fontSize: 18 }} /></span>
+              <div className="db-order-insights-content">
+                <span className="db-order-insights-title">Pending</span>
+                <span className="db-order-insights-desc">{summary?.pendingOrdersCount || 0} awaiting approval</span>
               </div>
             </div>
-            <div className="db-activity-item">
-              <span className="db-activity-icon green"><CheckCircleRounded sx={{ fontSize: 20 }} /></span>
-              <div className="db-activity-info">
-                <span className="db-activity-title">Processed Orders</span>
-                <span className="db-activity-sub">{(summary?.totalOrders || 0) - (summary?.pendingOrdersCount || 0)} orders completed</span>
+            <div className="db-order-insights-card">
+              <span className="db-order-insights-icon-wrap green"><CheckCircleRounded sx={{ fontSize: 18 }} /></span>
+              <div className="db-order-insights-content">
+                <span className="db-order-insights-title">Processed</span>
+                <span className="db-order-insights-desc">{(summary?.totalOrders || 0) - (summary?.pendingOrdersCount || 0)} completed</span>
               </div>
             </div>
           </div>
@@ -355,11 +381,50 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
       </div>
 
       <SectionCard title="Quick Actions" subtitle="Navigate to key sections" delay={300}>
-        <div className="db-quick-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <Button variant="contained" color="info" onClick={() => navigate("/orders")} startIcon={<ListAltRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Manage Orders</Button>
-          <Button variant="contained" color="success" onClick={() => navigate("/stock")} startIcon={<Inventory2Rounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>View Stock</Button>
-          <Button variant="contained" color="warning" onClick={() => navigate("/outlet")} startIcon={<StoreRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Outlets</Button>
-          <Button variant="contained" color="primary" onClick={() => navigate("/product")} startIcon={<ShoppingCartRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Products</Button>
+        <div className="db-quick-cards-grid">
+          <div className="db-quick-card blue" onClick={() => navigate("/orders")}>
+            <div className="db-quick-card-icon">
+              <ListAltRounded sx={{ fontSize: 24 }} />
+            </div>
+            <div className="db-quick-card-content">
+              <span className="db-quick-card-title">Manage Orders</span>
+              <span className="db-quick-card-desc">Approve and track requests</span>
+            </div>
+            <span className="db-quick-card-arrow">→</span>
+          </div>
+
+          <div className="db-quick-card green" onClick={() => navigate("/stock")}>
+            <div className="db-quick-card-icon">
+              <Inventory2Rounded sx={{ fontSize: 24 }} />
+            </div>
+            <div className="db-quick-card-content">
+              <span className="db-quick-card-title">View Stock</span>
+              <span className="db-quick-card-desc">Check available inventory</span>
+            </div>
+            <span className="db-quick-card-arrow">→</span>
+          </div>
+
+          <div className="db-quick-card orange" onClick={() => navigate("/outlet")}>
+            <div className="db-quick-card-icon">
+              <StoreRounded sx={{ fontSize: 24 }} />
+            </div>
+            <div className="db-quick-card-content">
+              <span className="db-quick-card-title">Outlets</span>
+              <span className="db-quick-card-desc">Manage outlet records</span>
+            </div>
+            <span className="db-quick-card-arrow">→</span>
+          </div>
+
+          <div className="db-quick-card purple" onClick={() => navigate("/product")}>
+            <div className="db-quick-card-icon">
+              <ShoppingCartRounded sx={{ fontSize: 24 }} />
+            </div>
+            <div className="db-quick-card-content">
+              <span className="db-quick-card-title">Products</span>
+              <span className="db-quick-card-desc">Browse product catalog</span>
+            </div>
+            <span className="db-quick-card-arrow">→</span>
+          </div>
         </div>
       </SectionCard>
 
@@ -397,17 +462,49 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
         </SectionCard>
 
         <SectionCard title="Recent Activity" subtitle="Latest transactions" delay={420}>
-          <div className="db-activity-list">
+          <div className="db-activity-timeline">
             {transactions.length === 0 ? (
               <p className="db-empty">No recent activity</p>
             ) : transactions.slice(0, 6).map((tx, i) => {
-              const isOut = tx.type?.toLowerCase().includes("sale") || tx.type?.toLowerCase().includes("out");
+              const isOrder = tx.orderNo !== undefined;
+              const txType = tx.transactionType || tx.type || "";
+              const isOut = isOrder
+                ? !(tx.status === "APPROVED" || tx.status === "COMPLETED")
+                : txType.toLowerCase().includes("sale") || txType.toLowerCase().includes("out");
+
+              const title = isOrder
+                ? `Order ${tx.orderNo}`
+                : tx.product?.name || tx.productName || txType || "Transaction";
+
+              const firstItem = isOrder && tx.items?.[0];
+              const itemsCount = isOrder && tx.items?.length || 0;
+              const desc = isOrder
+                ? (firstItem ? `${firstItem.productName}${itemsCount > 1 ? ` + ${itemsCount - 1} more` : ""} · ${firstItem.quantity} units` : "No items")
+                : `${tx.quantity ? `${tx.quantity} units` : ""} ${tx.outlet?.outletName || tx.outletName ? `· ${tx.outlet?.outletName || tx.outletName}` : ""}`;
+
+              const dateStr = tx.createdAt || tx.requestDate;
+              const timeAgo = dateStr ? formatTimeAgo(dateStr) : "";
+
+              let badgeClass = "badge-in";
+              let badgeText = "Stock In";
+              if (isOrder) {
+                badgeClass = "badge-order";
+                badgeText = tx.status || "Order";
+              } else if (isOut) {
+                badgeClass = "badge-out";
+                badgeText = "Stock Out";
+              }
+
               return (
-                <div key={i} className="db-activity-item">
-                  <span className={`db-activity-icon ${isOut ? "green" : "indigo"}`}>{isOut ? <CallMadeRounded sx={{ fontSize: 20 }} /> : <CallReceivedRounded sx={{ fontSize: 20 }} />}</span>
-                  <div className="db-activity-info">
-                    <span className="db-activity-title">{tx.productName || tx.type || "Transaction"}</span>
-                    <span className="db-activity-sub">{tx.quantity ? `${tx.quantity} units` : ""} {tx.outletName ? `· ${tx.outletName}` : ""}</span>
+                <div key={i} className="db-activity-item-wrapper">
+                  <div className={`db-activity-dot ${isOrder ? "incoming" : (isOut ? "outgoing" : "incoming")}`} />
+                  <div className="db-activity-card">
+                    <div className="db-activity-header-row">
+                      <span className={`db-activity-badge ${badgeClass}`}>{badgeText}</span>
+                      {timeAgo && <span className="db-activity-time">{timeAgo}</span>}
+                    </div>
+                    <span className="db-activity-title">{title}</span>
+                    <span className="db-activity-desc">{desc}</span>
                   </div>
                 </div>
               );
@@ -448,9 +545,28 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
         </SectionCard>
 
         <SectionCard title="Quick Actions" subtitle="Common tasks" delay={280}>
-          <div className="db-quick-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <Button variant="contained" color="warning" onClick={() => navigate("/orders")} startIcon={<ListAltRounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>My Orders</Button>
-            <Button variant="contained" color="success" onClick={() => navigate("/stock")} startIcon={<Inventory2Rounded />} sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>Check Stock</Button>
+          <div className="db-quick-cards-grid" style={{ gridTemplateColumns: "1fr" }}>
+            <div className="db-quick-card orange" onClick={() => navigate("/orders")}>
+              <div className="db-quick-card-icon">
+                <ListAltRounded sx={{ fontSize: 24 }} />
+              </div>
+              <div className="db-quick-card-content">
+                <span className="db-quick-card-title">My Orders</span>
+                <span className="db-quick-card-desc">Track and view your requests</span>
+              </div>
+              <span className="db-quick-card-arrow">→</span>
+            </div>
+
+            <div className="db-quick-card green" onClick={() => navigate("/stock")}>
+              <div className="db-quick-card-icon">
+                <Inventory2Rounded sx={{ fontSize: 24 }} />
+              </div>
+              <div className="db-quick-card-content">
+                <span className="db-quick-card-title">Check Stock</span>
+                <span className="db-quick-card-desc">Verify available products</span>
+              </div>
+              <span className="db-quick-card-arrow">→</span>
+            </div>
           </div>
         </SectionCard>
       </div>
@@ -526,7 +642,14 @@ export default function Dashboard() {
         isOutletManager ? API.get('/api/orders?size=8').then(r => r.data.data) : reportService.getTransactions(transParams),
       ]);
       setSummary(data);
-      setTransactions(trans?.content || trans || []);
+      let list = trans?.content || trans || [];
+      if (!isOutletManager && list.length === 0) {
+        const ordersParams = {};
+        if (curOutletId) ordersParams.outletId = curOutletId;
+        const ordersData = await API.get('/api/orders?size=8', { params: ordersParams }).then(r => r.data.data);
+        list = ordersData?.content || ordersData || [];
+      }
+      setTransactions(list);
     } catch (e) {
       console.error("Dashboard real-time reload error", e);
     }
@@ -552,7 +675,16 @@ export default function Dashboard() {
             isOutletManager ? API.get('/api/orders?size=8').then(r => r.data.data) : reportService.getTransactions(transParams),
           ]);
           setSummary(data);
-          setTransactions(trans?.content || trans || []);
+          let list = trans?.content || trans || [];
+          if (!isOutletManager && list.length === 0) {
+            const ordersParams = {};
+            if (user?.outletId || user?.outlet?.id) {
+              ordersParams.outletId = user?.outletId || user?.outlet?.id;
+            }
+            const ordersData = await API.get('/api/orders?size=8', { params: ordersParams }).then(r => r.data.data);
+            list = ordersData?.content || ordersData || [];
+          }
+          setTransactions(list);
         } catch (e) {
           console.error("Dashboard load error", e);
         } finally {
@@ -568,7 +700,15 @@ export default function Dashboard() {
           const trans = isOutletManager
             ? await API.get('/api/orders?size=8').then(r => r.data.data)
             : await reportService.getTransactions(params);
-          setTransactions(trans?.content || trans || []);
+          
+          let list = trans?.content || trans || [];
+          if (!isOutletManager && list.length === 0) {
+            const ordersParams = {};
+            if (selectedOutletId) ordersParams.outletId = selectedOutletId;
+            const ordersData = await API.get('/api/orders?size=8', { params: ordersParams }).then(r => r.data.data);
+            list = ordersData?.content || ordersData || [];
+          }
+          setTransactions(list);
         } catch (e) {
           console.error("Dashboard transactions fetch error", e);
         }
@@ -647,6 +787,31 @@ export default function Dashboard() {
   const filteredDivisions = divisions.filter(d =>
     !selectedDivisionId || String(d.id) === String(selectedDivisionId)
   );
+
+  const filteredTransactions = transactions.filter(tx => {
+    // 1. Filter by Outlet
+    const txOutletId = tx.outlet?.id || tx.outletId;
+    if (selectedOutletId && txOutletId && String(txOutletId) !== String(selectedOutletId)) {
+      return false;
+    }
+    // 2. Filter by Division
+    if (selectedDivisionId) {
+      const isOrder = tx.orderNo !== undefined;
+      if (isOrder) {
+        const hasDivItem = tx.items?.some(item => {
+          const itemDivId = item.division?.id || item.divisionId;
+          return String(itemDivId) === String(selectedDivisionId);
+        });
+        if (!hasDivItem) return false;
+      } else {
+        const txDivId = tx.product?.division?.id || tx.product?.divisionId;
+        if (txDivId && String(txDivId) !== String(selectedDivisionId)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  });
 
   const roleLabel = { ADMIN: "Administrator", MANAGER: "Outlet Manager", USER: "User" }[role] || role;
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
@@ -735,13 +900,13 @@ export default function Dashboard() {
       ) : (
         <div className="db-content">
           {role === "ADMIN" && (
-            <AdminDashboard summary={filteredSummary} outlets={filteredOutlets} divisions={filteredDivisions} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
+            <AdminDashboard summary={filteredSummary} outlets={filteredOutlets} divisions={filteredDivisions} transactions={filteredTransactions} navigate={navigate} filters={dashboardFilters} />
           )}
           {role === "MANAGER" && (
-            <ManagerDashboard summary={filteredSummary} outlets={filteredOutlets} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
+            <ManagerDashboard summary={filteredSummary} outlets={filteredOutlets} transactions={filteredTransactions} navigate={navigate} filters={dashboardFilters} />
           )}
           {((role === "USER" || role === "OUTLET_MANAGER") || (role !== "ADMIN" && role !== "MANAGER")) && (
-            <UserDashboard summary={filteredSummary} transactions={transactions} navigate={navigate} filters={dashboardFilters} />
+            <UserDashboard summary={filteredSummary} transactions={filteredTransactions} navigate={navigate} filters={dashboardFilters} />
           )}
         </div>
       )}

@@ -45,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
 
         if (currentUser.getRole() == User.Role.USER) {
             return orderRepository.findFilteredOrders(status, outletId, orderNo, currentUser.getId(), pageable);
-        } else if (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() != null) {
+        } else if ((currentUser.getRole() == User.Role.OUTLET_MANAGER || currentUser.getRole() == User.Role.MANAGER) && currentUser.getOutlet() != null) {
             return orderRepository.findFilteredOrders(status, currentUser.getOutlet().getId(), orderNo, null, pageable);
         }
         return orderRepository.findFilteredOrders(status, outletId, orderNo, null, pageable); // ADMIN
@@ -69,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
-        if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.MANAGER) {
+        if (currentUser.getRole() == User.Role.USER || currentUser.getRole() == User.Role.OUTLET_MANAGER || currentUser.getRole() == User.Role.MANAGER) {
             if (request.getOutletId() == null) {
                 if (currentUser.getOutlet() == null)
                     throw new RuntimeException("User must be assigned to an outlet first");

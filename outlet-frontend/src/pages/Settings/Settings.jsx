@@ -61,21 +61,56 @@ import {
   History as HistoryIcon,
   ArrowBack as ArrowBackIcon,
   Visibility,
-  VisibilityOff
+  VisibilityOff,
+  SwitchAccount as SwitchAccountIcon
 } from '@mui/icons-material';
 import { translateText, languageCodes } from '../../utils/translate';
 import './Settings.css';
+import { userService as adminUserService } from '../../services/userService';
 
 const Settings = () => {
-  const { role } = useAuth();
+  const { role, user, impersonate } = useAuth();
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
     defaultValues: { newPassword: '', confirmPassword: '' }
   });
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('general');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ new: false, confirm: false });
+  const [selectedImpersonateUser, setSelectedImpersonateUser] = useState('');
+  const [usersList, setUsersList] = useState([]);
+
+  // Fetch users for impersonation tab
+  useEffect(() => {
+    if (activeTab === 'impersonate' && role === 'ADMIN') {
+      const fetchUsers = async () => {
+        try {
+          const data = await adminUserService.getAllUsers(0, 100);
+          setUsersList(data.content || []);
+        } catch (err) {
+          console.error("Failed to fetch users for impersonation:", err);
+        }
+      };
+      fetchUsers();
+    }
+  }, [activeTab, role]);
+
+  const handleImpersonateSubmit = async () => {
+    if (!selectedImpersonateUser) return;
+    setLoading(true);
+    try {
+      const response = await adminUserService.impersonateUser(selectedImpersonateUser);
+      impersonate(response, response.token);
+      setSnackbar({ open: true, message: `Successfully impersonated ${response.username}`, severity: 'success' });
+      navigate('/dashboard');
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'Impersonation failed';
+      setSnackbar({ open: true, message: msg, severity: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // General Settings
   const [theme, setTheme] = useState(localStorage.getItem('darkMode') === 'true' ? 'dark' : 'light');
@@ -115,6 +150,7 @@ const Settings = () => {
     localStorage.setItem('darkMode', theme === 'dark');
     const colorName = reverseColorMap[colorAccent] || 'Purple';
     localStorage.setItem('themeColor', colorName);
+    document.documentElement.style.setProperty('--theme-accent', colorAccent);
     
     const formattedFontSize = fontSize.charAt(0).toUpperCase() + fontSize.slice(1);
     localStorage.setItem('fontSize', formattedFontSize);
@@ -199,26 +235,30 @@ const Settings = () => {
             className="settings-tabs"
             TabIndicatorProps={{ style: { display: 'none' } }}
           >
-            <Tab icon={<SettingsIcon />} iconPosition="start" label="General" className={`settings-tab ${activeTab === 0 ? 'active' : ''}`} />
-            <Tab icon={<PersonIcon />} iconPosition="start" label="Profile" className={`settings-tab ${activeTab === 1 ? 'active' : ''}`} />
-            <Tab icon={<SecurityIcon />} iconPosition="start" label="Security" className={`settings-tab ${activeTab === 2 ? 'active' : ''}`} />
-            <Tab icon={<NotificationsIcon />} iconPosition="start" label="Notifications" className={`settings-tab ${activeTab === 3 ? 'active' : ''}`} />
+            <Tab value="general" icon={<SettingsIcon />} iconPosition="start" label="General" className={`settings-tab ${activeTab === 'general' ? 'active' : ''}`} />
+            <Tab value="profile" icon={<PersonIcon />} iconPosition="start" label="Profile" className={`settings-tab ${activeTab === 'profile' ? 'active' : ''}`} />
+            <Tab value="security" icon={<SecurityIcon />} iconPosition="start" label="Security" className={`settings-tab ${activeTab === 'security' ? 'active' : ''}`} />
+            <Tab value="notifications" icon={<NotificationsIcon />} iconPosition="start" label="Notifications" className={`settings-tab ${activeTab === 'notifications' ? 'active' : ''}`} />
             
             {(role === 'ADMIN' || role === 'MANAGER') && (
-              <Tab icon={<StoreIcon />} iconPosition="start" label="Outlet Preferences" className={`settings-tab ${activeTab === 4 ? 'active' : ''}`} />
+              <Tab value="outlet" icon={<StoreIcon />} iconPosition="start" label="Outlet Preferences" className={`settings-tab ${activeTab === 'outlet' ? 'active' : ''}`} />
             )}
             
-            <Tab icon={<PaletteIcon />} iconPosition="start" label="Appearance" className={`settings-tab ${activeTab === 5 ? 'active' : ''}`} />
+            <Tab value="appearance" icon={<PaletteIcon />} iconPosition="start" label="Appearance" className={`settings-tab ${activeTab === 'appearance' ? 'active' : ''}`} />
             
             {role === 'ADMIN' && (
-              <Tab icon={<InfoIcon />} iconPosition="start" label="System" className={`settings-tab ${activeTab === 6 ? 'active' : ''}`} />
+              <Tab value="system" icon={<InfoIcon />} iconPosition="start" label="System" className={`settings-tab ${activeTab === 'system' ? 'active' : ''}`} />
+            )}
+
+            {role === 'ADMIN' && (
+              <Tab value="impersonate" icon={<SwitchAccountIcon />} iconPosition="start" label="Impersonate" className={`settings-tab ${activeTab === 'impersonate' ? 'active' : ''}`} />
             )}
           </Tabs>
         </Box>
 
         <Box className="settings-panel">
           {/* General Settings */}
-          {activeTab === 0 && (
+          {activeTab === 'general' && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">General Settings</Typography>
               <Divider className="section-divider" />
@@ -287,7 +327,7 @@ const Settings = () => {
           )}
 
           {/* Profile Settings */}
-          {activeTab === 1 && (
+          {activeTab === 'profile' && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">Profile</Typography>
               <Divider className="section-divider" />
@@ -318,7 +358,7 @@ const Settings = () => {
           )}
 
           {/* Security Settings */}
-          {activeTab === 2 && (
+          {activeTab === 'security' && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">Security</Typography>
               <Divider className="section-divider" />
@@ -433,7 +473,7 @@ const Settings = () => {
           )}
 
           {/* Notifications */}
-          {activeTab === 3 && (
+          {activeTab === 'notifications' && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">Notifications</Typography>
               <Divider className="section-divider" />
@@ -483,7 +523,7 @@ const Settings = () => {
           )}
 
           {/* Outlet Preferences */}
-          {activeTab === 4 && (role === 'ADMIN' || role === 'MANAGER') && (
+          {activeTab === 'outlet' && (role === 'ADMIN' || role === 'MANAGER') && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">Outlet Preferences</Typography>
               <Divider className="section-divider" />
@@ -545,7 +585,7 @@ const Settings = () => {
           )}
 
           {/* Appearance */}
-          {activeTab === 5 && (
+          {activeTab === 'appearance' && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">Appearance</Typography>
               <Divider className="section-divider" />
@@ -607,7 +647,7 @@ const Settings = () => {
           )}
 
           {/* System */}
-          {activeTab === 6 && role === 'ADMIN' && (
+          {activeTab === 'system' && role === 'ADMIN' && (
             <Box className="settings-section animate-fade-in">
               <Typography variant="h5" className="section-title">System Information</Typography>
               <Divider className="section-divider" />
@@ -654,16 +694,79 @@ const Settings = () => {
             </Box>
           )}
 
-          <Box className="settings-footer">
-            <Button 
-              variant="contained" 
-              color="primary"
-              className="save-btn" 
-              onClick={() => setSnackbar({ open: true, message: 'Settings have been automatically saved and applied!', severity: 'success' })}
-            >
-              Save Changes
-            </Button>
-          </Box>
+          {/* Impersonate */}
+          {activeTab === 'impersonate' && role === 'ADMIN' && (
+            <Box className="settings-section animate-fade-in">
+              <Typography variant="h5" className="section-title">Admin Impersonation</Typography>
+              <Divider className="section-divider" />
+              
+              <Box className="setting-item" sx={{ mt: 3, maxWidth: 500 }}>
+                <Typography variant="body1" sx={{ mb: 2, color: '#475569' }}>
+                  Select a user from the dropdown below to temporarily log in as them. You can return to your admin session at any time by clicking the warning banner at the top of the screen.
+                </Typography>
+                
+                <FormControl fullWidth size="small" sx={{ mb: 3 }}>
+                  <FormLabel sx={{ mb: 1, color: '#334155', fontWeight: 600 }}>Target User</FormLabel>
+                  <Select
+                    value={selectedImpersonateUser}
+                    onChange={(e) => setSelectedImpersonateUser(e.target.value)}
+                    displayEmpty
+                    renderValue={(selected) => {
+                      if (!selected) {
+                        return <span style={{ color: '#94a3b8' }}>Select a user to impersonate</span>;
+                      }
+                      const target = usersList.find(u => u.id === selected);
+                      return target ? `${target.username} (${target.role})` : '';
+                    }}
+                    className="setting-select"
+                  >
+                    <MenuItem disabled value="">
+                      <em>Select a user to impersonate</em>
+                    </MenuItem>
+                    {usersList
+                      .filter(u => u.username !== user?.username)
+                      .map(u => (
+                        <MenuItem key={u.id} value={u.id}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{u.username}</Typography>
+                            <Typography variant="caption" color="textSecondary">{u.email} • {u.role}</Typography>
+                          </Box>
+                        </MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
+
+                <Button 
+                  variant="contained" 
+                  color="primary"
+                  startIcon={<SwitchAccountIcon />}
+                  onClick={handleImpersonateSubmit}
+                  disabled={!selectedImpersonateUser || loading}
+                  disableElevation
+                  sx={{ 
+                    bgcolor: colorAccent, 
+                    '&:hover': { bgcolor: colorAccent } 
+                  }}
+                >
+                  {loading ? 'Switching Account...' : 'Start Impersonation'}
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {activeTab !== 'impersonate' && (
+            <Box className="settings-footer">
+              <Button 
+                variant="contained" 
+                color="primary"
+                className="save-btn" 
+                onClick={() => setSnackbar({ open: true, message: 'Settings have been automatically saved and applied!', severity: 'success' })}
+              >
+                Save Changes
+              </Button>
+            </Box>
+          )}
         </Box>
       </Paper>
 

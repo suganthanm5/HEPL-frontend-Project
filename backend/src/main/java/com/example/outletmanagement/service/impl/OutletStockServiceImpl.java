@@ -72,10 +72,12 @@ public class OutletStockServiceImpl implements OutletStockService {
                                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
                 Long activeOutletId = outletId;
-                if (currentUser.getRole() != User.Role.ADMIN) {
+                if (currentUser.getRole() != User.Role.ADMIN && currentUser.getRole() != User.Role.MANAGER) {
                         if (currentUser.getOutlet() == null) {
                                 return Page.empty(pageable);
                         }
+                        activeOutletId = currentUser.getOutlet().getId();
+                } else if (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() != null) {
                         activeOutletId = currentUser.getOutlet().getId();
                 }
 
@@ -170,10 +172,12 @@ public class OutletStockServiceImpl implements OutletStockService {
                                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
                 Long effectiveOutletId = outletId;
-                if (currentUser.getRole() != User.Role.ADMIN) {
+                if (currentUser.getRole() != User.Role.ADMIN && currentUser.getRole() != User.Role.MANAGER) {
                         if (currentUser.getOutlet() == null) {
                                 return Page.empty(pageable);
                         }
+                        effectiveOutletId = currentUser.getOutlet().getId();
+                } else if (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() != null) {
                         effectiveOutletId = currentUser.getOutlet().getId();
                 }
 

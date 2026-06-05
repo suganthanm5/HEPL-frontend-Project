@@ -48,7 +48,7 @@ public class ReportController {
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
         Map<String, Object> summary = new HashMap<>();
-        Long outletId = (currentUser.getRole() == User.Role.ADMIN) ? null
+        Long outletId = (currentUser.getRole() == User.Role.ADMIN || (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() == null)) ? null
                 : (currentUser.getOutlet() != null ? currentUser.getOutlet().getId() : -1L);
 
         // 1. Stats
