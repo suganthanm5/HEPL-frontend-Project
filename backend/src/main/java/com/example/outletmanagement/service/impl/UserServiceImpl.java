@@ -29,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OutletRepository outletRepository;
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
     @Override
     public UserResponse createUser(UserCreationDto request) {
@@ -63,7 +64,10 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            return mapToResponse(userRepository.save(user));
+            User savedUser = userRepository.save(user);
+            UserResponse response = mapToResponse(savedUser);
+            auditLogService.log("CREATE_USER", "Created user: " + response.getUsername() + " (Role: " + response.getRole() + ")");
+            return response;
         } catch (Exception e) {
             throw new RuntimeException("Failed to create user: " + e.getMessage());
         }
@@ -117,6 +121,7 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(new java.util.Date());
         
         User updatedUser = userRepository.save(user);
+        auditLogService.log("UPDATE_USER", "Updated user profile/roles for: " + updatedUser.getUsername() + " (ID: " + updatedUser.getId() + ")");
         return mapToResponse(updatedUser);
     }
 
@@ -125,7 +130,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setRole(Role.valueOf(role.toUpperCase()));
-        return mapToResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        auditLogService.log("UPDATE_USER_ROLE", "Updated user role for " + saved.getUsername() + " (ID: " + id + ") to " + role);
+        return mapToResponse(saved);
     }
 
     @Override
@@ -138,7 +145,11 @@ public class UserServiceImpl implements UserService {
         if (currentUser.getId().equals(id)) {
             throw new RuntimeException("You cannot delete your own account");
         }
+        User userToDelete = userRepository.findById(id).orElse(null);
         userRepository.deleteById(id);
+        if (userToDelete != null) {
+            auditLogService.log("DELETE_USER", "Deleted user: " + userToDelete.getUsername() + " (ID: " + id + ")");
+        }
     }
 
     @Override
@@ -166,7 +177,9 @@ public class UserServiceImpl implements UserService {
         }
         
         user.setUpdatedAt(new java.util.Date());
-        return mapToResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        auditLogService.log(username, "UPDATE_PROFILE", "User " + username + " updated their own profile details.");
+        return mapToResponse(saved);
     }
 
     @Override
@@ -178,6 +191,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(newPassword.trim()));
         user.setUpdatedAt(new java.util.Date());
         userRepository.save(user);
+        auditLogService.log(username, "CHANGE_PASSWORD", "User " + username + " changed their password.");
     }
 
     @Override

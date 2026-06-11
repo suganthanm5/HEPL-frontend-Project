@@ -1,14 +1,10 @@
-/* ══════════════════════════════════════════
-   Auth Context — provides role-aware user state
-   across the entire app using secure cookies.
-   ══════════════════════════════════════════ */
+
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { setCookie, getCookie, deleteCookie } from "../utils/cookieUtils";
 
 const AuthContext = createContext(null);
 
-/** Parse the stored user from cookies with defensive checks */
 const loadUser = () => {
   try {
     const raw = getCookie("user");

@@ -24,6 +24,8 @@ public class ProductBatchServiceImpl implements ProductBatchService {
     @Lazy
     private final com.example.outletmanagement.repository.OrderRepository orderRepository;
 
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
+
     @Override
     public List<ProductBatch> getAllBatches() {
         return productBatchRepository.findAll();
@@ -71,6 +73,7 @@ public class ProductBatchServiceImpl implements ProductBatchService {
                 .build();
 
         ProductBatch savedBatch = productBatchRepository.save(batch);
+        auditLogService.log("CREATE_BATCH", "Created product batch: " + savedBatch.getBatchNo() + " (Product ID: " + savedBatch.getProduct().getId() + ", Qty: " + savedBatch.getQuantity() + ")");
 
         // Auto-allocate to pending or partially approved orders
         List<com.example.outletmanagement.entity.Order> pendingOrders = orderRepository
@@ -103,7 +106,9 @@ public class ProductBatchServiceImpl implements ProductBatchService {
         batch.setQuantity(request.getQuantity());
         batch.setPurchasePrice(request.getPurchasePrice());
         batch.setSellingPrice(request.getSellingPrice());
-        return productBatchRepository.save(batch);
+        ProductBatch savedBatch = productBatchRepository.save(batch);
+        auditLogService.log("UPDATE_BATCH", "Updated batch ID: " + id + " (Batch No: " + savedBatch.getBatchNo() + ", Qty: " + savedBatch.getQuantity() + ")");
+        return savedBatch;
     }
 
     @Override
@@ -111,5 +116,6 @@ public class ProductBatchServiceImpl implements ProductBatchService {
     public void deleteBatch(Long id) {
         ProductBatch batch = getBatchById(id);
         productBatchRepository.delete(batch);
+        auditLogService.log("DELETE_BATCH", "Deleted batch ID: " + id + " (Batch No: " + batch.getBatchNo() + ")");
     }
 }

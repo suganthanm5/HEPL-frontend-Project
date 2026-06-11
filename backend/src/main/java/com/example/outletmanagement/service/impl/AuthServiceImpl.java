@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.outletmanagement.websocket.WebSocketEventPublisher;
+import com.example.outletmanagement.service.AuditLogService;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final WebSocketEventPublisher webSocketEventPublisher;
+    private final AuditLogService auditLogService;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -40,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
                 .role(User.Role.USER)
                 .build();
         userRepository.save(user);
+        auditLogService.log(user.getUsername(), "USER_REGISTER", "User registered: " + user.getUsername() + " (Email: " + user.getEmail() + ")");
 
         try {
             webSocketEventPublisher.publishNotification("New user registered: " + user.getUsername(), "USER_REGISTERED");
@@ -67,11 +70,13 @@ public class AuthServiceImpl implements AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            auditLogService.log(username, "USER_LOGIN_FAILED", "Failed login attempt for username: " + username);
             throw new RuntimeException("Incorrect username or password");
         }
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + request.getUsername()));
         String token = jwtService.generateToken(user);
+        auditLogService.log(user.getUsername(), "USER_LOGIN", "User logged in: " + user.getUsername());
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
@@ -106,6 +111,7 @@ public class AuthServiceImpl implements AuthService {
                             .role(User.Role.USER)
                             .build();
                     userRepository.save(user);
+                    auditLogService.log(user.getUsername(), "USER_REGISTER_GOOGLE", "New user registered via Google: " + user.getUsername());
 
                     try {
                         webSocketEventPublisher.publishNotification("New user registered: " + user.getUsername(), "USER_REGISTERED");
@@ -115,6 +121,7 @@ public class AuthServiceImpl implements AuthService {
                 }
 
                 String jwtToken = jwtService.generateToken(user);
+                auditLogService.log(user.getUsername(), "USER_LOGIN_GOOGLE", "User logged in via Google: " + user.getUsername());
                 return AuthResponse.builder()
                         .token(jwtToken)
                         .username(user.getUsername())
@@ -147,6 +154,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         String token = jwtService.generateToken(user);
+        auditLogService.log("USER_IMPERSONATE", "Admin impersonated user ID: " + userId + " (" + user.getUsername() + ")");
         return AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())

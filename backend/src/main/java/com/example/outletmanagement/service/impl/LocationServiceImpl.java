@@ -21,6 +21,7 @@ import com.example.outletmanagement.websocket.WebSocketEventPublisher;
 public class LocationServiceImpl implements LocationService {
     private final LocationRepository locationRepository;
     private final WebSocketEventPublisher webSocketEventPublisher;
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
     @Override
     public LocationResponse createLocation(LocationRequest request) {
@@ -30,7 +31,9 @@ public class LocationServiceImpl implements LocationService {
             if (existing.getIsDeleted() != null && existing.getIsDeleted()) {
                 existing.setIsDeleted(false);
                 Location restored = locationRepository.save(existing);
-                return mapToResponse(restored);
+                LocationResponse response = mapToResponse(restored);
+                auditLogService.log("RESTORE_LOCATION", "Restored location: " + response.getName() + " (ID: " + response.getId() + ")");
+                return response;
             } else {
                 throw new RuntimeException("Location already exists!");
             }
@@ -40,7 +43,9 @@ public class LocationServiceImpl implements LocationService {
                 .name(request.getName())
                 .build();
         Location savedLocation = locationRepository.save(location);
-        return mapToResponse(savedLocation);
+        LocationResponse response = mapToResponse(savedLocation);
+        auditLogService.log("CREATE_LOCATION", "Created location: " + response.getName() + " (ID: " + response.getId() + ")");
+        return response;
     }
 
     @Override
@@ -76,7 +81,9 @@ public class LocationServiceImpl implements LocationService {
                 
         location.setName(request.getName());
         Location updatedLocation = locationRepository.save(location);
-        return mapToResponse(updatedLocation);
+        LocationResponse response = mapToResponse(updatedLocation);
+        auditLogService.log("UPDATE_LOCATION", "Updated location: " + response.getName() + " (ID: " + response.getId() + ")");
+        return response;
     }
 
     @Override
@@ -85,6 +92,7 @@ public class LocationServiceImpl implements LocationService {
         Location location = locationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
         locationRepository.deleteById(id);
+        auditLogService.log("DELETE_LOCATION", "Deleted location ID: " + id + " (Name: " + location.getName() + ")");
 
         try {
             webSocketEventPublisher.publishNotification("Location deleted: " + location.getName(), "LOCATION_DELETED");
@@ -110,12 +118,14 @@ public class LocationServiceImpl implements LocationService {
                 failure++;
             }
         }
-        return BulkUploadResult.builder()
+        BulkUploadResult result = BulkUploadResult.builder()
                 .totalReceived(requests.size())
                 .successCount(success)
                 .failureCount(failure)
                 .results(results)
                 .build();
+        auditLogService.log("BULK_CREATE_LOCATIONS", "Bulk created locations. Success: " + success + ", Failures: " + failure);
+        return result;
     }
 
     private LocationResponse mapToResponse(Location location) {

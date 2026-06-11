@@ -29,6 +29,7 @@ import com.example.outletmanagement.websocket.WebSocketEventPublisher;
 public class DivisionServiceImpl implements DivisionService {
     private final DivisionRepository divisionRepository;
     private final WebSocketEventPublisher webSocketEventPublisher;
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
     @Override
     @CacheEvict(value = "divisions", allEntries = true)
@@ -39,7 +40,9 @@ public class DivisionServiceImpl implements DivisionService {
             if (existing.getIsDeleted() != null && existing.getIsDeleted()) {
                 existing.setIsDeleted(false);
                 Division restored = divisionRepository.save(existing);
-                return mapToResponse(restored);
+                DivisionResponse response = mapToResponse(restored);
+                auditLogService.log("RESTORE_DIVISION", "Restored division: " + response.getName() + " (ID: " + response.getId() + ")");
+                return response;
             } else {
                 throw new ResourceAlreadyExistsException("Division", "name", request.getName());
             }
@@ -49,7 +52,9 @@ public class DivisionServiceImpl implements DivisionService {
                 .name(request.getName())
                 .build();
         Division savedDivision = divisionRepository.save(division);
-        return mapToResponse(savedDivision);
+        DivisionResponse response = mapToResponse(savedDivision);
+        auditLogService.log("CREATE_DIVISION", "Created division: " + response.getName() + " (ID: " + response.getId() + ")");
+        return response;
     }
 
     @Override
@@ -82,7 +87,9 @@ public class DivisionServiceImpl implements DivisionService {
 
         division.setName(request.getName());
         Division updatedDivision = divisionRepository.save(division);
-        return mapToResponse(updatedDivision);
+        DivisionResponse response = mapToResponse(updatedDivision);
+        auditLogService.log("UPDATE_DIVISION", "Updated division: " + response.getName() + " (ID: " + response.getId() + ")");
+        return response;
     }
 
     @Override
@@ -101,6 +108,7 @@ public class DivisionServiceImpl implements DivisionService {
         Division division = divisionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Division not found with id: " + id));
         divisionRepository.deleteById(id);
+        auditLogService.log("DELETE_DIVISION", "Deleted division ID: " + id + " (Name: " + division.getName() + ")");
 
         try {
             webSocketEventPublisher.publishNotification("Division deleted: " + division.getName(), "DIVISION_DELETED");
@@ -127,12 +135,14 @@ public class DivisionServiceImpl implements DivisionService {
                 failure++;
             }
         }
-        return BulkUploadResult.builder()
+        BulkUploadResult result = BulkUploadResult.builder()
                 .totalReceived(requests.size())
                 .successCount(success)
                 .failureCount(failure)
                 .results(results)
                 .build();
+        auditLogService.log("BULK_CREATE_DIVISIONS", "Bulk created divisions. Success: " + success + ", Failures: " + failure);
+        return result;
     }
 
     private DivisionResponse mapToResponse(Division division) {

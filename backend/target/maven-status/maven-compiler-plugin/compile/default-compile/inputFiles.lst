@@ -1,6 +1,7 @@
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\OrderItemRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\OrderRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\config\OpenApiConfig.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\AuditLogService.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\OutletManagementApplication.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\request\OutletRequest.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\request\LoginRequest.java
@@ -40,6 +41,7 @@ C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\e
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\websocket\WebSocketEventPublisher.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\OutletStockController.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\ProductController.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\impl\AuditLogServiceImpl.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\specification\ProductSpecification.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\entity\ProductBatch.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\OrderService.java
@@ -50,6 +52,7 @@ C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\e
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\ProductRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\request\ProductBatchRequest.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\response\StockTransactionResponse.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\entity\AuditLog.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\entity\RequestBatch.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\response\DivisionResponse.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\DivisionService.java
@@ -75,6 +78,7 @@ C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\e
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\entity\StockTransaction.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\OutletRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\response\UserResponse.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\specification\AuditLogSpecification.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\config\SocketIOServerRunner.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\LocationRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\HealthController.java
@@ -82,9 +86,11 @@ C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\e
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\UserService.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\UserController.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\specification\OutletStockSpecification.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\AuditLogRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\scheduler\BatchScheduler.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\impl\LocationServiceImpl.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\specification\LocationSpecification.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\AuditLogController.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\TestController.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\response\BulkUploadResult.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\payload\dto\request\UserCreationDto.java

@@ -29,6 +29,7 @@ public class ProductServiceImpl implements ProductService {
     private final OutletDivisionProductRepository outletDivisionProductRepository;
     private final OutletStockRepository outletStockRepository;
     private final WebSocketEventPublisher webSocketEventPublisher;
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
     @Override
     @CacheEvict(value = "products", allEntries = true)
@@ -52,7 +53,9 @@ public class ProductServiceImpl implements ProductService {
                 .build();
 
         Product savedProduct = productRepository.save(product);
-        return mapToResponse(savedProduct);
+        ProductResponse response = mapToResponse(savedProduct);
+        auditLogService.log("CREATE_PRODUCT", "Created product: " + response.getName() + " (Code: " + response.getProductCode() + ")");
+        return response;
     }
 
     @Override
@@ -91,7 +94,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product updatedProduct = productRepository.save(product);
-        return mapToResponse(updatedProduct);
+        ProductResponse response = mapToResponse(updatedProduct);
+        auditLogService.log("UPDATE_PRODUCT", "Updated product: " + response.getName() + " (ID: " + response.getId() + ")");
+        return response;
     }
 
     @Override
@@ -129,6 +134,7 @@ public class ProductServiceImpl implements ProductService {
 
         // 4. Soft-delete the product itself
         productRepository.deleteById(id);
+        auditLogService.log("DELETE_PRODUCT", "Deleted product ID: " + id + " (Name: " + product.getName() + ")");
 
         try {
             webSocketEventPublisher.publishNotification("Product deleted: " + product.getName(), "PRODUCT_DELETED");
@@ -155,12 +161,14 @@ public class ProductServiceImpl implements ProductService {
                 failure++;
             }
         }
-        return BulkUploadResult.builder()
+        BulkUploadResult result = BulkUploadResult.builder()
                 .totalReceived(requests.size())
                 .successCount(success)
                 .failureCount(failure)
                 .results(results)
                 .build();
+        auditLogService.log("BULK_CREATE_PRODUCTS", "Bulk uploaded products. Success: " + success + ", Failures: " + failure);
+        return result;
     }
 
     private ProductResponse mapToResponse(Product product) {

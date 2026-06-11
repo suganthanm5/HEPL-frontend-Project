@@ -30,6 +30,7 @@ import {
   ShoppingCartRounded,
   AssessmentRounded,
   AllInclusiveRounded,
+  HistoryRounded,
 } from "@mui/icons-material";
 import { useAuth } from "../../context/AuthContext";
 import { getCookie } from "../../utils/cookieUtils";
@@ -54,6 +55,7 @@ const ALL_NAV = [
   { to: "/stock", label: "Stock", icon: <SwapHorizRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
   { to: "/orders", label: "Orders", icon: <ShoppingCartRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
   { to: "/reports", label: "Reports", icon: <AssessmentRounded />, roles: ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"] },
+  { to: "/audit-logs", label: "Audit Logs", icon: <HistoryRounded />, roles: ["ADMIN"] },
 ];
 
 const Sidebar = ({ collapsed, setCollapsed }) => {

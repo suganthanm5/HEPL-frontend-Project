@@ -186,3 +186,13 @@ CREATE INDEX idx_product_batches_status ON product_batches(status);
 CREATE INDEX idx_product_batches_expiry ON product_batches(expiry_date);
 CREATE INDEX idx_stock_transactions_type ON stock_transactions(transaction_type);
 CREATE INDEX idx_stock_transactions_outlet ON stock_transactions(outlet_id);
+
+-- Audit Logs Table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(255) NOT NULL,
+    username VARCHAR(255),
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

@@ -8,6 +8,7 @@ com\example\outletmanagement\controller\UserController.class
 com\example\outletmanagement\specification\OutletStockSpecification.class
 com\example\outletmanagement\controller\ProductController.class
 com\example\outletmanagement\payload\dto\response\UserResponse.class
+com\example\outletmanagement\specification\AuditLogSpecification.class
 com\example\outletmanagement\config\CacheConfig.class
 com\example\outletmanagement\entity\ProductBatch$ProductBatchBuilder.class
 com\example\outletmanagement\entity\StockTransaction.class
@@ -21,12 +22,14 @@ com\example\outletmanagement\payload\dto\request\LoginRequest.class
 com\example\outletmanagement\repository\ProductBatchRepository.class
 com\example\outletmanagement\payload\dto\request\OrderRequest.class
 com\example\outletmanagement\entity\Order.class
+com\example\outletmanagement\service\AuditLogService.class
 com\example\outletmanagement\payload\dto\response\OutletStockResponse$OutletStockResponseBuilder.class
 com\example\outletmanagement\payload\dto\request\UserCreationDto.class
 com\example\outletmanagement\service\OutletService.class
 com\example\outletmanagement\websocket\WebSocketEventPublisher.class
 com\example\outletmanagement\payload\dto\response\BulkUploadResult$RowResult.class
 com\example\outletmanagement\repository\OrderItemRepository.class
+com\example\outletmanagement\service\impl\AuditLogServiceImpl.class
 com\example\outletmanagement\controller\OrderController.class
 com\example\outletmanagement\payload\dto\request\StockTransferRequest.class
 com\example\outletmanagement\config\ApplicationConfig.class
@@ -52,6 +55,7 @@ com\example\outletmanagement\payload\dto\response\OutletResponse.class
 com\example\outletmanagement\config\SocketIOServerRunner.class
 com\example\outletmanagement\controller\HealthController.class
 com\example\outletmanagement\controller\ProductBatchController.class
+com\example\outletmanagement\repository\AuditLogRepository.class
 com\example\outletmanagement\service\impl\OutletStockServiceImpl.class
 com\example\outletmanagement\entity\Product.class
 com\example\outletmanagement\repository\StockTransactionRepository.class
@@ -118,6 +122,7 @@ com\example\outletmanagement\entity\StockTransaction$StockTransactionBuilder.cla
 com\example\outletmanagement\repository\OutletStockRepository.class
 com\example\outletmanagement\controller\OutletController.class
 com\example\outletmanagement\payload\dto\response\OrderResponse$OutletInfo.class
+com\example\outletmanagement\entity\AuditLog$AuditLogBuilder.class
 com\example\outletmanagement\payload\dto\request\OutletRequest$OutletMappingRequest.class
 com\example\outletmanagement\service\impl\DivisionServiceImpl.class
 com\example\outletmanagement\controller\AuthController.class
@@ -133,9 +138,11 @@ com\example\outletmanagement\service\AuthService.class
 com\example\outletmanagement\controller\ExportController.class
 com\example\outletmanagement\config\JpaAuditingConfig.class
 com\example\outletmanagement\payload\dto\response\StockTransactionResponse$StockTransactionResponseBuilder.class
+com\example\outletmanagement\entity\AuditLog.class
 com\example\outletmanagement\entity\ProductBatch.class
 com\example\outletmanagement\payload\dto\response\StockTransactionResponse.class
 com\example\outletmanagement\entity\StockTransaction$TransactionType.class
+com\example\outletmanagement\controller\AuditLogController.class
 com\example\outletmanagement\controller\ReportController.class
 com\example\outletmanagement\entity\ProductBatch$Status.class
 com\example\outletmanagement\entity\Location.class

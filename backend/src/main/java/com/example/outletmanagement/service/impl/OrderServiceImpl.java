@@ -31,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final RequestBatchRepository requestBatchRepository;
     private final WebSocketEventPublisher webSocketEventPublisher;
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
     @Override
     public Page<Order> getAllOrders(Pageable pageable) {
@@ -126,6 +127,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setItems(items);
         Order saved = orderRepository.save(order);
+        auditLogService.log("CREATE_ORDER", "Created order " + saved.getOrderNo() + " for outlet " + outlet.getOutletName() + " (ID: " + saved.getId() + ")");
 
         // Publish real-time event
         webSocketEventPublisher.publishNewOrder(
@@ -185,6 +187,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Order updated = orderRepository.save(order);
+        auditLogService.log("UPDATE_ORDER_STATUS", "Updated order " + updated.getOrderNo() + " status to " + status.name());
 
         // Publish real-time status change event
         webSocketEventPublisher.publishOrderStatusChange(
@@ -293,5 +296,6 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Cannot delete order that is not in PENDING status");
         }
         orderRepository.deleteById(id); // triggers @SQLDelete soft-delete
+        auditLogService.log("DELETE_ORDER", "Deleted order ID: " + id + " (Order No: " + order.getOrderNo() + ")");
     }
 }

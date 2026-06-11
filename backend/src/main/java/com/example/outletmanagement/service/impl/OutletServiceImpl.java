@@ -32,6 +32,7 @@ public class OutletServiceImpl implements OutletService {
     private final OutletDivisionProductRepository mappingRepository;
     private final UserRepository userRepository;
     private final WebSocketEventPublisher webSocketEventPublisher;
+    private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -67,7 +68,9 @@ public class OutletServiceImpl implements OutletService {
             }
         }
 
-        return mapToResponse(outletRepository.findByIdWithMappings(savedOutlet.getId()).orElse(savedOutlet));
+        OutletResponse response = mapToResponse(outletRepository.findByIdWithMappings(savedOutlet.getId()).orElse(savedOutlet));
+        auditLogService.log("CREATE_OUTLET", "Created outlet: " + response.getOutletName() + " (Code: " + response.getOutletCode() + ")");
+        return response;
     }
 
     @Override
@@ -135,7 +138,9 @@ public class OutletServiceImpl implements OutletService {
         }
 
         outletRepository.save(outlet);
-        return mapToResponse(outletRepository.findByIdWithMappings(id).orElse(outlet));
+        OutletResponse response = mapToResponse(outletRepository.findByIdWithMappings(id).orElse(outlet));
+        auditLogService.log("UPDATE_OUTLET", "Updated outlet: " + response.getOutletName() + " (ID: " + response.getId() + ")");
+        return response;
     }
 
     @Override
@@ -156,12 +161,14 @@ public class OutletServiceImpl implements OutletService {
                 failure++;
             }
         }
-        return BulkUploadResult.builder()
+        BulkUploadResult result = BulkUploadResult.builder()
                 .totalReceived(requests.size())
                 .successCount(success)
                 .failureCount(failure)
                 .results(results)
                 .build();
+        auditLogService.log("BULK_CREATE_OUTLETS", "Bulk created outlets. Success: " + success + ", Failures: " + failure);
+        return result;
     }
 
     @Override
@@ -171,6 +178,7 @@ public class OutletServiceImpl implements OutletService {
         Outlet outlet = outletRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Outlet not found with id: " + id));
         outletRepository.deleteById(id);
+        auditLogService.log("DELETE_OUTLET", "Deleted outlet ID: " + id + " (Name: " + outlet.getOutletName() + ")");
 
         try {
             webSocketEventPublisher.publishNotification("Outlet deleted: " + outlet.getOutletName(), "OUTLET_DELETED");

@@ -2,7 +2,6 @@ package com.example.outletmanagement.controller;
 
 import com.example.outletmanagement.entity.*;
 import com.example.outletmanagement.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/export")
-@RequiredArgsConstructor
 public class ExportController {
 
     private final OrderRepository orderRepository;
@@ -31,6 +29,28 @@ public class ExportController {
     private final com.example.outletmanagement.repository.ProductRepository productRepository;
     private final com.example.outletmanagement.repository.DivisionRepository divisionRepository;
     private final com.example.outletmanagement.repository.LocationRepository locationRepository;
+    private final AuditLogRepository auditLogRepository;
+
+    public ExportController(
+            OrderRepository orderRepository,
+            ProductBatchRepository batchRepository,
+            OutletStockRepository stockRepository,
+            com.example.outletmanagement.repository.UserRepository userRepository,
+            com.example.outletmanagement.repository.OutletRepository outletRepository,
+            com.example.outletmanagement.repository.ProductRepository productRepository,
+            com.example.outletmanagement.repository.DivisionRepository divisionRepository,
+            com.example.outletmanagement.repository.LocationRepository locationRepository,
+            AuditLogRepository auditLogRepository) {
+        this.orderRepository = orderRepository;
+        this.batchRepository = batchRepository;
+        this.stockRepository = stockRepository;
+        this.userRepository = userRepository;
+        this.outletRepository = outletRepository;
+        this.productRepository = productRepository;
+        this.divisionRepository = divisionRepository;
+        this.locationRepository = locationRepository;
+        this.auditLogRepository = auditLogRepository;
+    }
 
     // ── Orders ──────────────────────────────────────────────────────────────
     @GetMapping("/orders")
@@ -162,6 +182,22 @@ public class ExportController {
         }).toArray(String[][]::new);
         String[] headers = {"ID", "Location Name"};
         return buildResponse(format, "locations", headers, data);
+    }
+
+    // ── Audit Logs ───────────────────────────────────────────────────────────
+    @GetMapping("/audit-logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> exportAuditLogs(@RequestParam(defaultValue = "csv") String format) throws IOException {
+        List<AuditLog> logs = auditLogRepository.findAll();
+        String[][] data = logs.stream().map(al -> new String[]{
+            String.valueOf(al.getId()),
+            al.getCreatedAt() != null ? al.getCreatedAt().toString() : "",
+            al.getAction() != null ? al.getAction() : "",
+            al.getUsername() != null ? al.getUsername() : "",
+            al.getDetails() != null ? al.getDetails() : ""
+        }).toArray(String[][]::new);
+        String[] headers = {"ID", "Timestamp", "Action Code", "Username", "Activity Description"};
+        return buildResponse(format, "audit-logs", headers, data);
     }
 
     // ── Shared builder ───────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ import Unauthorized from "../pages/Unauthorized/Unauthorized";
 import NotificationPage from "../pages/NotificationPage/NotificationPage";
 import Settings from "../pages/Settings/Settings";
 import Reports from "../pages/Reports/Reports";
+import AuditLogs from "../pages/AuditLogs/AuditLogs";
 
 import MainLayout from "../components/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -77,6 +78,7 @@ const AppRoutes = () => {
       <Route path="/division" element={<RoleRoute title="Division Management" roles={["ADMIN"]}><Division /></RoleRoute>} />
       <Route path="/location" element={<RoleRoute title="Location Management" roles={["ADMIN"]}><Location /></RoleRoute>} />
       <Route path="/users" element={<RoleRoute title="User Management" roles={["ADMIN"]}><UserManagement /></RoleRoute>} />
+      <Route path="/audit-logs" element={<RoleRoute title="Audit Logs" roles={["ADMIN"]}><AuditLogs /></RoleRoute>} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />

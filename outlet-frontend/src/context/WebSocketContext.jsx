@@ -1,20 +1,3 @@
-/**
- * WebSocketContext.jsx
- *
- * Provides real-time event data to the entire app via React Context.
- *
- * Exposes:
- *   - isConnected        : boolean — WebSocket connection status
- *   - latestOrder        : last order event received
- *   - latestStockUpdate  : last stock update event received
- *   - latestAlert        : last low-stock alert received
- *   - latestNotification : last generic notification received
- *   - orderEvents        : array of recent order events (last 20)
- *   - alertEvents        : array of recent alert events (last 20)
- *
- * Usage:
- *   const { isConnected, orderEvents, latestAlert } = useWebSocketContext();
- */
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -22,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from './AuthContext';
 import { getCookie } from '../utils/cookieUtils';
 
-const WebSocketContext = createContext(null);
+const WebSocketContext = createContext(null);0
 
 export function WebSocketProvider({ children }) {
   const { subscribe, publish, isConnected, disconnect } = useWebSocket();

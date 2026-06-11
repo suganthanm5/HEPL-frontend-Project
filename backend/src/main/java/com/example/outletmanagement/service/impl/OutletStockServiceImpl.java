@@ -23,6 +23,7 @@ public class OutletStockServiceImpl implements OutletStockService {
         private final ProductRepository productRepository;
         private final ProductBatchRepository productBatchRepository;
         private final UserRepository userRepository;
+        private final com.example.outletmanagement.service.AuditLogService auditLogService;
 
         private OutletStockResponse toOutletStockResponse(OutletStock stock) {
                 return OutletStockResponse.builder()
@@ -153,6 +154,7 @@ public class OutletStockServiceImpl implements OutletStockService {
                                                 : "Transfer from outlet: " + fromOutlet.getOutletName())
                                 .build());
 
+                auditLogService.log("TRANSFER_STOCK", "Transferred " + quantity + " of product " + product.getName() + " (Batch: " + batch.getBatchNo() + ") from outlet " + fromOutlet.getOutletName() + " to outlet " + toOutlet.getOutletName());
                 return toOutletStockResponse(savedToStock);
         }
 
