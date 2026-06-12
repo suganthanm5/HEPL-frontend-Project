@@ -31,6 +31,14 @@ function App() {
       root.style.setProperty('--color-text-placeholder', isDark ? '#64748b' : '#798EAE');
       
       root.style.setProperty('--color-border-hr', newTheme.palette.divider);
+      
+      if (isDark) {
+        root.classList.add('dark-theme');
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark-theme');
+        root.classList.remove('dark');
+      }
     };
 
     const applyLanguageSetting = () => {

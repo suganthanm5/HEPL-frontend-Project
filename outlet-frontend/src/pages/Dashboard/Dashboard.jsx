@@ -176,13 +176,13 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8", fontFamily: "inherit" }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} domain={[0, dataMax => (dataMax === 0 ? 5 : dataMax)]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-hr)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-text-secondary)", fontFamily: "inherit" }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--color-text-secondary)" }} allowDecimals={false} domain={[0, dataMax => (dataMax === 0 ? 5 : dataMax)]} />
               <Tooltip
-                contentStyle={{ borderRadius: 8, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                contentStyle={{ borderRadius: 8, border: "1px solid var(--color-border-hr)", backgroundColor: "var(--color-dropdown-bg)", color: "var(--color-text-primary)", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                 formatter={(value) => [value, 'Products']}
-                cursor={{ fill: '#f8fafc' }}
+                cursor={{ fill: 'var(--color-bg-secondary)' }}
               />
               <Bar dataKey="count" name="Products" radius={[4, 4, 0, 0]} barSize={30}>
                 {(summary?.divisionStats || []).map((entry, index) => (
@@ -196,7 +196,7 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
         <SectionCard title="Division & Type Distribution" subtitle="Outlet breakdown by category" delay={260}>
           <div className="db-distribution-split">
             <div className="db-pie-mini-wrap">
-              <Typography variant="caption" sx={{ display: "block", textAlign: "center", mb: 1, fontWeight: 700, color: "#64748b", fontFamily: "inherit" }}>By Division</Typography>
+              <Typography variant="caption" sx={{ display: "block", textAlign: "center", mb: 1, fontWeight: 700, color: "text.secondary", fontFamily: "inherit" }}>By Division</Typography>
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
                   <Pie data={divisionData} innerRadius={40} outerRadius={58} paddingAngle={5} dataKey="value" stroke="none">
@@ -207,7 +207,7 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
               </ResponsiveContainer>
             </div>
             <div className="db-pie-mini-wrap">
-              <Typography variant="caption" sx={{ display: "block", textAlign: "center", mb: 1, fontWeight: 700, color: "#64748b", fontFamily: "inherit" }}>By Outlet Type</Typography>
+              <Typography variant="caption" sx={{ display: "block", textAlign: "center", mb: 1, fontWeight: 700, color: "text.secondary", fontFamily: "inherit" }}>By Outlet Type</Typography>
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
                   <Pie data={typeData} innerRadius={40} outerRadius={58} paddingAngle={5} dataKey="value" stroke="none">
@@ -277,8 +277,8 @@ function AdminDashboard({ summary, outlets, divisions, transactions, navigate, f
               </PieChart>
             </ResponsiveContainer>
             <div className="db-donut-center" style={{ position: "absolute", textAlign: "center", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
-              <span className="db-donut-val" style={{ fontSize: "24px", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{summary?.totalOrders || 0}</span>
-              <span className="db-donut-lbl" style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", marginTop: "2px" }}>Orders</span>
+              <span className="db-donut-val" style={{ fontSize: "24px", fontWeight: 800, color: "var(--color-text-primary)", lineHeight: 1 }}>{summary?.totalOrders || 0}</span>
+              <span className="db-donut-lbl" style={{ fontSize: "10px", fontWeight: 700, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px", marginTop: "2px" }}>Orders</span>
             </div>
           </div>
           <div className="db-order-insights-list">
@@ -348,9 +348,9 @@ function ManagerDashboard({ summary, outlets, transactions, navigate, filters })
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-hr)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 13 }} />
               <Area type="monotone" dataKey="revenue" name="Revenue (₹)" stroke="#6366f1" strokeWidth={2.5} fill="url(#mgRevGrad)" dot={false} />
@@ -535,10 +535,10 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
         <SectionCard title="Order Trend" subtitle="Your order activity this week" delay={220} action={filters}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f1f5f9" }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-hr)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-bg-secondary)" }} />
               <Bar dataKey="orders" name="Orders" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={32} />
             </BarChart>
           </ResponsiveContainer>

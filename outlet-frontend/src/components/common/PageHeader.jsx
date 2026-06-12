@@ -19,7 +19,7 @@ const PageHeader = ({ title, subtitle, action }) => {
           component="h1"
           sx={{
             fontWeight: 800,
-            color: '#1e1b4b',
+            color: 'text.primary',
             fontFamily: 'Space Grotesk, sans-serif',
             letterSpacing: '-0.02em',
             mb: 0.5,
@@ -34,7 +34,7 @@ const PageHeader = ({ title, subtitle, action }) => {
           <Typography
             variant="body2"
             sx={{
-              color: '#7d2ae8',
+              color: 'primary.main',
               fontFamily: 'Manrope, sans-serif',
               fontWeight: 500,
             }}

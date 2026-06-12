@@ -79,7 +79,8 @@ const ChartCard = ({ title, subtitle, action, children }) => (
   <Paper
     elevation={0}
     sx={{
-      border: "1px solid #f1f5f9",
+      border: "1px solid",
+      borderColor: "divider",
       borderRadius: "16px",
       p: { xs: 2, sm: 3 },
       height: "100%",
@@ -87,8 +88,8 @@ const ChartCard = ({ title, subtitle, action, children }) => (
       flexDirection: "column",
       transition: "all 0.3s ease",
       "&:hover": {
-        boxShadow: "0 20px 40px rgba(0,0,0,0.04)",
-        borderColor: "#e2e8f0",
+        boxShadow: (theme) => theme.palette.mode === 'dark' ? '0 20px 40px rgba(0,0,0,0.35)' : '0 20px 40px rgba(0,0,0,0.04)',
+        borderColor: "primary.light",
         transform: "translateY(-4px)"
       }
     }}
@@ -102,8 +103,8 @@ const ChartCard = ({ title, subtitle, action, children }) => (
       mb: 3
     }}>
       <Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e293b", lineHeight: 1.2 }}>{title}</Typography>
-        {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
+        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary", lineHeight: 1.2 }}>{title}</Typography>
+        {subtitle && <Typography variant="caption" sx={{ color: "text.secondary" }}>{subtitle}</Typography>}
       </Box>
       <Box sx={{
         display: "flex",
@@ -113,9 +114,9 @@ const ChartCard = ({ title, subtitle, action, children }) => (
         justifyContent: { xs: "flex-start", sm: "flex-end" }
       }}>
         {action}
-        <Box sx={{ px: 1.5, py: 0.5, bgcolor: "#f8fafc", borderRadius: 1.5, border: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>2025-10-14 - 2025-10-17</Typography>
-          <Box sx={{ width: 14, height: 14, color: "#94a3b8", display: "flex", alignItems: "center" }}><BarChartIcon sx={{ fontSize: 14 }} /></Box>
+        <Box sx={{ px: 1.5, py: 0.5, bgcolor: "action.hover", borderRadius: 1.5, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>2025-10-14 - 2025-10-17</Typography>
+          <Box sx={{ width: 14, height: 14, color: "text.secondary", display: "flex", alignItems: "center" }}><BarChartIcon sx={{ fontSize: 14 }} /></Box>
         </Box>
       </Box>
     </Box>
@@ -128,12 +129,12 @@ const ChartCard = ({ title, subtitle, action, children }) => (
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: 2, boxShadow: "0 10px 25px rgba(0,0,0,0.1)", border: "1px solid #f1f5f9" }}>
-      <Typography variant="caption" sx={{ fontWeight: 700, color: "#1e293b", display: "block", mb: 0.5 }}>{label}</Typography>
+    <Box sx={{ bgcolor: "background.paper", p: 1.5, borderRadius: 2, boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid", borderColor: "divider" }}>
+      <Typography variant="caption" sx={{ fontWeight: 700, color: "text.primary", display: "block", mb: 0.5 }}>{label}</Typography>
       {payload.map((p, i) => (
         <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: p.color }} />
-          <Typography variant="caption" sx={{ color: "#64748b" }}>{p.name}: <span style={{ fontWeight: 700, color: "#1e293b" }}>{p.value}</span></Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>{p.name}: <span style={{ fontWeight: 700, color: "var(--color-text-primary)" }}>{p.value}</span></Typography>
         </Box>
       ))}
     </Box>
@@ -143,29 +144,29 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 
 /* ── Styled Components ── */
-const GlassCard = styled(Paper)(() => ({
-  background: "#ffffff",
+const GlassCard = styled(Paper)(({ theme }) => ({
+  background: theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : theme.palette.background.paper,
   borderRadius: "20px",
-  border: "1.5px solid #e8eaf6",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+  border: `1.5px solid ${theme.palette.divider}`,
+  boxShadow: theme.palette.mode === 'dark' ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.03)",
   position: "relative",
   overflow: "hidden",
   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   "&:hover": {
     transform: "translateY(-4px)",
-    boxShadow: "0 16px 48px rgba(79,70,229,0.12)",
-    borderColor: "#c7d2fe",
+    boxShadow: theme.palette.mode === 'dark' ? "0 16px 48px rgba(0,0,0,0.5)" : "0 16px 48px rgba(79,70,229,0.12)",
+    borderColor: theme.palette.primary.main,
   },
 }));
 
-const StyledTableRow = styled(TableRow)(() => ({
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
   transition: "all 0.2s ease",
   "&:hover": {
-    backgroundColor: "#f8fafc",
-    "& td": { borderColor: "#c7d2fe" },
+    backgroundColor: theme.palette.mode === 'dark' ? 'var(--color-bg-secondary)' : "#f8fafc",
+    "& td": { borderColor: theme.palette.mode === 'dark' ? 'var(--color-border-hr)' : "#c7d2fe" },
   },
   "& td": {
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: `1px solid ${theme.palette.divider}`,
     padding: "16px 12px",
     transition: "border-color 0.2s ease",
   },
@@ -182,7 +183,7 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
       flex: 1, minWidth: 200,
       borderRadius: "18px",
       border: `1.5px solid ${accent}33`,
-      background: gradient,
+      background: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : gradient,
       p: "20px 26px",
       display: "flex", alignItems: "center", gap: 2.5,
       cursor: "default",
@@ -200,7 +201,7 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
       {icon}
     </Box>
     <Box>
-      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "#0f172a", lineHeight: 1, letterSpacing: "-0.5px" }}>
+      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "text.primary", lineHeight: 1, letterSpacing: "-0.5px" }}>
         {value}
       </Typography>
       <Typography sx={{ fontSize: 12, color: iconColor, fontWeight: 600, mt: "2px" }}>{label}</Typography>
@@ -211,15 +212,15 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
 /* ── Modal Header Icon ── */
 const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
   <DialogTitle sx={{ p: 0 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px 24px 16px", borderBottom: "1px solid #f1f5f9" }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "20px 24px 16px", borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}>
       <Box sx={{ width: 40, height: 40, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", background: `${accent}20`, color: accent, "& svg": { fontSize: 20 } }}>
         {icon}
       </Box>
       <Box sx={{ flex: 1 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b" }}>{title}</Typography>
-        {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
+        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "text.primary" }}>{title}</Typography>
+        {subtitle && <Typography variant="caption" sx={{ color: "text.secondary" }}>{subtitle}</Typography>}
       </Box>
-      <IconButton size="small" onClick={onClose} sx={{ color: "#94a3b8" }}><CloseIcon fontSize="small" /></IconButton>
+      <IconButton size="small" onClick={onClose} sx={{ color: "text.secondary" }}><CloseIcon fontSize="small" /></IconButton>
     </Box>
   </DialogTitle>
 );
@@ -567,7 +568,7 @@ const Product = () => {
 
         {/* ── Hero ── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary" }}>
             <TypingText text="Product Management" />
           </Typography>
           <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -625,7 +626,7 @@ const Product = () => {
                           width: "100%",
                           aspectRatio: "1/1",
                           borderRadius: 4,
-                          bgcolor: "#f8fafc",
+                          bgcolor: "background.default",
                           border: "2px dashed #e2e8f0",
                           display: "flex",
                           flexDirection: "column",
@@ -640,7 +641,7 @@ const Product = () => {
                             <>
                               <img src={watch("image")} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               <Box sx={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 1 }}>
-                                <IconButton size="small" component="label" sx={{ bgcolor: "rgba(255,255,255,0.9)", "&:hover": { bgcolor: "#fff" } }}>
+                                <IconButton size="small" component="label" sx={{ bgcolor: "rgba(255,255,255,0.9)", "&:hover": { bgcolor: "background.paper" } }}>
                                   <EditIcon fontSize="small" />
                                   <input type="file" hidden accept="image/*" onChange={(e) => {
                                     const file = e.target.files[0];
@@ -659,11 +660,11 @@ const Product = () => {
                             </>
                           ) : (
                             <Box sx={{ textAlign: "center", p: 3 }}>
-                              <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-                                <PhotoCameraIcon sx={{ fontSize: 32, color: "#94a3b8" }} />
+                              <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "background.paper", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                                <PhotoCameraIcon sx={{ fontSize: 32, color: "text.secondary" }} />
                               </Box>
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: "#475569" }}>Click to upload product image</Typography>
-                              <Typography variant="caption" sx={{ color: "#94a3b8" }}>PNG, JPG or GIF up to 1MB</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>Click to upload product image</Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary" }}>PNG, JPG or GIF up to 1MB</Typography>
                               <Button variant="contained" color="primary" component="label" size="small" sx={{ mt: 2, borderRadius: 2 }}>
                                 Browse Files
                                 <input type="file" hidden accept="image/*" onChange={(e) => {
@@ -715,11 +716,11 @@ const Product = () => {
                           </Grid>
                           {editModal && (
                             <Grid item xs={12} sm={6}>
-                              <TextField fullWidth label="Product Code" value={watch("productCode")} disabled sx={{ bgcolor: "#f8fafc" }} />
+                              <TextField fullWidth label="Product Code" value={watch("productCode")} disabled sx={{ bgcolor: "background.default" }} />
                             </Grid>
                           )}
                           <Grid item xs={12}>
-                            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 1, display: "block" }}>Division *</Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 1, display: "block" }}>Division *</Typography>
                             <SearchableSelect
                               options={divisions}
                               value={watch("divisionId")}
@@ -845,7 +846,7 @@ const Product = () => {
                       size="small"
                       value={trendPeriod}
                       onChange={(e) => setTrendPeriod(e.target.value)}
-                      sx={{ height: 28, fontSize: "0.7rem", bgcolor: "#fff" }}
+                      sx={{ height: 28, fontSize: "0.7rem", bgcolor: "background.paper" }}
                     >
                       <MenuItem value="Weekly">Weekly</MenuItem>
                       <MenuItem value="Monthly">Monthly</MenuItem>
@@ -923,7 +924,7 @@ const Product = () => {
                   }}
                   sx={{ minWidth: 240, flex: 1 }}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
+                    startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "text.secondary", fontSize: 18 }} /></InputAdornment>,
                     endAdornment: search ? (
                       <InputAdornment position="end">
                         <IconButton size="small" onClick={() => { setSearch(""); setActiveSearch(""); setPage(1); }}><CloseIcon fontSize="small" /></IconButton>
@@ -957,7 +958,7 @@ const Product = () => {
 
                   {(divisionFilter || priceRangeFilter || search) && (
                     <Button size="small" variant="outlined" color="inherit"
-                      sx={{ color: "#64748b", borderColor: "#e2e8f0", height: 40 }}
+                      sx={{ color: "text.secondary", borderColor: "#e2e8f0", height: 40 }}
                       onClick={() => { setDivisionFilter(""); setPriceRangeFilter(""); setSearch(""); setPage(1); }}>
                       Clear
                     </Button>
@@ -967,13 +968,13 @@ const Product = () => {
                 {/* Show entries + View toggle */}
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ ml: { md: "auto" } }}>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="body2" sx={{ color: "#64748b", whiteSpace: "nowrap" }}>Show</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>Show</Typography>
                     <FormControl size="small" sx={{ minWidth: 72 }}>
                       <Select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
                         {PAGE_SIZES.map((n) => <MenuItem key={n} value={n}>{n}</MenuItem>)}
                       </Select>
                     </FormControl>
-                    <Typography variant="body2" sx={{ color: "#64748b" }}>entries</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>entries</Typography>
                   </Stack>
 
                   <ToggleButtonGroup size="small" value={view} exclusive onChange={(_, v) => v && setView(v)}
@@ -1009,7 +1010,7 @@ const Product = () => {
                       <TableRow>
                         <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-                            <Box sx={{ width: 60, height: 60, borderRadius: "18px", bgcolor: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Box sx={{ width: 60, height: 60, borderRadius: "18px", bgcolor: "background.default", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <Inventory2Icon sx={{ fontSize: 30, color: "#cbd5e1" }} />
                             </Box>
                             <Typography color="text.secondary" sx={{ fontWeight: 600 }}>{activeSearch ? "No products match your search" : "No products yet"}</Typography>
@@ -1026,19 +1027,19 @@ const Product = () => {
                     ) : (
                       paginated.map((p, i) => (
                         <StyledTableRow key={p.id}>
-                          <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontSize: "12px" }}>{(page - 1) * pageSize + i + 1}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "12px" }}>{(page - 1) * pageSize + i + 1}</TableCell>
                           <TableCell>
                             <Avatar
                               variant="rounded"
                               src={p.image}
-                              sx={{ width: 40, height: 40, bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px" }}
+                              sx={{ width: 40, height: 40, bgcolor: "background.default", border: "1px solid #e2e8f0", borderRadius: "10px" }}
                             >
-                              <Typography variant="body2" sx={{ fontWeight: 800, color: "#94a3b8" }}>{p.name?.charAt(0).toUpperCase()}</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 800, color: "text.secondary" }}>{p.name?.charAt(0).toUpperCase()}</Typography>
                             </Avatar>
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b", fontSize: "13.5px" }}>{p.name}</Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", fontSize: "13.5px" }}>{p.name}</Typography>
                             </Box>
                           </TableCell>
                           <TableCell>
@@ -1047,14 +1048,14 @@ const Product = () => {
                           </TableCell>
                           <TableCell>
                             {p.productCode
-                              ? <Box sx={{ display: "inline-block", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "7px", px: "8px", py: "2px", fontFamily: "monospace", fontSize: "11.5px", color: "#475569", fontWeight: 700 }}>{p.productCode}</Box>
+                              ? <Box sx={{ display: "inline-block", bgcolor: "background.default", border: "1px solid #e2e8f0", borderRadius: "7px", px: "8px", py: "2px", fontFamily: "monospace", fontSize: "11.5px", color: "text.secondary", fontWeight: 700 }}>{p.productCode}</Box>
                               : "—"}
                           </TableCell>
                           {[p.uimPrice, p.mrp].map((v, idx) => (
-                            <TableCell key={idx} sx={{ fontWeight: 600, color: "#64748b", fontSize: "13px" }}>{fmt(v)}</TableCell>
+                            <TableCell key={idx} sx={{ fontWeight: 600, color: "text.secondary", fontSize: "13px" }}>{fmt(v)}</TableCell>
                           ))}
                           <TableCell sx={{ fontWeight: 700, color: "#10b981", fontSize: "13.5px" }}>{fmt(p.sellingPrice)}</TableCell>
-                          <TableCell sx={{ fontWeight: 600, color: "#64748b", fontSize: "13px" }}>{fmt(p.purchasePrice)}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: "13px" }}>{fmt(p.purchasePrice)}</TableCell>
                           <TableCell>
                             <Box sx={{
                               display: "inline-flex", alignItems: "center", gap: 0.5,
@@ -1140,22 +1141,22 @@ const Product = () => {
                           <Avatar
                             variant="rounded"
                             src={p.image}
-                            sx={{ width: "100%", height: 180, bgcolor: "#f8fafc", borderRadius: 3, fontSize: "3rem", border: "1px solid #f1f5f9" }}
+                            sx={{ width: "100%", height: 180, bgcolor: "background.default", borderRadius: 3, fontSize: "3rem", border: "1px solid #f1f5f9" }}
                           >
                             {p.name?.charAt(0).toUpperCase()}
                           </Avatar>
-                          <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "#94a3b8", fontWeight: 600, backdropFilter: "blur(4px)" }}>#{(page - 1) * pageSize + i + 1}</Typography>
+                          <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "text.secondary", fontWeight: 600, backdropFilter: "blur(4px)" }}>#{(page - 1) * pageSize + i + 1}</Typography>
                         </Box>
-                        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b", mb: 0.75 }}>{p.name}</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "text.primary", mb: 0.75 }}>{p.name}</Typography>
                         <Stack direction="row" spacing={0.75} flexWrap="wrap" sx={{ mb: 1.5 }}>
                           <Chip label={divNameOf(p)} size="small" sx={{ bgcolor: "#f0fdf4", color: "#16a34a", fontWeight: 600, fontSize: "0.7rem" }} />
-                          {p.productCode && <Chip label={p.productCode} size="small" sx={{ bgcolor: "#f8fafc", color: "#475569", fontFamily: "monospace", fontSize: "0.7rem" }} />}
+                          {p.productCode && <Chip label={p.productCode} size="small" sx={{ bgcolor: "background.default", color: "text.secondary", fontFamily: "monospace", fontSize: "0.7rem" }} />}
                         </Stack>
                         <Divider sx={{ mb: 1.5 }} />
                         <Stack spacing={0.5} sx={{ mb: 2 }}>
                           {[["MRP", fmt(p.mrp), "#475569"], ["Selling", fmt(p.sellingPrice), "#10b981"], ["Purchase", fmt(p.purchasePrice), "#475569"]].map(([label, val, color]) => (
                             <Box key={label} sx={{ display: "flex", justifyContent: "space-between" }}>
-                              <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>{label}</Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>{label}</Typography>
                               <Typography variant="caption" sx={{ fontWeight: 700, color }}>₹{val}</Typography>
                             </Box>
                           ))}
@@ -1178,7 +1179,7 @@ const Product = () => {
             {/* ── Pagination ── */}
             {!loading && totalElements > 0 && (
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, flexWrap: "wrap", gap: 1 }}>
-                <Typography variant="body2" sx={{ color: "#64748b" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
                 </Typography>
                 <Pagination
@@ -1202,7 +1203,7 @@ const Product = () => {
           <ModalIconHeader icon={<WarningAmberIcon />} title="Delete Product" subtitle="This action cannot be undone" accent="#ef4444"
             onClose={() => setDeleteModal(null)} />
           <DialogContent sx={{ pt: 2 }}>
-            <Typography variant="body2" sx={{ color: "#475569" }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Are you sure you want to delete <strong>"{deleteModal?.name}"</strong>?
             </Typography>
             <Typography variant="caption" sx={{ color: "#ef4444", mt: 0.5, display: "block" }}>
@@ -1227,7 +1228,7 @@ const Product = () => {
               <Avatar
                 variant="rounded"
                 src={viewModal?.image}
-                sx={{ width: 120, height: 120, bgcolor: "#f8fafc", border: "1px solid #f1f5f9", fontSize: "3rem" }}
+                sx={{ width: 120, height: 120, bgcolor: "background.default", border: "1px solid #f1f5f9", fontSize: "3rem" }}
               >
                 {viewModal?.name?.charAt(0).toUpperCase()}
               </Avatar>
@@ -1243,14 +1244,14 @@ const Product = () => {
                 ["Purchase Price", `₹${fmt(viewModal.purchasePrice)}`],
               ].map(([label, val]) => (
                 <Box key={label} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 0.5, borderBottom: "1px solid #f1f5f9" }}>
-                  <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b" }}>{val}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>{val}</Typography>
                 </Box>
               ))}
             </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-            <Button variant="outlined" color="inherit" sx={{ color: "#64748b", borderColor: "#e2e8f0" }}
+            <Button variant="outlined" color="inherit" sx={{ color: "text.secondary", borderColor: "#e2e8f0" }}
               onClick={() => setViewModal(null)}>Close</Button>
             <Button variant="contained" color="info" startIcon={<EditIcon />}
               onClick={() => { setViewModal(null); openEdit(viewModal); }}>

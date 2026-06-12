@@ -81,6 +81,9 @@ export const getTheme = () => {
     components: {
       MuiCssBaseline: {
         styleOverrides: `
+          html {
+            font-size: ${htmlFontSize}px !important;
+          }
           body {
             background-color: ${isDark ? "#0f172a" : "#f8fafc"};
             -webkit-font-smoothing: antialiased;

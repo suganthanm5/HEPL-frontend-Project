@@ -56,16 +56,16 @@ const CustomPieLegend = ({ data, colors }) => {
 // Reusable StatCard inline
 const StatCard = ({ label, value, icon, iconBg, iconColor }) => (
   <Paper elevation={0} sx={{
-    p: 2, borderRadius: "12px", border: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 2,
-    background: "#ffffff", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.04)", transition: "all 0.2s",
-    "&:hover": { borderColor: "#e2e8f0", transform: "translateY(-2px)" }
+    p: 2, borderRadius: "12px", border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2,
+    bgcolor: "background.paper", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.04)", transition: "all 0.2s",
+    "&:hover": { borderColor: "primary.light", transform: "translateY(-2px)" }
   }}>
-    <Box sx={{ p: 1.5, borderRadius: "10px", background: iconBg, color: iconColor, display: "flex" }}>
+    <Box sx={{ p: 1.5, borderRadius: "10px", background: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-secondary)' : iconBg, color: iconColor, display: "flex" }}>
       {icon}
     </Box>
     <Box>
-      <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.02em" }}>{label}</Typography>
-      <Typography sx={{ fontSize: "24px", fontWeight: 900, color: "#0f172a", lineHeight: 1.2 }}>{value || 0}</Typography>
+      <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.02em" }}>{label}</Typography>
+      <Typography sx={{ fontSize: "24px", fontWeight: 900, color: "text.primary", lineHeight: 1.2 }}>{value || 0}</Typography>
     </Box>
   </Paper>
 );
@@ -73,14 +73,14 @@ const StatCard = ({ label, value, icon, iconBg, iconColor }) => (
 // Reusable PremiumCard inline
 const PremiumCard = ({ title, subtitle, icon, children }) => (
   <Paper elevation={0} sx={{
-    background: "#ffffff", borderRadius: "12px", border: "1px solid #f1f5f9",
+    bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider",
     boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.04)", display: "flex", flexDirection: "column", overflow: "hidden"
   }}>
-    <Box sx={{ p: 2, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ color: "#3b82f6", display: "flex" }}>{icon}</Box>
+    <Box sx={{ p: 2, borderBottom: "1px solid", borderBottomColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ color: "primary.main", display: "flex" }}>{icon}</Box>
       <Box>
-        <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>{title}</Typography>
-        <Typography sx={{ fontSize: "14px", color: "#64748b" }}>{subtitle}</Typography>
+        <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "text.primary" }}>{title}</Typography>
+        <Typography sx={{ fontSize: "14px", color: "text.secondary" }}>{subtitle}</Typography>
       </Box>
     </Box>
     <Box sx={{ p: 2, flex: 1 }}>{children}</Box>
@@ -176,19 +176,20 @@ export default function Reports() {
 
       {/* ── Compact Interactive Download Center ──────────────────────────────── */}
       <Paper elevation={0} sx={{
-        background: "linear-gradient(135deg, #ffffff, #fcfdff)", borderRadius: "12px", border: "1px solid #f1f5f9",
+        background: (theme) => theme.palette.mode === 'dark' ? 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.05))' : 'linear-gradient(135deg, #ffffff, #fcfdff)',
+        borderRadius: "12px", border: "1px solid", borderColor: "divider",
         boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.04)", p: { xs: 1.5, sm: 2 }, mb: 3
       }}>
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1.5, mb: 2, pb: 1.5, borderBottom: "1px solid #f1f5f9" }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1.5, mb: 2, pb: 1.5, borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}>
           <Box>
-            <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "text.primary", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 1 }}>
               <TableChartRounded sx={{ color: "#10b981", fontSize: 20 }} /> Report Export Hub
             </Typography>
             <Typography sx={{ fontSize: "14px", color: "#64748b", mt: 0.5 }}>
               Select a module ledger to export {userRole === "ADMIN" ? "full system database registers" : "your outlet's registers"} to Excel sheets.
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, bgcolor: "#ecfdf5", color: "#10b981", px: 1.5, py: 0.5, borderRadius: "12px", alignSelf: { xs: "flex-start", sm: "auto" } }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-secondary)' : "#ecfdf5", color: "#10b981", px: 1.5, py: 0.5, borderRadius: "12px", alignSelf: { xs: "flex-start", sm: "auto" } }}>
             <CheckCircleRounded sx={{ fontSize: 16 }} />
             <Typography sx={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>Live Synced</Typography>
           </Box>
@@ -198,18 +199,18 @@ export default function Reports() {
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 2 }}>
           {downloadReports.map((r) => (
             <Box key={r.type} sx={{
-              background: "#ffffff", borderRadius: "8px", border: "1px solid #f1f5f9", p: "12px",
+              bgcolor: "background.paper", borderRadius: "8px", border: "1px solid", borderColor: "divider", p: "12px",
               display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 96,
-              transition: "all 150ms ease", "&:hover": { borderColor: "#3b82f644", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)", transform: "translateY(-2px)" }
+              transition: "all 150ms ease", "&:hover": { borderColor: "primary.light", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.02)", transform: "translateY(-2px)" }
             }}>
               <Box>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                  <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "#0f172a" }}>{r.label}</Typography>
-                  <Box sx={{ bgcolor: "#f8fafc", border: "1px solid #e2e8f0", color: "#64748b", fontSize: "12px", fontWeight: 700, px: 1, py: 0.25, borderRadius: "4px" }}>
+                  <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "text.primary" }}>{r.label}</Typography>
+                  <Box sx={{ bgcolor: "action.hover", border: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "12px", fontWeight: 700, px: 1, py: 0.25, borderRadius: "4px" }}>
                     XLSX
                   </Box>
                 </Box>
-                <Typography sx={{ fontSize: "14px", color: "#64748b", lineHeight: 1.3 }}>{r.desc}</Typography>
+                <Typography sx={{ fontSize: "14px", color: "text.secondary", lineHeight: 1.3 }}>{r.desc}</Typography>
               </Box>
 
               <Button
@@ -254,22 +255,22 @@ export default function Reports() {
                 <PieChart>
                   <Pie data={divisionData.length > 0 ? divisionData : [{ name: "No Categories", value: 1 }]} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={divisionData.length > 0 ? 2.5 : 0} dataKey="value">
                     {divisionData.length > 0
-                      ? divisionData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="#ffffff" strokeWidth={1.5} />)
-                      : <Cell fill="#f1f5f9" stroke="#ffffff" strokeWidth={1.5} />
+                      ? divisionData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="var(--color-bg-sidebar)" strokeWidth={1.5} />)
+                      : <Cell fill="var(--color-bg-secondary)" stroke="var(--color-bg-sidebar)" strokeWidth={1.5} />
                     }
                   </Pie>
                   {divisionData.length > 0 && <ReTooltip content={<CustomTooltip />} />}
                 </PieChart>
               </ResponsiveContainer>
               <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center", pointerEvents: "none" }}>
-                <Typography sx={{ fontSize: "24px", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{totalProducts}</Typography>
-                <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", mt: 0.5 }}>Products</Typography>
+                <Typography sx={{ fontSize: "24px", fontWeight: 900, color: "text.primary", lineHeight: 1 }}>{totalProducts}</Typography>
+                <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", mt: 0.5 }}>Products</Typography>
               </Box>
             </Box>
             {divisionData.length > 0 ? (
               <CustomPieLegend data={divisionData} colors={CHART_COLORS} />
             ) : (
-              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#cbd5e1", textAlign: "center", mt: 2, textTransform: "uppercase" }}>No Categories Registered</Typography>
+              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "text.secondary", textAlign: "center", mt: 2, textTransform: "uppercase" }}>No Categories Registered</Typography>
             )}
           </Box>
         </PremiumCard>
@@ -282,8 +283,8 @@ export default function Reports() {
                 <PieChart>
                   <Pie data={orderStatusData.length > 0 ? orderStatusData : [{ name: "No Orders", value: 1 }]} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={orderStatusData.length > 0 ? 2.5 : 0} dataKey="value">
                     {orderStatusData.length > 0
-                      ? orderStatusData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 3) % CHART_COLORS.length]} stroke="#ffffff" strokeWidth={1.5} />)
-                      : <Cell fill="#f1f5f9" stroke="#ffffff" strokeWidth={1.5} />
+                      ? orderStatusData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 3) % CHART_COLORS.length]} stroke="var(--color-bg-sidebar)" strokeWidth={1.5} />)
+                      : <Cell fill="var(--color-bg-secondary)" stroke="var(--color-bg-sidebar)" strokeWidth={1.5} />
                     }
                   </Pie>
                   {orderStatusData.length > 0 && <ReTooltip content={<CustomTooltip />} />}
@@ -296,7 +297,7 @@ export default function Reports() {
             {orderStatusData.length > 0 ? (
               <CustomPieLegend data={orderStatusData} colors={CHART_COLORS.slice(3).concat(CHART_COLORS.slice(0, 3))} />
             ) : (
-              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#cbd5e1", textAlign: "center", mt: 2, textTransform: "uppercase" }}>No Orders Registered</Typography>
+              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "text.secondary", textAlign: "center", mt: 2, textTransform: "uppercase" }}>No Orders Registered</Typography>
             )}
           </Box>
         </PremiumCard>
@@ -309,8 +310,8 @@ export default function Reports() {
                 <PieChart>
                   <Pie data={stockHealthData.length > 0 ? stockHealthData : [{ name: "No Stock", value: 1 }]} cx="50%" cy="50%" innerRadius="55%" outerRadius="80%" paddingAngle={stockHealthData.length > 0 ? 2.5 : 0} dataKey="value">
                     {stockHealthData.length > 0
-                      ? stockHealthData.map((_, i) => <Cell key={i} fill={i === 0 && d.lowStockCount > 0 ? "#f43f5e" : "#10b981"} stroke="#ffffff" strokeWidth={1.5} />)
-                      : <Cell fill="#f1f5f9" stroke="#ffffff" strokeWidth={1.5} />
+                      ? stockHealthData.map((_, i) => <Cell key={i} fill={i === 0 && d.lowStockCount > 0 ? "#f43f5e" : "#10b981"} stroke="var(--color-bg-sidebar)" strokeWidth={1.5} />)
+                      : <Cell fill="var(--color-bg-secondary)" stroke="var(--color-bg-sidebar)" strokeWidth={1.5} />
                     }
                   </Pie>
                   {stockHealthData.length > 0 && <ReTooltip content={<CustomTooltip />} />}
@@ -323,7 +324,7 @@ export default function Reports() {
             {stockHealthData.length > 0 ? (
               <CustomPieLegend data={stockHealthData} colors={d.lowStockCount > 0 ? ["#f43f5e", "#10b981"] : ["#10b981"]} />
             ) : (
-              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#cbd5e1", textAlign: "center", mt: 2, textTransform: "uppercase" }}>No Stock Data</Typography>
+              <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "text.secondary", textAlign: "center", mt: 2, textTransform: "uppercase" }}>No Stock Data</Typography>
             )}
           </Box>
         </PremiumCard>

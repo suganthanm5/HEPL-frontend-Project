@@ -7,7 +7,7 @@ import {
   TableHead, TableRow, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Select,
   MenuItem, FormControl, Tooltip, CircularProgress,
-  Snackbar, Alert, Chip, Paper, Grid, Stack, Pagination, FormHelperText
+  Snackbar, Alert, Chip, Paper, Grid, Stack, Pagination, FormHelperText, useTheme
 } from "@mui/material";
 import {
   PersonAddRounded, SearchRounded, EditRounded,
@@ -32,6 +32,17 @@ const ROLE_META = {
   USER: { label: "User", cls: "user", color: "#16a34a", bg: "#dcfce7", Icon: PersonRounded },
 };
 
+const getRoleMeta = (role, isDark) => {
+  const meta = ROLE_META[role] || ROLE_META.USER;
+  if (isDark) {
+    if (role === "ADMIN") return { ...meta, bg: "rgba(125, 42, 232, 0.2)", color: "#c084fc" };
+    if (role === "MANAGER") return { ...meta, bg: "rgba(2, 132, 199, 0.2)", color: "#60a5fa" };
+    if (role === "OUTLET_MANAGER") return { ...meta, bg: "rgba(14, 165, 233, 0.2)", color: "#38bdf8" };
+    return { ...meta, bg: "rgba(22, 163, 74, 0.2)", color: "#4ade80" };
+  }
+  return meta;
+};
+
 const ROLES = ["ADMIN", "MANAGER", "OUTLET_MANAGER", "USER"];
 
 
@@ -43,6 +54,8 @@ const emptyForm = { name: "", username: "", email: "", password: "", roles: ["US
 const UserManagement = () => {
   const navigate = useNavigate();
   const { user: currentUser, impersonate } = useAuth();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [users, setUsers] = useState([]);
   const [outlets, setOutlets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -287,21 +300,21 @@ const UserManagement = () => {
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={5} sx={{ display: "flex" }}>
-                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+                  <Box sx={{ p: 4, bgcolor: "background.default", borderRadius: 4, border: "1px solid", borderColor: "divider", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                     <Avatar sx={{ width: 120, height: 120, mb: 2, background: "linear-gradient(135deg, #7d2ae8, #a855f7)", fontSize: "3rem", fontWeight: 700, boxShadow: "0 8px 16px rgba(125,42,232,0.2)" }}>
                       {initials(dialog.data.name || dialog.data.username)}
                     </Avatar>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit" }}>
                       {dialog.data.name || "New User"}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b", mb: 3 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
                       @{dialog.data.username || "username"}
                     </Typography>
                     <Chip
-                      label={ROLE_META[dialog.data.role || "USER"].label}
+                      label={getRoleMeta(dialog.data.role || "USER", isDark).label}
                       sx={{
-                        bgcolor: ROLE_META[dialog.data.role || "USER"].bg,
-                        color: ROLE_META[dialog.data.role || "USER"].color,
+                        bgcolor: getRoleMeta(dialog.data.role || "USER", isDark).bg,
+                        color: getRoleMeta(dialog.data.role || "USER", isDark).color,
                         fontWeight: 700,
                         fontFamily: "inherit"
                       }}
@@ -317,8 +330,8 @@ const UserManagement = () => {
           {/* Stat Cards */}
           <Box className="stat-cards-row">
             <Box className="stat-card stat-indigo">
-              <Box className="stat-card-icon" sx={{ background: "#f5f0ff" }}>
-                <PeopleRounded sx={{ color: "#7d2ae8", fontSize: 22 }} />
+              <Box className="stat-card-icon" sx={{ background: isDark ? "rgba(125, 42, 232, 0.2)" : "#f5f0ff" }}>
+                <PeopleRounded sx={{ color: isDark ? "#c084fc" : "#7d2ae8", fontSize: 22 }} />
               </Box>
               <Box>
                 <Typography className="stat-card-value">{users.length}</Typography>
@@ -326,7 +339,7 @@ const UserManagement = () => {
               </Box>
             </Box>
             {ROLES.map((r) => {
-              const meta = ROLE_META[r];
+              const meta = getRoleMeta(r, isDark);
               const theme = r === "ADMIN" ? "purple" : r === "MANAGER" ? "blue" : "green";
               return (
                 <Box className={`stat-card stat-${theme}`} key={r}>
@@ -345,17 +358,17 @@ const UserManagement = () => {
           {/* Table */}
           <Box className="table-card">
             <Box className="table-toolbar">
-              <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>
+              <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit" }}>
                 All Users
               </Typography>
               <ExportMenu getData={() => formatUserData(filtered)} filename="users" title="User Report" backendType="users" />
               <Box className="table-search">
-                <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
+                <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
                 <InputBase
                   placeholder="Search users…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b" }}
+                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }}
                 />
               </Box>
             </Box>
@@ -388,25 +401,25 @@ const UserManagement = () => {
                     filtered.map((u) => {
                       const meta = ROLE_META[u.role] || ROLE_META.USER;
                       return (
-                        <TableRow key={u.id} hover sx={{ "&:hover": { background: "#faf5ff" } }}>
+                        <TableRow key={u.id} hover sx={{ "&:hover": { background: "action.hover" } }}>
                           <TableCell sx={{ py: 1.5 }}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <Avatar sx={{ width: 34, height: 34, background: `linear-gradient(135deg, ${meta.color}, #a855f7)`, fontSize: "0.8rem", fontWeight: 700 }}>
                                 {initials(u.name || u.username)}
                               </Avatar>
-                              <Typography sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>
+                              <Typography sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>
                                 {u.name || u.username}
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{u.username}</TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{u.email}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{u.username}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{u.email}</TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                               <Chip
                                 size="small"
                                 label={meta.label}
-                                sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 600, fontFamily: "inherit", borderRadius: "8px" }}
+                                sx={{ bgcolor: getRoleMeta(u.role, isDark).bg, color: getRoleMeta(u.role, isDark).color, fontWeight: 600, fontFamily: "inherit", borderRadius: "8px" }}
                               />
                             </Box>
                           </TableCell>
@@ -427,16 +440,17 @@ const UserManagement = () => {
                                   size="small"
                                   label={outletName}
                                   sx={{
-                                    bgcolor: "#f8fafc",
-                                    color: "#334155",
+                                    bgcolor: "background.default",
+                                    color: "text.primary",
                                     fontWeight: 600,
                                     fontFamily: "inherit",
                                     borderRadius: "8px",
-                                    border: "1px solid #cbd5e1"
+                                    border: "1px solid",
+                                    borderColor: "divider"
                                   }}
                                 />
                               ) : (
-                                <Typography sx={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic", fontFamily: "inherit" }}>
+                                <Typography sx={{ color: "text.secondary", fontSize: "0.85rem", fontStyle: "italic", fontFamily: "inherit" }}>
                                   Not Assigned
                                 </Typography>
                               );
@@ -473,9 +487,9 @@ const UserManagement = () => {
             </TableContainer>
           </Box>
           {/* Pagination */}
-          {!loading && totalElements > 0 && (
+           {!loading && totalElements > 0 && (
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, flexWrap: "wrap", gap: 1 }}>
-              <Typography variant="body2" sx={{ color: "#64748b" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Showing <strong>{totalElements === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalElements)}</strong> of <strong>{totalElements}</strong> entries
               </Typography>
               <Pagination
@@ -496,15 +510,15 @@ const UserManagement = () => {
 
       {/* Delete Confirm Dialog */}
       <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null, name: "" })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "text.primary" }}>Confirm Delete</DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontFamily: "inherit", color: "#64748b", fontSize: "0.9rem" }}>
+          <Typography sx={{ fontFamily: "inherit", color: "text.secondary", fontSize: "0.9rem" }}>
             Are you sure you want to delete <strong>{delDialog.name}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <Button variant="outlined" color="inherit" onClick={() => setDelDialog({ open: false, id: null, name: "" })}
-            sx={{ borderRadius: 2, color: "#64748b", borderColor: "#e2e8f0" }}>
+            sx={{ borderRadius: 2, color: "text.secondary", borderColor: "divider" }}>
             Cancel
           </Button>
           <Button variant="contained" color="error" onClick={handleDelete}

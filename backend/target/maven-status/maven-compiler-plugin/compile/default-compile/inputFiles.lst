@@ -8,6 +8,7 @@ C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\e
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\config\ApplicationConfig.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\RedisCacheController.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\LocationService.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\EmailService.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\DivisionController.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\repository\RequestBatchRepository.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\exception\ResourceAlreadyExistsException.java

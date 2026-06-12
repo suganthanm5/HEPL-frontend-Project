@@ -29,6 +29,8 @@ import {
   AccountTreeRounded,
   KeyboardArrowDownRounded,
   WarningAmberRounded,
+  LightModeRounded,
+  DarkModeRounded,
 } from "@mui/icons-material";
 import ModernProfileDrawer from "../ProfileDrawer/ModernProfileDrawer";
 import TypingText from "../TypingText";
@@ -47,6 +49,30 @@ import "./Navbar.css";
 const Navbar = ({ title = "Dashboard" }) => {
   const navigate = useNavigate();
   const searchRef = useRef(null);
+
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDark(localStorage.getItem("darkMode") === "true");
+    };
+    window.addEventListener("settingsUpdated", handleThemeChange);
+    window.addEventListener("storage", handleThemeChange);
+    return () => {
+      window.removeEventListener("settingsUpdated", handleThemeChange);
+      window.removeEventListener("storage", handleThemeChange);
+    };
+  }, []);
+
+  const toggleTheme = () => {
+    const newValue = !isDark;
+    localStorage.setItem("darkMode", String(newValue));
+    setIsDark(newValue);
+    window.dispatchEvent(new Event("settingsUpdated"));
+    window.dispatchEvent(new Event("storage"));
+  };
 
   /* Helper to load user profile dynamically */
   const loadUserFromCookie = () => {
@@ -329,7 +355,7 @@ const Navbar = ({ title = "Dashboard" }) => {
         <Box className="navbar-left" sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {title === 'Dashboard' || title === 'Dashboard ' ? (
             <>
-              <Typography sx={{ fontSize: '1.3rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.2, minHeight: '1.5rem' }}>
+              <Typography sx={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--color-text-primary)', lineHeight: 1.2, minHeight: '1.5rem' }}>
                 <TypingText text={`Hi, ${user.name || "User"}`} delay={40} startDelay={100} />
               </Typography>
               <Typography sx={{ fontSize: '0.9rem', color: '#8b5cf6', fontWeight: 500, mt: 0.3, minHeight: '1.35rem' }}>
@@ -337,7 +363,7 @@ const Navbar = ({ title = "Dashboard" }) => {
               </Typography>
             </>
           ) : (
-            <Typography className="nb-page" sx={{ fontSize: '1.3rem', fontWeight: 700, color: '#1e293b' }}>
+            <Typography className="nb-page" sx={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
               {title}
             </Typography>
           )}
@@ -348,6 +374,22 @@ const Navbar = ({ title = "Dashboard" }) => {
 
         {/* RIGHT */}
         <Box className="navbar-right">
+
+          {/* Theme Toggle Button */}
+          <Tooltip title={isDark ? "Light Mode" : "Dark Mode"} placement="bottom">
+            <IconButton
+              className="navbar-icon-btn"
+              onClick={toggleTheme}
+              sx={{
+                color: "var(--color-text-placeholder)",
+                "&:hover": {
+                  color: "#7C3AED",
+                }
+              }}
+            >
+              {isDark ? <LightModeRounded sx={{ fontSize: 20 }} /> : <DarkModeRounded sx={{ fontSize: 20 }} />}
+            </IconButton>
+          </Tooltip>
 
           {/* Notification bell */}
           <Box className="navbar-notif-wrap">
@@ -467,7 +509,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <PersonRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "inherit", color: "#334155" }}>
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "inherit", color: "var(--color-text-primary)" }}>
                         My Profile
                       </Typography>
                     </ListItemButton>
@@ -478,7 +520,7 @@ const Navbar = ({ title = "Dashboard" }) => {
                       <ListItemIcon className="udm-icon" sx={{ minWidth: 30 }}>
                         <SettingsRounded sx={{ fontSize: 18 }} />
                       </ListItemIcon>
-                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "inherit", color: "#334155" }}>
+                      <Typography sx={{ fontSize: "13.5px", fontWeight: 500, fontFamily: "inherit", color: "var(--color-text-primary)" }}>
                         Settings
                       </Typography>
                     </ListItemButton>

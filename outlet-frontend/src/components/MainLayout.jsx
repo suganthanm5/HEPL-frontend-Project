@@ -6,7 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import './MainLayout.css';
 
 const MainLayout = ({ children, title = 'Dashboard' }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    return localStorage.getItem('sidebarCollapsed') === 'true';
+  });
   const { isImpersonating, user, stopImpersonating } = useAuth();
 
   // On small screens start collapsed (hidden)
@@ -17,6 +19,19 @@ const MainLayout = ({ children, title = 'Dashboard' }) => {
     handle();
     window.addEventListener('resize', handle);
     return () => window.removeEventListener('resize', handle);
+  }, []);
+
+  // Listen to sidebar collapse changes from settings or other pages
+  useEffect(() => {
+    const handleSettings = () => {
+      setCollapsed(localStorage.getItem('sidebarCollapsed') === 'true');
+    };
+    window.addEventListener('settingsUpdated', handleSettings);
+    window.addEventListener('storage', handleSettings);
+    return () => {
+      window.removeEventListener('settingsUpdated', handleSettings);
+      window.removeEventListener('storage', handleSettings);
+    };
   }, []);
 
   return (

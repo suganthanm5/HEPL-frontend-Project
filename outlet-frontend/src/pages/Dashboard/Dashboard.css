@@ -33,6 +33,143 @@
   --db-font-mono: 'DM Mono', 'Fira Code', monospace;
 }
 
+/* ── Dark Mode Overrides ────────────────── */
+.dark-theme, .dark {
+  --db-indigo-soft: rgba(99, 102, 241, 0.15);
+  --db-blue-soft: rgba(59, 130, 246, 0.15);
+  --db-green-soft: rgba(16, 185, 129, 0.15);
+  --db-orange-soft: rgba(245, 158, 11, 0.15);
+  --db-rose-soft: rgba(239, 68, 68, 0.15);
+  --db-purple-soft: rgba(168, 85, 247, 0.15);
+  --db-bg: var(--color-bg-primary);
+  --db-surface: var(--color-bg-sidebar);
+  --db-border: var(--color-border-hr);
+  --db-text-primary: var(--color-text-primary);
+  --db-text-sec: var(--color-text-secondary);
+  --db-text-muted: var(--color-text-placeholder);
+}
+
+.dark-theme .db-stat-indigo .db-stat-value,
+.dark-theme .db-stat-blue .db-stat-value,
+.dark-theme .db-stat-green .db-stat-value,
+.dark-theme .db-stat-orange .db-stat-value,
+.dark-theme .db-stat-rose .db-stat-value,
+.dark-theme .db-stat-purple .db-stat-value,
+.dark-theme .db-stat-indigo .db-stat-label,
+.dark-theme .db-stat-blue .db-stat-label,
+.dark-theme .db-stat-green .db-stat-label,
+.dark-theme .db-stat-orange .db-stat-label,
+.dark-theme .db-stat-rose .db-stat-label,
+.dark-theme .db-stat-purple .db-stat-label,
+.dark-theme .db-table td strong,
+.dark-theme .db-table td,
+.dark-theme .db-card-title {
+  color: var(--color-text-primary) !important;
+}
+
+.dark-theme .db-table th,
+.dark-theme .db-card-subtitle,
+.dark-theme .db-stat-indigo .db-stat-sub,
+.dark-theme .db-stat-blue .db-stat-sub,
+.dark-theme .db-stat-green .db-stat-sub,
+.dark-theme .db-stat-orange .db-stat-sub,
+.dark-theme .db-stat-rose .db-stat-sub,
+.dark-theme .db-stat-purple .db-stat-sub {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark-theme .db-table tbody tr:hover td {
+  background: var(--color-bg-secondary) !important;
+}
+
+.dark-theme .db-stat-indigo {
+  background: linear-gradient(135deg, var(--color-bg-sidebar) 0%, rgba(99, 102, 241, 0.05) 100%);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.dark-theme .db-stat-blue {
+  background: linear-gradient(135deg, var(--color-bg-sidebar) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.dark-theme .db-stat-green {
+  background: linear-gradient(135deg, var(--color-bg-sidebar) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.dark-theme .db-stat-orange {
+  background: linear-gradient(135deg, var(--color-bg-sidebar) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.dark-theme .db-stat-rose {
+  background: linear-gradient(135deg, var(--color-bg-sidebar) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.dark-theme .db-stat-purple {
+  background: linear-gradient(135deg, var(--color-bg-sidebar) 0%, rgba(168, 85, 247, 0.05) 100%);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.dark-theme .db-card-header {
+  background: var(--color-bg-sidebar) !important;
+  border-bottom: 1px solid var(--color-border-hr) !important;
+}
+
+.dark-theme .db-table thead tr {
+  background: var(--color-bg-sidebar) !important;
+}
+
+.dark-theme .db-order-insights-card {
+  background: var(--color-bg-secondary) !important;
+  border-color: var(--color-border-hr) !important;
+}
+
+.dark-theme .db-order-insights-card:hover {
+  background: var(--color-bg-sidebar) !important;
+}
+
+.dark-theme .db-legend-item:hover {
+  background: var(--color-bg-secondary) !important;
+}
+
+.dark-theme .db-activity-item-wrapper:hover {
+  background: var(--color-bg-secondary) !important;
+}
+
+.dark-theme .db-order-insights-title {
+  color: var(--color-text-primary) !important;
+}
+
+.dark-theme .db-order-insights-desc {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark-theme .db-select-pill {
+  background: var(--color-bg-sidebar) !important;
+  border-color: var(--color-border-hr) !important;
+}
+
+.dark-theme .db-select-pill:hover,
+.dark-theme .db-select-pill:focus-within {
+  background: var(--color-bg-secondary) !important;
+  border-color: var(--db-indigo) !important;
+}
+
+.dark-theme .db-select-field-sm option {
+  background: var(--color-bg-sidebar) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.dark-theme .custom-scroll::-webkit-scrollbar-track {
+  background: var(--color-bg-primary) !important;
+}
+
+.dark-theme .custom-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border-hr) !important;
+}
+
 /* ── Root ────────────────────────────────── */
 .db-root {
   padding: 10px 4px 40px;
@@ -935,7 +1072,8 @@
 
 /* ── Tooltip ─────────────────────────────── */
 .db-tooltip {
-  background: var(--db-text-primary);
+  background: var(--color-dropdown-bg);
+  border: 1px solid var(--color-border-hr);
   border-radius: 12px;
   padding: 11px 15px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
@@ -946,7 +1084,7 @@
 
 .db-tooltip-label {
   font-weight: 800;
-  color: #e2e8f0;
+  color: var(--color-text-primary);
   margin: 0 0 6px;
   font-size: 12px;
   text-transform: uppercase;
@@ -954,7 +1092,7 @@
 }
 
 .db-tooltip-key {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
@@ -964,7 +1102,7 @@
 }
 
 .custom-scroll::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--color-bg-secondary);
   border-radius: 10px;
 }
 

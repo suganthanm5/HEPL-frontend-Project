@@ -8,21 +8,20 @@ const AuthContext = createContext(null);
 const loadUser = () => {
   try {
     const raw = getCookie("user");
-    // Handle null, undefined, or empty strings
+    
     if (!raw || raw === "null" || raw === "undefined") return null;
 
     const user = JSON.parse(raw);
     if (!user || typeof user !== 'object') return null;
 
-    // Normalize role
+   
     if (user.role) {
       user.role = user.role.toString().toUpperCase().replace('ROLE_', '').trim();
     } else {
-      // Fallback if role is missing but user exists
+      
       user.role = "USER";
     }
 
-    // Ensure we have a username or name
     if (!user.username && !user.name) {
       const fallbackUsername = getCookie("username");
       if (fallbackUsername && fallbackUsername !== "undefined") {
@@ -45,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     return !(userData && token);
   });
 
-  // Load user data on mount
+  
   useEffect(() => {
     const userData = loadUser();
     const token = getCookie('token');
@@ -68,7 +67,6 @@ export const AuthProvider = ({ children }) => {
 
   const [isImpersonating, setIsImpersonating] = useState(() => !!getCookie("impersonatorToken"));
 
-  /** Call this after a successful login response */
   const login = useCallback((userData, token) => {
     const normalizedRole = (userData.role || "USER").toString().toUpperCase().replace('ROLE_', '').trim();
     const normalizedUserData = { ...userData, role: normalizedRole };
@@ -111,7 +109,6 @@ export const AuthProvider = ({ children }) => {
     setIsImpersonating(false);
   }, [login]);
 
-  /** Call this on logout */
   const logout = useCallback(() => {
     deleteCookie("token");
     deleteCookie("user");
@@ -126,7 +123,7 @@ export const AuthProvider = ({ children }) => {
     window.dispatchEvent(new Event('storage'));
   }, []);
 
-  // Listen for storage changes from other tabs/windows
+  
   useEffect(() => {
     const handleStorageChange = () => {
       const userData = loadUser();

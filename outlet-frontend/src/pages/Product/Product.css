@@ -1280,3 +1280,128 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Dark Mode Overrides ────────────────── */
+.dark-theme .prod-stat-card {
+  background: var(--color-bg-sidebar);
+  border-color: var(--color-border-hr);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .prod-hero-title {
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-stat-value {
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-stat-label {
+  color: var(--color-text-secondary);
+}
+
+.dark-theme .prod-card {
+  background: var(--color-bg-sidebar);
+  border-color: var(--color-border-hr);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .prod-card:hover {
+  border-color: var(--color-primary-light);
+}
+
+.dark-theme .prod-card-name {
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-card-desc {
+  color: var(--color-text-secondary);
+}
+
+.dark-theme .prod-card-price-val {
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-table-card {
+  background: var(--color-bg-sidebar);
+  border-color: var(--color-border-hr);
+}
+
+.dark-theme .prod-table th {
+  background: var(--color-bg-primary);
+  border-color: var(--color-border-hr);
+  color: var(--color-text-secondary);
+}
+
+.dark-theme .prod-table td {
+  border-color: var(--color-border-hr);
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-td-name {
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-table tr:hover {
+  background: var(--color-bg-secondary);
+}
+
+.dark-theme .prod-filter-card {
+  background: var(--color-bg-sidebar);
+  border-color: var(--color-border-hr);
+}
+
+.dark-theme .prod-filter-title {
+  color: var(--color-text-primary);
+}
+
+.dark-theme .prod-filter-label {
+  color: var(--color-text-secondary);
+}
+
+.dark-theme .prod-empty {
+  color: var(--color-text-placeholder);
+}
+
+.dark-theme .prod-tab-btn {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.dark-theme .prod-tab-btn.active {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary-main));
+  color: #fff;
+}
+
+.dark-theme .prod-card,
+.dark-theme .prod-table-wrap,
+.dark-theme .prod-filters-panel,
+.dark-theme .prod-stat-card {
+  background: var(--color-bg-sidebar) !important;
+  border-color: var(--color-border-hr) !important;
+}
+
+.dark-theme .prod-card-name,
+.dark-theme .prod-hero-title,
+.dark-theme .prod-stat-value,
+.dark-theme .prod-td-name,
+.dark-theme .prod-card-price-row strong,
+.dark-theme .prod-pag-info strong,
+.dark-theme .prod-td-price {
+  color: var(--color-text-primary) !important;
+}
+
+.dark-theme .prod-stat-label,
+.dark-theme .prod-td-num,
+.dark-theme .prod-card-price-row span,
+.dark-theme .prod-pag-info {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark-theme .prod-table th {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark-theme .prod-table tr:hover {
+  background: var(--color-bg-secondary) !important;
+}

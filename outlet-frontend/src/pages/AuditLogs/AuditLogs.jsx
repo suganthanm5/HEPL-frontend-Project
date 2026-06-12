@@ -27,7 +27,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Snackbar
+  Snackbar,
+  useTheme
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -45,9 +46,19 @@ import ExportMenu from "../../components/ExportMenu/ExportMenu";
 const PAGE_SIZES = [5, 10, 20, 50];
 
 // Color mapping for actions
-const getActionChipProps = (action) => {
+const getActionChipProps = (action, isDark) => {
   const act = (action || "").toUpperCase();
   const displayLabel = act.replace(/_/g, " ");
+  if (isDark) {
+    if (act.includes("DELETE")) return { label: displayLabel, bgcolor: "rgba(239, 68, 68, 0.2)", color: "#f87171" };
+    if (act.includes("CREATE")) return { label: displayLabel, bgcolor: "rgba(37, 99, 235, 0.2)", color: "#60a5fa" };
+    if (act.includes("UPDATE")) return { label: displayLabel, bgcolor: "rgba(217, 119, 6, 0.2)", color: "#fbbf24" };
+    if (act.includes("LOGIN") && !act.includes("FAILED")) return { label: displayLabel, bgcolor: "rgba(22, 163, 74, 0.2)", color: "#4ade80" };
+    if (act.includes("FAILED")) return { label: displayLabel, bgcolor: "rgba(220, 38, 38, 0.2)", color: "#f87171" };
+    if (act.includes("IMPERSONATE")) return { label: displayLabel, bgcolor: "rgba(124, 58, 237, 0.2)", color: "#c084fc" };
+    if (act.includes("REGISTER")) return { label: displayLabel, bgcolor: "rgba(0, 172, 193, 0.2)", color: "#2dd4bf" };
+    return { label: displayLabel, bgcolor: "rgba(255, 255, 255, 0.08)", color: "#94a3b8" };
+  }
   if (act.includes("DELETE")) {
     return { label: displayLabel, bgcolor: "#fee2e2", color: "#ef4444" };
   }
@@ -83,6 +94,8 @@ const ACTION_CATEGORIES = [
 ];
 
 const AuditLogs = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -204,10 +217,10 @@ const AuditLogs = () => {
       {/* ── Page Header ── */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 1.5 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b", mb: 0.25 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", mb: 0.25 }}>
             <TypingText text="Audit Logs" />
           </Typography>
-          <Typography sx={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>
+          <Typography sx={{ fontSize: "0.8rem", color: "text.secondary", fontWeight: 500 }}>
             Monitor admin operations, login events, and database mutations
           </Typography>
         </Box>
@@ -218,12 +231,12 @@ const AuditLogs = () => {
               disabled={loading}
               size="small"
               sx={{
-                color: "#7d2ae8",
-                bgcolor: "#f5f0ff",
-                "&:hover": { bgcolor: "#ede9fe" }
+                color: isDark ? "#c084fc" : "#7d2ae8",
+                bgcolor: isDark ? "rgba(125,42,232,0.2)" : "#f5f0ff",
+                "&:hover": { bgcolor: isDark ? "rgba(125,42,232,0.3)" : "#ede9fe" }
               }}
             >
-              {loading ? <CircularProgress size={16} sx={{ color: "#7d2ae8" }} /> : <RefreshRoundedIcon fontSize="small" />}
+              {loading ? <CircularProgress size={16} sx={{ color: "primary.main" }} /> : <RefreshRoundedIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
         </Box>
@@ -232,9 +245,9 @@ const AuditLogs = () => {
       {/* ── Stat Cards ── */}
       <Box className="stat-cards-row">
         {[
-          { label: "Total Logs Recorded", value: totalElements, icon: HistoryRoundedIcon, theme: "purple", color: "#7d2ae8", bg: "#f3e8ff" },
-          { label: "This Page", value: logs.length, icon: LayersRoundedIcon, theme: "blue", color: "#0284c7", bg: "#e0f2fe" },
-          { label: "Access Level", value: "ADMIN ONLY", icon: SecurityRoundedIcon, theme: "green", color: "#10b981", bg: "#dcfce7" },
+          { label: "Total Logs Recorded", value: totalElements, icon: HistoryRoundedIcon, theme: "purple", color: isDark ? "#c084fc" : "#7d2ae8", bg: isDark ? "rgba(125,42,232,0.2)" : "#f3e8ff" },
+          { label: "This Page", value: logs.length, icon: LayersRoundedIcon, theme: "blue", color: isDark ? "#60a5fa" : "#0284c7", bg: isDark ? "rgba(2,132,199,0.2)" : "#e0f2fe" },
+          { label: "Access Level", value: "ADMIN ONLY", icon: SecurityRoundedIcon, theme: "green", color: isDark ? "#4ade80" : "#10b981", bg: isDark ? "rgba(22,163,74,0.2)" : "#dcfce7" },
         ].map((s, i) => (
           <Box className={`stat-card stat-${s.theme}`} key={i}>
             <Box className="stat-card-icon" sx={{ background: s.bg }}>
@@ -256,11 +269,11 @@ const AuditLogs = () => {
       )}
 
       {/* ── Table Card ── */}
-      <Box className="table-card" sx={{ bgcolor: "#fff", border: "1px solid rgba(125,42,232,0.08)", borderRadius: 3, mb: 2 }}>
-        <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderBottom: "1px solid rgba(125,42,232,0.07)" }}>
+      <Box className="table-card" sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, mb: 2 }}>
+        <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderBottom: "1px solid", borderBottomColor: "divider" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>Operational Audit Trail</Typography>
-            <Chip label={totalElements} size="small" sx={{ bgcolor: "#f3e8ff", color: "#7d2ae8", fontWeight: 700, fontFamily: "inherit", height: 20, fontSize: "0.7rem" }} />
+            <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit" }}>Operational Audit Trail</Typography>
+            <Chip label={totalElements} size="small" sx={{ bgcolor: isDark ? "rgba(125,42,232,0.2)" : "#f3e8ff", color: isDark ? "#c084fc" : "#7d2ae8", fontWeight: 700, fontFamily: "inherit", height: 20, fontSize: "0.7rem" }} />
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
@@ -276,7 +289,7 @@ const AuditLogs = () => {
                   fontSize: "0.8rem",
                   borderRadius: 2,
                   "& .MuiSelect-select": { py: 0.5, px: 1.5 },
-                  bgcolor: "#fff"
+                  bgcolor: "background.default"
                 }}
               >
                 {ACTION_CATEGORIES.map((cat) => (
@@ -289,7 +302,7 @@ const AuditLogs = () => {
 
             {/* Page Size Select */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit", whiteSpace: "nowrap" }}>Show</Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: "0.8rem", fontFamily: "inherit", whiteSpace: "nowrap" }}>Show</Typography>
               <Select value={pageSize} size="small"
                 onChange={handlePageSizeChange}
                 sx={{ fontFamily: "inherit", fontSize: "0.8rem", borderRadius: 2, "& .MuiSelect-select": { py: 0.5, px: 1.5 } }}>
@@ -298,14 +311,14 @@ const AuditLogs = () => {
             </Box>
 
             {/* Search */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: "#f5f0ff", border: "1.5px solid transparent", borderRadius: "50px", px: 2, py: 0.8, width: 240, transition: "all 0.3s", "&:focus-within": { borderColor: "#7d2ae8", bgcolor: "#fff", boxShadow: "0 0 0 3px rgba(125,42,232,0.1)" } }}>
-              <SearchRoundedIcon sx={{ fontSize: 17, color: "#7d2ae8", flexShrink: 0 }} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: isDark ? "rgba(255, 255, 255, 0.05)" : "#f5f0ff", border: "1.5px solid transparent", borderRadius: "50px", px: 2, py: 0.8, width: 240, transition: "all 0.3s", "&:focus-within": { borderColor: "primary.main", bgcolor: "background.paper", boxShadow: isDark ? "0 0 0 3px rgba(125,42,232,0.25)" : "0 0 0 3px rgba(125,42,232,0.1)" } }}>
+              <SearchRoundedIcon sx={{ fontSize: 17, color: "primary.main", flexShrink: 0 }} />
               <InputBase placeholder="Search logs…" value={search}
                 onChange={handleSearchChange}
-                sx={{ fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b", flex: 1 }}
+                sx={{ fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary", flex: 1 }}
               />
               {search && (
-                <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }} sx={{ p: 0, color: "#94a3b8" }}>
+                <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }} sx={{ p: 0, color: "text.secondary" }}>
                   <CloseRoundedIcon sx={{ fontSize: 14 }} />
                 </IconButton>
               )}
@@ -355,9 +368,9 @@ const AuditLogs = () => {
                 </TableRow>
               ) : (
                 logs.map((log, i) => {
-                  const chip = getActionChipProps(log.action);
+                  const chip = getActionChipProps(log.action, isDark);
                   const logIndex = (safePage - 1) * pageSize + i + 1;
-
+ 
                   const formattedTime = log.createdAt
                     ? new Date(log.createdAt).toLocaleString(undefined, {
                       year: "numeric",
@@ -368,15 +381,15 @@ const AuditLogs = () => {
                       second: "2-digit"
                     })
                     : "—";
-
+ 
                   const initial = (log.username || "S").charAt(0).toUpperCase();
-
+ 
                   return (
-                    <TableRow key={log.id || i} hover sx={{ "&:hover": { bgcolor: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
-                      <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontFamily: "inherit", fontSize: "0.8rem" }}>
+                    <TableRow key={log.id || i} hover sx={{ "&:hover": { bgcolor: "action.hover" }, "&:last-child td": { borderBottom: 0 } }}>
+                      <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontFamily: "inherit", fontSize: "0.8rem" }}>
                         {logIndex}
                       </TableCell>
-                      <TableCell sx={{ color: "#475569", fontSize: "0.85rem", fontFamily: "inherit" }}>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem", fontFamily: "inherit" }}>
                         {formattedTime}
                       </TableCell>
                       <TableCell sx={{ fontFamily: "inherit" }}>
@@ -402,20 +415,21 @@ const AuditLogs = () => {
                               height: 24,
                               fontSize: "0.75rem",
                               fontWeight: 700,
-                              bgcolor: "#f5f3ff",
-                              color: "#7c3aed",
-                              border: "1px solid #ddd6fe",
+                              bgcolor: isDark ? "rgba(124, 58, 237, 0.15)" : "#f5f3ff",
+                              color: isDark ? "#c084fc" : "#7c3aed",
+                              border: "1px solid",
+                              borderColor: "divider",
                               fontFamily: "inherit"
                             }}
                           >
                             {initial}
                           </Avatar>
-                          <Typography sx={{ fontWeight: 600, color: "#1e293b", fontSize: "0.85rem", fontFamily: "inherit" }}>
+                          <Typography sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.85rem", fontFamily: "inherit" }}>
                             {log.username || "system"}
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ color: "#334155", fontSize: "0.85rem", fontWeight: 500, fontFamily: "inherit" }}>
+                      <TableCell sx={{ color: "text.primary", fontSize: "0.85rem", fontWeight: 500, fontFamily: "inherit" }}>
                         {log.details}
                       </TableCell>
                       <TableCell sx={{ fontFamily: "inherit" }}>
@@ -427,7 +441,7 @@ const AuditLogs = () => {
                                 setSelectedLog(log);
                                 setDetailOpen(true);
                               }}
-                              sx={{ color: "#7d2ae8", background: "#f5f0ff", "&:hover": { background: "#ede9fe" } }}
+                              sx={{ color: isDark ? "#c084fc" : "#7d2ae8", background: isDark ? "rgba(125, 42, 232, 0.15)" : "#f5f0ff", "&:hover": { background: isDark ? "rgba(125, 42, 232, 0.25)" : "#ede9fe" } }}
                             >
                               <VisibilityRoundedIcon sx={{ fontSize: 16 }} />
                             </IconButton>
@@ -441,7 +455,7 @@ const AuditLogs = () => {
                                   setRestoreLogAction(log.action);
                                   setRestoreConfirmOpen(true);
                                 }}
-                                sx={{ color: "#10b981", background: "#dcfce7", "&:hover": { background: "#bbf7d0" } }}
+                                sx={{ color: isDark ? "#4ade80" : "#10b981", background: isDark ? "rgba(22, 163, 74, 0.15)" : "#dcfce7", "&:hover": { background: isDark ? "rgba(22, 163, 74, 0.25)" : "#bbf7d0" } }}
                               >
                                 <RestoreRoundedIcon sx={{ fontSize: 16 }} />
                               </IconButton>
@@ -461,7 +475,7 @@ const AuditLogs = () => {
       {/* ── Pagination ── */}
       {!loading && totalElements > 0 && (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1.5, flexWrap: "wrap", gap: 1.5 }}>
-          <Typography variant="body2" sx={{ color: "#64748b", fontFamily: "inherit" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>
             Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
           </Typography>
           <Pagination
@@ -480,24 +494,24 @@ const AuditLogs = () => {
 
       {/* ── Detail Dialog ── */}
       <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 1 } }}>
-        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 800, color: "#1e1b4b", pb: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 800, color: "text.primary", pb: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           Audit Log Details
-          <IconButton size="small" onClick={() => setDetailOpen(false)} sx={{ color: "#94a3b8" }}>
+          <IconButton size="small" onClick={() => setDetailOpen(false)} sx={{ color: "text.secondary" }}>
             <CloseRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: "rgba(125,42,232,0.08)" }}>
+        <DialogContent dividers sx={{ borderColor: "divider" }}>
           {selectedLog && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, py: 1 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600 }}>Action:</Typography>
+                  <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", fontWeight: 600 }}>Action:</Typography>
                   <Chip
                     label={selectedLog.action}
                     size="small"
                     sx={{
-                      bgcolor: getActionChipProps(selectedLog.action).bgcolor,
-                      color: getActionChipProps(selectedLog.action).color,
+                      bgcolor: getActionChipProps(selectedLog.action, isDark).bgcolor,
+                      color: getActionChipProps(selectedLog.action, isDark).color,
                       fontWeight: 700,
                       fontSize: "0.7rem",
                       borderRadius: 1.5,
@@ -505,35 +519,35 @@ const AuditLogs = () => {
                     }}
                   />
                 </Box>
-                <Typography sx={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 500 }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 500 }}>
                   ID: #{selectedLog.id}
                 </Typography>
               </Box>
 
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
                 <Box>
-                  <Typography sx={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, mb: 0.5 }}>Performed By</Typography>
+                  <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600, mb: 0.5 }}>Performed By</Typography>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Avatar sx={{ width: 28, height: 28, fontSize: "0.85rem", fontWeight: 700, bgcolor: "#f5f3ff", color: "#7c3aed", border: "1px solid #ddd6fe" }}>
+                    <Avatar sx={{ width: 28, height: 28, fontSize: "0.85rem", fontWeight: 700, bgcolor: isDark ? "rgba(124, 58, 237, 0.15)" : "#f5f3ff", color: isDark ? "#c084fc" : "#7c3aed", border: "1px solid", borderColor: "divider" }}>
                       {(selectedLog.username || "S").charAt(0).toUpperCase()}
                     </Avatar>
-                    <Typography sx={{ fontWeight: 600, color: "#1e293b", fontSize: "0.9rem", fontFamily: "inherit" }}>
+                    <Typography sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.9rem", fontFamily: "inherit" }}>
                       {selectedLog.username || "system"}
                     </Typography>
                   </Box>
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, mb: 0.5 }}>Timestamp</Typography>
-                  <Typography sx={{ color: "#334155", fontSize: "0.9rem", fontWeight: 500, fontFamily: "inherit" }}>
+                  <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600, mb: 0.5 }}>Timestamp</Typography>
+                  <Typography sx={{ color: "text.primary", fontSize: "0.9rem", fontWeight: 500, fontFamily: "inherit" }}>
                     {selectedLog.createdAt ? new Date(selectedLog.createdAt).toLocaleString() : "—"}
                   </Typography>
                 </Box>
               </Box>
 
               <Box>
-                <Typography sx={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, mb: 0.5 }}>Activity Description</Typography>
-                <Box sx={{ p: 2, bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 3 }}>
-                  <Typography sx={{ color: "#334155", fontSize: "0.9rem", fontWeight: 500, fontFamily: "inherit", whiteSpace: "pre-line" }}>
+                <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 600, mb: 0.5 }}>Activity Description</Typography>
+                <Box sx={{ p: 2, bgcolor: "background.default", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+                  <Typography sx={{ color: "text.primary", fontSize: "0.9rem", fontWeight: 500, fontFamily: "inherit", whiteSpace: "pre-line" }}>
                     {selectedLog.details}
                   </Typography>
                 </Box>
@@ -542,7 +556,7 @@ const AuditLogs = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" onClick={() => setDetailOpen(false)} sx={{ borderRadius: 2, bgcolor: "#7d2ae8", "&:hover": { bgcolor: "#6b21c8" }, textTransform: "none", fontFamily: "inherit", fontWeight: 600 }}>
+          <Button variant="contained" onClick={() => setDetailOpen(false)} sx={{ borderRadius: 2, bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" }, textTransform: "none", fontFamily: "inherit", fontWeight: 600 }}>
             Close
           </Button>
         </DialogActions>
@@ -550,9 +564,9 @@ const AuditLogs = () => {
 
       {/* ── Restore Confirm Dialog ── */}
       <Dialog open={restoreConfirmOpen} onClose={() => setRestoreConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b" }}>Confirm Restore</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "text.primary" }}>Confirm Restore</DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontFamily: "inherit", color: "#64748b", fontSize: "0.9rem" }}>
+          <Typography sx={{ fontFamily: "inherit", color: "text.secondary", fontSize: "0.9rem" }}>
             Are you sure you want to restore this deleted entity? This will reactivate the record in the system database.
             <br /><br />
             <strong>Action Code:</strong> {restoreLogAction}
@@ -560,7 +574,7 @@ const AuditLogs = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <Button variant="outlined" color="inherit" onClick={() => setRestoreConfirmOpen(false)} disabled={restoring}
-            sx={{ borderRadius: 2, color: "#64748b", borderColor: "#e2e8f0", textTransform: "none", fontFamily: "inherit" }}>
+            sx={{ borderRadius: 2, color: "text.secondary", borderColor: "divider", textTransform: "none", fontFamily: "inherit" }}>
             Cancel
           </Button>
           <Button variant="contained" color="success" onClick={() => handleRestore(restoreLogId)} disabled={restoring}

@@ -78,3 +78,9 @@
   margin: 0 auto;
   box-shadow: 0 4px 12px rgba(125, 42, 232, 0.35);
 }
+
+/* ── Dark Mode Overrides ────────────────── */
+.dark-theme .stock-level-bar,
+.dark .stock-level-bar {
+  background: var(--color-bg-secondary);
+}

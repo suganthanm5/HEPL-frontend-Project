@@ -6,7 +6,7 @@ import {
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
   CircularProgress, Snackbar, Alert, IconButton, Paper,
-  Grid, Stack, Divider, Tabs, Tab
+  Grid, Stack, Divider, Tabs, Tab, useTheme
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -35,13 +35,13 @@ import "../UserManagement/UserManagement.css";
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   transition: "all 0.2s ease",
-  backgroundColor: "#faf5ff",
+  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#faf5ff',
   "&:hover": {
-    backgroundColor: "#f3e8ff",
-    "& td": { borderColor: "#c7d2fe" },
+    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f3e8ff',
+    "& td": { borderColor: theme.palette.divider },
   },
   "& td": {
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: `1px solid ${theme.palette.divider}`,
     padding: "16px 12px",
     transition: "border-color 0.2s ease",
   },
@@ -66,6 +66,8 @@ const emptyItem = { productId: "", quantity: 1, price: 0 };
 ══════════════════════════════════════════ */
 const Orders = () => {
   const { user, role } = useAuth();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { latestOrder } = useWebSocketContext();
   const userOutletId = user?.outletId || getCookie("outletId") || "";
   const isAdmin = role === "ADMIN";
@@ -317,8 +319,8 @@ const Orders = () => {
             <Box sx={{ p: { xs: 2, md: 4 } }}>
               <Grid container spacing={4}>
                 <Grid item xs={12} md={8}>
-                  <Box sx={{ mb: 4, p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff" }}>
-                    <FormSectionHeader title="Target Outlet" color="#7d2ae8" />
+                  <Box sx={{ mb: 4, p: 3, border: "1px solid", borderColor: "divider", borderRadius: 4, bgcolor: "background.paper" }}>
+                    <FormSectionHeader title="Target Outlet" color="primary.main" />
                     <SearchableSelect
                       options={
                         (isAdmin || isManager) 
@@ -333,13 +335,13 @@ const Orders = () => {
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b", fontFamily: "inherit" }}>Order Items</Typography>
-                    <Button variant="text" startIcon={<AddRounded />} onClick={addItem} sx={{ color: "#7d2ae8", fontWeight: 700 }}>Add Item</Button>
+                    <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "text.primary", fontFamily: "inherit" }}>Order Items</Typography>
+                    <Button variant="text" startIcon={<AddRounded />} onClick={addItem} sx={{ color: "primary.main", fontWeight: 700 }}>Add Item</Button>
                   </Box>
 
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {create.data.items.map((item, idx) => (
-                      <Box key={idx} sx={{ position: "relative", p: 3, border: "1px solid #e2e8f0", borderRadius: 4, bgcolor: "#fff", transition: "all 0.2s", "&:hover": { borderColor: "#7d2ae8", boxShadow: "0 4px 12px rgba(125,42,232,0.05)" } }}>
+                      <Box key={idx} sx={{ position: "relative", p: 3, border: "1px solid", borderColor: "divider", borderRadius: 4, bgcolor: "background.paper", transition: "all 0.2s", "&:hover": { borderColor: "primary.main", boxShadow: "0 4px 12px rgba(125,42,232,0.05)" } }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid item xs={12} sm={5}>
                             <Typography className="dialog-field-label" sx={{ mb: 0.5 }}>Product *</Typography>
@@ -376,27 +378,27 @@ const Orders = () => {
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                  <Box sx={{ p: 4, bgcolor: "#f8fafc", borderRadius: 4, border: "1px solid #e2e8f0", height: "fit-content", position: "sticky", top: 24 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#1e1b4b", mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-                      <ShoppingCartRounded sx={{ color: "#7d2ae8" }} /> Order Summary
+                  <Box sx={{ p: 4, bgcolor: "background.default", borderRadius: 4, border: "1px solid", borderColor: "divider", height: "100%", position: "sticky", top: 24 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "text.primary", mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
+                      <ShoppingCartRounded sx={{ color: "primary.main" }} /> Order Summary
                     </Typography>
-
+ 
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                       <Box>
-                        <Typography variant="caption" sx={{ color: "#64748b" }}>Destination Outlet</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>Destination Outlet</Typography>
                         <Typography variant="body1" sx={{ fontWeight: 700 }}>
                           {outlets.find(o => String(o.id) === String(create.data.outletId))?.outletName || "Not Selected"}
                         </Typography>
                       </Box>
-
+ 
                       <Divider />
-
+ 
                       <Box>
-                        <Typography variant="caption" sx={{ color: "#64748b" }}>Total Items</Typography>
-                        <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b" }}>{create.data.items.length}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>Total Items</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary" }}>{create.data.items.length}</Typography>
                       </Box>
-
-                      <Box sx={{ p: 2, bgcolor: "#7d2ae8", borderRadius: 3, color: "#fff" }}>
+ 
+                      <Box sx={{ p: 2, bgcolor: "primary.main", borderRadius: 3, color: "#fff" }}>
                         <Typography variant="caption" sx={{ opacity: 0.9 }}>Total Estimated Value</Typography>
                         <Typography variant="h4" sx={{ fontWeight: 900 }}>
                           ₹{create.data.items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0).toLocaleString()}
@@ -419,21 +421,35 @@ const Orders = () => {
                 key === "APPROVED" ? "green" :
                 key === "REJECTED" ? "rose" :
                 key === "COMPLETED" ? "blue" : "indigo";
+              
+              const isPending = key === "PENDING" || key === "PARTIALLY_APPROVED";
+              const isApproved = key === "APPROVED";
+              const isRejected = key === "REJECTED";
+              
+              const iconBg = isDark ? (
+                isPending ? "rgba(245, 158, 11, 0.2)" :
+                isApproved ? "rgba(22, 163, 74, 0.2)" :
+                isRejected ? "rgba(239, 68, 68, 0.2)" : "rgba(2, 132, 199, 0.2)"
+              ) : (
+                isPending ? "#fef9c3" :
+                isApproved ? "#dcfce7" :
+                isRejected ? "#fee2e2" : "#e0f2fe"
+              );
+
+              const iconColor = isDark ? (
+                isPending ? "#fbbf24" :
+                isApproved ? "#4ade80" :
+                isRejected ? "#f87171" : "#60a5fa"
+              ) : (
+                isPending ? "#ca8a04" :
+                isApproved ? "#16a34a" :
+                isRejected ? "#ef4444" : "#0284c7"
+              );
+
               return (
                 <Box className={`stat-card stat-${theme}`} key={key}>
-                  <Box className="stat-card-icon" sx={{
-                    background:
-                      key === "PENDING" || key === "PARTIALLY_APPROVED" ? "#fef9c3" :
-                        key === "APPROVED" ? "#dcfce7" :
-                          key === "REJECTED" ? "#fee2e2" : "#e0f2fe",
-                  }}>
-                    <meta.Icon sx={{
-                      color:
-                        key === "PENDING" || key === "PARTIALLY_APPROVED" ? "#ca8a04" :
-                          key === "APPROVED" ? "#16a34a" :
-                            key === "REJECTED" ? "#ef4444" : "#0284c7",
-                      fontSize: 22,
-                    }} />
+                  <Box className="stat-card-icon" sx={{ background: iconBg }}>
+                    <meta.Icon sx={{ color: iconColor, fontSize: 22 }} />
                   </Box>
                   <Box>
                     <Typography className="stat-card-value">{counts[key] || 0}</Typography>
@@ -448,17 +464,17 @@ const Orders = () => {
           <Box className="table-card">
             <Box className="table-toolbar">
               <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
-                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>
+                <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit" }}>
                   All Orders
                 </Typography>
                 <ExportMenu getData={() => formatOrderData(filtered)} filename="orders" title="Orders Report" backendType="orders" />
-
+ 
                 {/* Outlet Filter - Admin or global Manager */}
                 {(isAdmin || (isManager && !userOutletId)) && (
                   <Select
                     size="small" displayEmpty value={filters.outletId}
                     onChange={(e) => setFilters((f) => ({ ...f, outletId: e.target.value }))}
-                    sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit" }}
+                    sx={{ minWidth: 150, borderRadius: 2, height: 36, fontSize: "0.8rem", fontFamily: "inherit", bgcolor: "background.default" }}
                   >
                     <MenuItem value="">All Outlets</MenuItem>
                     {outlets.map((ot) => (
@@ -466,22 +482,22 @@ const Orders = () => {
                     ))}
                   </Select>
                 )}
-
+ 
                 <Button
                   size="small"
                   onClick={() => setFilters({ status: "", outletId: isAdmin ? "" : userOutletId })}
-                  sx={{ fontSize: "0.75rem", fontWeight: 600 }}
+                  sx={{ fontSize: "0.75rem", fontWeight: 600, color: "primary.main" }}
                 >
                   Clear Filters
                 </Button>
               </Box>
-
+ 
               <Box className="table-search">
-                <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
+                <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
                 <InputBase
                   placeholder="Search order no…" value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b" }}
+                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }}
                 />
               </Box>
             </Box>
@@ -494,18 +510,19 @@ const Orders = () => {
               scrollButtons="auto"
               sx={{
                 px: 3,
-                borderBottom: "1px solid #f1f5f9",
-                "& .MuiTabs-indicator": { backgroundColor: "#7d2ae8", height: "3px", borderRadius: "10px" },
+                borderBottom: "1px solid",
+                borderBottomColor: "divider",
+                "& .MuiTabs-indicator": { backgroundColor: "primary.main", height: "3px", borderRadius: "10px" },
                 "& .MuiTab-root": {
                   textTransform: "none",
                   fontSize: "13px",
                   fontWeight: 700,
                   fontFamily: "inherit",
-                  color: "#64748b",
+                  color: "text.secondary",
                   pb: 1.5,
                   pt: 1.5,
                   minWidth: 100,
-                  "&.Mui-selected": { color: "#7d2ae8" },
+                  "&.Mui-selected": { color: "primary.main" },
                 },
               }}
             >
@@ -514,8 +531,8 @@ const Orders = () => {
                 <Tab key={k} label={`${v.label} (${counts[k] || 0})`} value={k} />
               ))}
             </Tabs>
-
-            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
+ 
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -530,12 +547,12 @@ const Orders = () => {
                   {loading ? (
                     <TableRow>
                       <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                        <CircularProgress sx={{ color: "#7d2ae8" }} size={32} />
+                        <CircularProgress color="primary" size={32} />
                       </TableCell>
                     </TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 6, color: "text.secondary", fontFamily: "inherit" }}>
                         No orders found
                       </TableCell>
                     </TableRow>
@@ -545,16 +562,16 @@ const Orders = () => {
                       return (
                         <TableRow
                           key={o.id} hover
-                          sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 }, cursor: "pointer" }}
+                          sx={{ "&:hover": { background: "action.hover" }, "&:last-child td": { borderBottom: 0 }, cursor: "pointer" }}
                           onClick={() => setDetail(o)}
                         >
-                          <TableCell sx={{ fontWeight: 700, color: "#7d2ae8", fontFamily: "inherit", fontSize: "0.875rem" }}>
+                          <TableCell sx={{ fontWeight: 700, color: "primary.main", fontFamily: "inherit", fontSize: "0.875rem" }}>
                             {o.orderNo || `ORD-${o.id}`}
                           </TableCell>
-                          <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>
+                          <TableCell sx={{ color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>
                             {o.outlet?.outletName || "—"}
                           </TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>
                             {o.items?.length || 0}
                           </TableCell>
                           <TableCell>
@@ -562,7 +579,7 @@ const Orders = () => {
                               <meta.Icon sx={{ fontSize: 16 }} /> {meta.label}
                             </Typography>
                           </TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit" }}>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem", fontFamily: "inherit" }}>
                             {o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}
                           </TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
@@ -630,17 +647,17 @@ const Orders = () => {
                 <ButtonBase
                   disabled={page === 0}
                   onClick={() => setPage(p => p - 1)}
-                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page === 0 ? 0.5 : 1 }}
+                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid", borderColor: "divider", opacity: page === 0 ? 0.5 : 1, color: "text.primary" }}
                 >
                   Previous
                 </ButtonBase>
-                <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600 }}>
+                <Typography sx={{ display: "flex", alignItems: "center", px: 2, fontSize: "0.875rem", fontWeight: 600, color: "text.primary" }}>
                   Page {page + 1} of {totalPages}
                 </Typography>
                 <ButtonBase
                   disabled={page >= totalPages - 1}
                   onClick={() => setPage(p => p + 1)}
-                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: page >= totalPages - 1 ? 0.5 : 1 }}
+                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid", borderColor: "divider", opacity: page >= totalPages - 1 ? 0.5 : 1, color: "text.primary" }}
                 >
                   Next
                 </ButtonBase>
@@ -653,10 +670,10 @@ const Orders = () => {
       {/* ── Order Detail Full View ── */}
       {detail && (
         <Box className="animate-fade-in">
-          <Paper elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: "20px", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.08)", mb: 4 }}>
+          <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "20px", overflow: "hidden", boxShadow: isDark ? "0 24px 64px rgba(0,0,0,0.4)" : "0 24px 64px rgba(0,0,0,0.08)", mb: 4 }}>
             {/* Elegant Header */}
             <Box sx={{ 
-              background: "linear-gradient(135deg, #7d2ae8 0%, #a855f7 100%)", 
+              background: "linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary-main) 100%)", 
               color: "#fff", 
               p: { xs: 3, md: 5 }, 
               position: "relative" 
@@ -683,7 +700,7 @@ const Orders = () => {
             </Box>
 
             {/* Timeline */}
-            <Box sx={{ display: "flex", p: { xs: 3, md: 5 }, bgcolor: "#fafafa", borderBottom: "1px solid #f1f5f9", overflowX: "auto" }}>
+            <Box sx={{ display: "flex", p: { xs: 3, md: 5 }, bgcolor: "background.default", borderBottom: "1px solid", borderBottomColor: "divider", overflowX: "auto" }}>
               {TIMELINE.map((step, i) => {
                 const done = timelineIdx(detail.status) >= i;
                 const active = timelineIdx(detail.status) === i;
@@ -694,9 +711,10 @@ const Orders = () => {
                       <Box sx={{ 
                         width: 56, height: 56, borderRadius: "16px", 
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        background: done ? "linear-gradient(135deg, #7d2ae8, #a855f7)" : "#fff",
-                        color: done ? "#fff" : "#cbd5e1",
-                        border: done ? "none" : "2px dashed #cbd5e1",
+                        background: done ? "linear-gradient(135deg, var(--color-primary-light), var(--color-primary-main))" : "background.paper",
+                        color: done ? "#fff" : "text.secondary",
+                        border: done ? "none" : "2px dashed",
+                        borderColor: "divider",
                         boxShadow: done ? "0 8px 20px rgba(125,42,232,0.3)" : "none",
                         transition: "all 0.3s ease",
                         transform: active ? "scale(1.1)" : "scale(1)"
@@ -705,7 +723,7 @@ const Orders = () => {
                       </Box>
                       <Typography sx={{ 
                         fontSize: "0.8rem", fontWeight: 800, mt: 2, textTransform: "uppercase", letterSpacing: "0.5px",
-                        color: active ? "#7d2ae8" : done ? "#475569" : "#94a3b8" 
+                        color: active ? "primary.main" : done ? "text.primary" : "text.secondary" 
                       }}>
                         {STATUS_META[step]?.label}
                       </Typography>
@@ -713,7 +731,7 @@ const Orders = () => {
                     {i < TIMELINE.length - 1 && (
                       <Box sx={{ 
                         position: "absolute", top: 28, left: "50%", width: "100%", height: "4px",
-                        background: done && timelineIdx(detail.status) > i ? "linear-gradient(90deg, #7d2ae8, #a855f7)" : "#e2e8f0",
+                        background: done && timelineIdx(detail.status) > i ? "linear-gradient(90deg, var(--color-primary-light), var(--color-primary-main))" : "divider",
                         transform: "translateY(-50%)", zIndex: 1, borderRadius: "2px"
                       }} />
                     )}
@@ -723,8 +741,8 @@ const Orders = () => {
             </Box>
 
             <Box sx={{ p: { xs: 3, md: 5 }, position: "relative" }}>
-              <Typography sx={{ fontWeight: 800, color: "#1e1b4b", fontSize: "1.2rem", mb: 2, fontFamily: "inherit" }}>Order Items</Typography>
-              <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: "12px", overflow: "hidden", mb: 4 }}>
+              <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "1.2rem", mb: 2, fontFamily: "inherit" }}>Order Items</Typography>
+              <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "12px", overflow: "hidden", mb: 4 }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -740,29 +758,29 @@ const Orders = () => {
                       
                       return (
                       <StyledTableRow key={idx}>
-                        <TableCell sx={{ fontWeight: 600, color: "#1e293b", fontSize: "1rem" }}>
+                        <TableCell sx={{ fontWeight: 600, color: "text.primary", fontSize: "1rem" }}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                            <Box sx={{ width: 44, height: 44, borderRadius: "10px", overflow: "hidden", bgcolor: "#f1f5f9", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #e2e8f0" }}>
+                            <Box sx={{ width: 44, height: 44, borderRadius: "10px", overflow: "hidden", bgcolor: "background.default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid", borderColor: "divider" }}>
                               {displayImg ? (
                                 <img src={displayImg} alt="product" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               ) : (
-                                <Typography sx={{ color: "#cbd5e1", fontSize: "0.7rem", fontWeight: 700 }}>IMG</Typography>
+                                <Typography sx={{ color: "text.secondary", fontSize: "0.7rem", fontWeight: 700 }}>IMG</Typography>
                               )}
                             </Box>
-                            <Typography sx={{ fontWeight: 600, color: "#1e293b", fontSize: "0.95rem" }}>
+                            <Typography sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.95rem" }}>
                               {item.product?.name || item.productName || item.productId || "—"}
                             </Typography>
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography sx={{ fontWeight: 700, color: "#4f46e5", display: "inline-block", bgcolor: "#eef2ff", px: 2, py: 0.5, borderRadius: "8px", fontSize: "0.95rem" }}>
+                          <Typography sx={{ fontWeight: 700, color: isDark ? "#818cf8" : "#4f46e5", display: "inline-block", bgcolor: isDark ? "rgba(79, 70, 229, 0.15)" : "#eef2ff", px: 2, py: 0.5, borderRadius: "8px", fontSize: "0.95rem" }}>
                             {item.quantity}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: "#64748b", ml: 1, fontWeight: 600 }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary", ml: 1, fontWeight: 600 }}>
                             (Fulfilled: {item.fulfilledQuantity || 0})
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: "#64748b", fontSize: "0.95rem" }}>₹{item.price ?? "—"}</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: "text.secondary", fontSize: "0.95rem" }}>₹{item.price ?? "—"}</TableCell>
                         <TableCell sx={{ fontWeight: 800, color: "#10b981", fontSize: "1rem" }}>₹{(item.quantity * (item.price || 0)).toLocaleString()}</TableCell>
                       </StyledTableRow>
                       );
@@ -770,8 +788,8 @@ const Orders = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, pt: 3, borderTop: "1px solid #e2e8f0" }}>
+ 
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, pt: 3, borderTop: "1px solid", borderTopColor: "divider" }}>
                 <Button
                   variant="outlined"
                   color="inherit"
@@ -818,15 +836,15 @@ const Orders = () => {
 
       {/* Delete Confirm Dialog */}
       <Dialog open={delDialog.open} onClose={() => setDelDialog({ open: false, id: null, title: "" })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b" }}>Confirm Delete</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "text.primary" }}>Confirm Delete</DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontFamily: "inherit", color: "#64748b", fontSize: "0.9rem" }}>
+          <Typography sx={{ fontFamily: "inherit", color: "text.secondary", fontSize: "0.9rem" }}>
             Are you sure you want to delete <strong>{delDialog.title}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
           <Button variant="outlined" color="inherit" onClick={() => setDelDialog({ open: false, id: null, title: "" })}
-            sx={{ borderRadius: 2, color: "#64748b", borderColor: "#e2e8f0" }}>
+            sx={{ borderRadius: 2, color: "text.secondary", borderColor: "divider" }}>
             Cancel
           </Button>
           <Button variant="contained" color="error" onClick={handleDelete}

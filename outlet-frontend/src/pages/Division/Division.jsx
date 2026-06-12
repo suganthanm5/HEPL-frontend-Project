@@ -57,24 +57,24 @@ import LastPageIcon from "@mui/icons-material/LastPage";
 const C = {
   indigo: "#4f46e5",
   indigoLight: "#6366f1",
-  indigoSoft: "#eef2ff",
-  indigoBorder: "#c7d2fe",
+  indigoSoft: "var(--color-bg-secondary)",
+  indigoBorder: "var(--color-border-hr)",
   sky: "#0ea5e9",
-  skySoft: "#f0f9ff",
+  skySoft: "var(--color-bg-secondary)",
   emerald: "#10b981",
-  emeraldSoft: "#f0fdf4",
+  emeraldSoft: "var(--color-bg-secondary)",
   rose: "#ef4444",
-  roseSoft: "#fef2f2",
+  roseSoft: "var(--color-bg-secondary)",
   amber: "#f59e0b",
-  amberSoft: "#fffbeb",
-  slate900: "#0f172a",
-  slate800: "#1e293b",
-  slate600: "#475569",
-  slate400: "#94a3b8",
-  slate200: "#e2e8f0",
-  slate100: "#f1f5f9",
-  slate50: "#f8fafc",
-  white: "#ffffff",
+  amberSoft: "var(--color-bg-secondary)",
+  slate900: "var(--color-text-primary)",
+  slate800: "var(--color-text-primary)",
+  slate600: "var(--color-text-secondary)",
+  slate400: "var(--color-text-placeholder)",
+  slate200: "var(--color-border-hr)",
+  slate100: "var(--color-border-hr)",
+  slate50: "var(--color-bg-primary)",
+  white: "var(--color-bg-sidebar)",
 };
 
 /* ─────────────────────────────────────────────
@@ -124,7 +124,7 @@ const StyledTableRow = styled(TableRow)(() => ({
 /* ─────────────────────────────────────────────
    MODAL WRAPPER
    ───────────────────────────────────────────── */
-const AppModal = ({ title, subtitle, icon, onClose, children, accent = C.indigo }) => (
+const AppModal = ({ title, subtitle, icon, onClose, children, actions, accent = C.indigo }) => (
   <Dialog open onClose={onClose} fullWidth maxWidth="sm"
     PaperProps={{ sx: { borderRadius: 3, overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.16)" } }}
   >
@@ -146,12 +146,17 @@ const AppModal = ({ title, subtitle, icon, onClose, children, accent = C.indigo 
             <Typography variant="caption" sx={{ color: C.slate400, display: "block" }}>{subtitle}</Typography>
           )}
         </Box>
-        <IconButton onClick={onClose} size="small" sx={{ color: C.slate400, bgcolor: C.slate100, "&:hover": { bgcolor: C.slate200 } }}>
+        <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary", bgcolor: "background.default", borderRadius: 1.5, "&:hover": { bgcolor: "action.hover" } }}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
     </DialogTitle>
-    <DialogContent sx={{ pt: 3, pb: 2 }}>{children}</DialogContent>
+    <DialogContent sx={{ pt: 3, pb: actions ? 1 : 2 }}>{children}</DialogContent>
+    {actions && (
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, justifyContent: "flex-end", gap: 1.5 }}>
+        {actions}
+      </DialogActions>
+    )}
   </Dialog>
 );
 
@@ -843,7 +848,23 @@ const Division = () => {
 
       {/* ── VIEW MODAL ── */}
       {viewModal && (
-        <AppModal title="Division Details" subtitle={`Viewing: ${viewModal.name}`} icon={<VisibilityIcon />} onClose={() => setViewModal(null)} accent={C.sky}>
+        <AppModal
+          title="Division Details"
+          subtitle={`Viewing: ${viewModal.name}`}
+          icon={<VisibilityIcon />}
+          onClose={() => setViewModal(null)}
+          accent={C.sky}
+          actions={
+            <>
+              <Button onClick={() => setViewModal(null)} variant="outlined" color="inherit"
+                sx={{ borderRadius: 2, textTransform: "none", color: "text.secondary", borderColor: "divider" }}>Close</Button>
+              <Button onClick={() => { setViewModal(null); openEdit(viewModal); }} variant="contained" color="info" startIcon={<EditIcon />}
+                sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>
+                Edit Division
+              </Button>
+            </>
+          }
+        >
           <Stack spacing={0}>
             {[
               { label: "Division ID", value: viewModal.id },
@@ -859,14 +880,6 @@ const Division = () => {
               </Box>
             ))}
           </Stack>
-          <DialogActions sx={{ px: 0, pt: 3 }}>
-            <Button onClick={() => setViewModal(null)} variant="outlined" color="inherit"
-              sx={{ borderRadius: 2, textTransform: "none", color: C.slate600, borderColor: C.slate200 }}>Close</Button>
-            <Button onClick={() => { setViewModal(null); openEdit(viewModal); }} variant="contained" color="info" startIcon={<EditIcon />}
-              sx={{ borderRadius: 2, textTransform: "none", boxShadow: "none" }}>
-              Edit Division
-            </Button>
-          </DialogActions>
         </AppModal>
       )}
 
@@ -950,21 +963,29 @@ const Division = () => {
 
       {/* ── DELETE MODAL ── */}
       {deleteModal && (
-        <AppModal title="Delete Division" subtitle="This action cannot be undone" icon={<WarningAmberRoundedIcon />} onClose={() => setDeleteModal(null)} accent={C.rose}>
+        <AppModal
+          title="Delete Division"
+          subtitle="This action cannot be undone"
+          icon={<WarningAmberRoundedIcon />}
+          onClose={() => setDeleteModal(null)}
+          accent={C.rose}
+          actions={
+            <>
+              <Button onClick={() => setDeleteModal(null)} variant="outlined" color="inherit"
+                sx={{ borderRadius: 2, textTransform: "none", color: "text.secondary", borderColor: "divider" }}>Cancel</Button>
+              <Button onClick={handleDelete} disabled={saving} variant="contained" color="error"
+                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
+                sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, boxShadow: "none" }}>
+                {saving ? "Deleting…" : "Delete Division"}
+              </Button>
+            </>
+          }
+        >
           <Box sx={{ p: 2, bgcolor: C.roseSoft, borderRadius: 2, border: `1px solid #fecaca`, mb: 1 }}>
             <Typography variant="body2" sx={{ color: C.slate700 }}>
               You're about to permanently delete <Box component="span" fontWeight={700} sx={{ color: C.slate900 }}>"{deleteModal.name}"</Box>. Any associated data may be affected.
             </Typography>
           </Box>
-          <DialogActions sx={{ px: 0, pt: 2 }}>
-            <Button onClick={() => setDeleteModal(null)} variant="outlined" color="inherit"
-              sx={{ borderRadius: 2, textTransform: "none", color: C.slate600, borderColor: C.slate200 }}>Cancel</Button>
-            <Button onClick={handleDelete} disabled={saving} variant="contained" color="error"
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
-              sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, boxShadow: "none" }}>
-              {saving ? "Deleting…" : "Delete Division"}
-            </Button>
-          </DialogActions>
         </AppModal>
       )}
 

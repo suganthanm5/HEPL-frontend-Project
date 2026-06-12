@@ -98,3 +98,61 @@
 
 .timeline-label.done { color: #7d2ae8; }
 
+/* ── Dark Mode Overrides ────────────────── */
+.dark-theme .timeline-dot,
+.dark .timeline-dot {
+  background: var(--color-bg-secondary);
+  color: var(--color-primary-light);
+}
+
+.dark-theme .timeline-dot.done,
+.dark .timeline-dot.done {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary-main));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(125, 42, 232, 0.25);
+}
+
+.dark-theme .timeline-line,
+.dark .timeline-line {
+  background: var(--color-bg-secondary);
+}
+
+.dark-theme .timeline-line.done,
+.dark .timeline-line.done {
+  background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary-main));
+}
+
+.dark-theme .timeline-label,
+.dark .timeline-label {
+  color: var(--color-text-secondary);
+}
+
+.dark-theme .timeline-label.done,
+.dark .timeline-label.done {
+  color: var(--color-primary-light);
+}
+
+.dark-theme .order-status.pending,
+.dark .order-status.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.dark-theme .order-status.approved,
+.dark .order-status.approved {
+  background: rgba(22, 163, 74, 0.15);
+  color: #4ade80;
+}
+
+.dark-theme .order-status.rejected,
+.dark .order-status.rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.dark-theme .order-status.completed,
+.dark .order-status.completed {
+  background: rgba(2, 132, 199, 0.15);
+  color: #60a5fa;
+}
+

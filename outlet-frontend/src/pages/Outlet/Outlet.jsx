@@ -54,27 +54,27 @@ import BusinessIcon from "@mui/icons-material/Business";
 
 
 /* ─── Styled components ─── */
-const StyledTableRow = styled(TableRow)(() => ({
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
   transition: "background 0.15s",
-  "&:hover": { background: "#fafbff" },
+  "&:hover": { background: theme.palette.mode === 'dark' ? 'var(--color-bg-secondary)' : "#fafbff" },
   "&:last-child td": { borderBottom: "none" },
 }));
 
-const ExpandedRow = styled(TableRow)(() => ({
-  background: "linear-gradient(135deg, #fafbff 0%, #f5f3ff 100%)",
-  "& td": { borderBottom: "1px solid #e8eaf6 !important" },
+const ExpandedRow = styled(TableRow)(({ theme }) => ({
+  background: theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : "linear-gradient(135deg, #fafbff 0%, #f5f3ff 100%)",
+  "& td": { borderBottom: `1px solid ${theme.palette.divider} !important` },
 }));
 
-const GlassCard = styled(Paper)(() => ({
-  background: "linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)",
-  border: "1.5px solid #e8eaf6",
+const GlassCard = styled(Paper)(({ theme }) => ({
+  background: theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : "linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)",
+  border: `1.5px solid ${theme.palette.divider}`,
   borderRadius: 18,
   transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
   overflow: "hidden",
   "&:hover": {
     transform: "translateY(-4px)",
-    boxShadow: "0 16px 48px rgba(79,70,229,0.12)",
-    borderColor: "#c7d2fe",
+    boxShadow: theme.palette.mode === 'dark' ? "0 16px 48px rgba(0,0,0,0.5)" : "0 16px 48px rgba(79,70,229,0.12)",
+    borderColor: theme.palette.primary.main,
   },
 }));
 
@@ -110,7 +110,7 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
       flex: 1, minWidth: 155,
       borderRadius: "18px",
       border: `1.5px solid ${accent}33`,
-      background: gradient,
+      background: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : gradient,
       p: "18px 20px",
       display: "flex", alignItems: "center", gap: 2,
       cursor: "default",
@@ -128,7 +128,7 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
       {icon}
     </Box>
     <Box>
-      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "#0f172a", lineHeight: 1, letterSpacing: "-0.5px" }}>
+      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "text.primary", lineHeight: 1, letterSpacing: "-0.5px" }}>
         {value}
       </Typography>
       <Typography sx={{ fontSize: 12, color: iconColor, fontWeight: 600, mt: "2px" }}>{label}</Typography>
@@ -138,7 +138,7 @@ const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) =
 
 /* ─── Type Badge ─── */
 const TypeBadge = ({ type }) => {
-  const m = TYPE_META[type] ?? { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8" };
+  const m = TYPE_META[type] ?? { bg: "#f1f5f9", color: "text.secondary", dot: "#94a3b8" };
   return (
     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px",
       bgcolor: m.bg, color: m.color,
@@ -156,7 +156,8 @@ const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
     <Box sx={{
       display: "flex", alignItems: "center", gap: 2,
       p: "20px 24px 16px",
-      borderBottom: "1px solid #f1f5f9",
+      borderBottom: "1px solid",
+      borderColor: "divider",
     }}>
       <Box sx={{
         width: 40, height: 40, borderRadius: "12px",
@@ -166,10 +167,10 @@ const ModalIconHeader = ({ icon, title, subtitle, accent, onClose }) => (
         {icon}
       </Box>
       <Box sx={{ flex: 1 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1e293b" }}>{title}</Typography>
-        {subtitle && <Typography variant="caption" sx={{ color: "#64748b" }}>{subtitle}</Typography>}
+        <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "text.primary" }}>{title}</Typography>
+        {subtitle && <Typography variant="caption" sx={{ color: "text.secondary" }}>{subtitle}</Typography>}
       </Box>
-      <IconButton size="small" onClick={onClose} sx={{ color: "#94a3b8", bgcolor: "#f8fafc", borderRadius: "9px" }}>
+      <IconButton size="small" onClick={onClose} sx={{ color: "text.secondary", bgcolor: "background.default", borderRadius: "9px" }}>
         <CloseIcon fontSize="small" />
       </IconButton>
     </Box>
@@ -181,60 +182,60 @@ const OutletDetailRow = ({ outlet, colSpan }) => (
   <ExpandedRow>
     <TableCell colSpan={colSpan} sx={{ py: 0, px: 0, borderBottom: "none !important" }}>
       <Collapse in timeout="auto" unmountOnExit>
-        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "#fafbff", borderBottom: "1px solid #e8eaf6" }}>
+        <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", borderBottom: "1px solid", borderBottomColor: "divider" }}>
           <Paper elevation={0} sx={{ 
             display: "flex", flexDirection: { xs: "column", md: "row" }, 
-            border: "1px solid #e2e8f0", borderRadius: "16px", overflow: "hidden",
-            boxShadow: "0 4px 20px rgba(15,23,42,0.03)", bgcolor: "#fff" 
+            border: "1px solid", borderColor: "divider", borderRadius: "16px", overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(15,23,42,0.03)", bgcolor: "background.paper" 
           }}>
             
             {/* Column 1: Division Breakdown */}
-            <Box sx={{ flex: 1, p: 3, borderRight: { md: "1px solid #f1f5f9" }, borderBottom: { xs: "1px solid #f1f5f9", md: "none" } }}>
-              <Typography variant="subtitle2" sx={{ color: "#1e293b", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#dcfce7", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ flex: 1, p: 3, borderRight: { md: "1px solid" }, borderRightColor: { md: "divider" }, borderBottom: { xs: "1px solid", md: "none" }, borderBottomColor: { xs: "divider", md: "none" } }}>
+              <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "rgba(22, 163, 74, 0.12)", color: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <DomainIcon sx={{ fontSize: 16 }} />
                 </Box>
                 Division Breakdown
               </Typography>
               <Stack spacing={1.5}>
                 {(outlet.divisions ?? []).map((d) => (
-                  <Box key={d.id} sx={{ p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px", border: "1px solid #f1f5f9" }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: "#334155", mb: 0.75 }}>{d.name}</Typography>
+                  <Box key={d.id} sx={{ p: 1.5, bgcolor: "background.default", borderRadius: "10px", border: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", mb: 0.75 }}>{d.name}</Typography>
                     {d.products?.length > 0 ? (
                       <Stack direction="row" flexWrap="wrap" gap={0.75}>
                         {d.products.map((p) => (
                           <Chip key={p.id} label={p.name} size="small" 
-                            icon={<Inventory2Icon sx={{ fontSize: "12px !important", color: "#64748b" }} />} 
-                            sx={{ bgcolor: "#fff", border: "1px solid #e2e8f0", color: "#475569", fontWeight: 600, fontSize: "11px", height: 22 }} />
+                            icon={<Inventory2Icon sx={{ fontSize: "12px !important", color: "text.secondary" }} />} 
+                            sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", color: "text.secondary", fontWeight: 600, fontSize: "11px", height: 22 }} />
                         ))}
                       </Stack>
                     ) : (
-                      <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>No products</Typography>
                     )}
                   </Box>
                 ))}
                 {(!outlet.divisions || outlet.divisions.length === 0) && (
-                  <Typography variant="body2" sx={{ color: "#94a3b8", fontStyle: "italic", textAlign: "center", py: 2 }}>No divisions linked to this outlet.</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic", textAlign: "center", py: 2 }}>No divisions linked to this outlet.</Typography>
                 )}
               </Stack>
             </Box>
 
             {/* Column 2: Contact & Address */}
-            <Box sx={{ flex: 1, p: 3, borderRight: { md: "1px solid #f1f5f9" }, borderBottom: { xs: "1px solid #f1f5f9", md: "none" }, bgcolor: "#fcfdff" }}>
-              <Typography variant="subtitle2" sx={{ color: "#1e293b", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#ede9fe", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ flex: 1, p: 3, borderRight: { md: "1px solid" }, borderRightColor: { md: "divider" }, borderBottom: { xs: "1px solid", md: "none" }, borderBottomColor: { xs: "divider", md: "none" }, bgcolor: "background.paper" }}>
+              <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "rgba(124, 58, 237, 0.12)", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <PersonIcon sx={{ fontSize: 16 }} />
                 </Box>
                 Contact Details
               </Typography>
               <Stack spacing={2.5}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Outlet Owner</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700, color: "#1e293b", mt: 0.25 }}>{outlet.ownerName || "—"}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Outlet Owner</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: "text.primary", mt: 0.25 }}>{outlet.ownerName || "—"}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Full Address</Typography>
-                  <Typography variant="body2" sx={{ color: "#475569", mt: 0.5, lineHeight: 1.5, display: "flex", gap: 1, alignItems: "flex-start" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Full Address</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5, lineHeight: 1.5, display: "flex", gap: 1, alignItems: "flex-start" }}>
                     <LocationOnIcon sx={{ fontSize: 16, color: "#ef4444", mt: "2px", flexShrink: 0 }} />
                     {outlet.address || "—"}
                   </Typography>
@@ -244,25 +245,25 @@ const OutletDetailRow = ({ outlet, colSpan }) => (
 
             {/* Column 3: Quick Stats */}
             <Box sx={{ flex: 1, p: 3 }}>
-              <Typography variant="subtitle2" sx={{ color: "#1e293b", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "#e0f2fe", color: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: "rgba(14, 165, 233, 0.12)", color: "#0ea5e9", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <StorefrontIcon sx={{ fontSize: 16 }} />
                 </Box>
                 Outlet Profile
               </Typography>
               <Stack spacing={1.5}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px" }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#64748b" }}>System Code</Typography>
-                  <Typography sx={{ fontWeight: 700, color: "#0f172a", fontFamily: "monospace", bgcolor: "#e2e8f0", px: 1, py: 0.25, borderRadius: "6px" }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "background.default", borderRadius: "10px" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>System Code</Typography>
+                  <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "monospace", bgcolor: "background.paper", border: "1px solid", borderColor: "divider", px: 1, py: 0.25, borderRadius: "6px" }}>
                     {outlet.outletCode || "N/A"}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px" }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#64748b" }}>Total Divisions</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "background.default", borderRadius: "10px" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>Total Divisions</Typography>
                   <Typography sx={{ fontWeight: 800, color: "#16a34a", fontSize: "1rem" }}>{outlet.divisions?.length ?? 0}</Typography>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "#f8fafc", borderRadius: "10px" }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: "#64748b" }}>Total Products</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "background.default", borderRadius: "10px" }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>Total Products</Typography>
                   <Typography sx={{ fontWeight: 800, color: "#7c3aed", fontSize: "1rem" }}>{outlet.productNames?.length ?? 0}</Typography>
                 </Box>
               </Stack>
@@ -602,7 +603,7 @@ export default function Outlet() {
     <Box>
       <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
-          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "block" }}>Add Division</Typography>
           <SearchableSelect
             options={divisions.filter((d) => !selectedDivisions.find((sd) => sd.id === d.id))}
             value="" onChange={handleDivisionSelect}
@@ -610,7 +611,7 @@ export default function Outlet() {
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "block" }}>Add Product</Typography>
           <SearchableSelect
             options={availableProducts.filter((p) => !(form.mappings[p.divisionId] || []).includes(p.id))}
             value="" onChange={handleProductSelect}
@@ -621,9 +622,9 @@ export default function Outlet() {
       </Grid>
 
       {selectedDivisions.length === 0 ? (
-        <Box sx={{ py: 4, textAlign: "center", border: "2px dashed #e2e8f0", borderRadius: 3, bgcolor: "#fafbff" }}>
+        <Box sx={{ py: 4, textAlign: "center", border: "2px dashed", borderColor: "divider", borderRadius: 3, bgcolor: "background.default" }}>
           <GridViewIcon sx={{ fontSize: 36, color: "#c7d2fe", mb: 1 }} />
-          <Typography variant="body2" sx={{ color: "#94a3b8" }}>No divisions added. Select one above.</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>No divisions added. Select one above.</Typography>
         </Box>
       ) : (
         <Stack spacing={1.5}>
@@ -632,23 +633,23 @@ export default function Outlet() {
               .map((pid) => availableProducts.find((p) => p.id === pid))
               .filter(Boolean);
             return (
-              <Paper key={div.id} elevation={0} sx={{ border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+              <Paper key={div.id} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "12px", overflow: "hidden" }}>
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-                  px: 2, py: 1.25, bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                  px: 2, py: 1.25, bgcolor: "background.default", borderBottom: "1px solid", borderBottomColor: "divider" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#4f46e5" }} />
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>{div.name}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{div.name}</Typography>
                     <Chip label={`${selProds.length} product${selProds.length !== 1 ? "s" : ""}`} size="small"
                       sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontWeight: 700, height: 20, fontSize: "0.7rem" }} />
                   </Box>
                   <IconButton size="small" onClick={() => removeDivision(div.id)}
-                    sx={{ color: "#ef4444", "&:hover": { bgcolor: "#fef2f2" }, borderRadius: "8px" }}>
+                    sx={{ color: "#ef4444", "&:hover": { bgcolor: "rgba(239, 68, 68, 0.08)" }, borderRadius: "8px" }}>
                     <CloseIcon sx={{ fontSize: 15 }} />
                   </IconButton>
                 </Box>
                 <Box sx={{ p: 2 }}>
                   {selProds.length === 0
-                    ? <Typography variant="caption" sx={{ color: "#94a3b8" }}>No products selected for this division</Typography>
+                    ? <Typography variant="caption" sx={{ color: "text.secondary" }}>No products selected for this division</Typography>
                     : (
                       <Stack direction="row" flexWrap="wrap" gap={0.75}>
                         {selProds.map((p) => (
@@ -691,22 +692,26 @@ export default function Outlet() {
               title="Basic Information"
               color="#4f46e5"
             />
-            <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid #e8eaf6", bgcolor: "#fff" }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid", borderColor: "divider", bgcolor: "background.paper" }}>
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                  <TextField fullWidth size="small" label="Outlet Name" required
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <StorefrontIcon sx={{ fontSize: 14, color: "#4f46e5" }} /> Outlet Name <span style={{ color: "#ef4444" }}>*</span>
+                  </Typography>
+                  <TextField fullWidth size="small"
                     value={form.outletName} onChange={handleOutletNameChange}
-                    placeholder="e.g. Main Branch"
-                    InputProps={{ startAdornment: <InputAdornment position="start"><StorefrontIcon sx={{ fontSize: 16, color: "#4f46e5" }} /></InputAdornment> }} />
+                    placeholder="e.g. Main Branch" />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <TextField fullWidth size="small" label="Owner Name" required
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <PersonIcon sx={{ fontSize: 14, color: "#7c3aed" }} /> Owner Name <span style={{ color: "#ef4444" }}>*</span>
+                  </Typography>
+                  <TextField fullWidth size="small"
                     value={form.ownerName} onChange={handleOwnerNameChange}
-                    placeholder="e.g. John Doe"
-                    InputProps={{ startAdornment: <InputAdornment position="start"><PersonIcon sx={{ fontSize: 16, color: "#7c3aed" }} /></InputAdornment> }} />
+                    placeholder="e.g. John Doe" />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
                     <MapIcon sx={{ fontSize: 14, color: "#10b981" }} /> Location <span style={{ color: "#ef4444" }}>*</span>
                   </Typography>
                   <SearchableSelect
@@ -716,7 +721,7 @@ export default function Outlet() {
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
                     <CategoryIcon sx={{ fontSize: 14, color: "#f59e0b" }} /> Outlet Type <span style={{ color: "#ef4444" }}>*</span>
                   </Typography>
                   <SearchableSelect
@@ -726,10 +731,12 @@ export default function Outlet() {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField fullWidth size="small" label="Address" required multiline rows={3}
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <LocationOnIcon sx={{ fontSize: 14, color: "#ef4444" }} /> Address <span style={{ color: "#ef4444" }}>*</span>
+                  </Typography>
+                  <TextField fullWidth size="small" multiline rows={3}
                     value={form.address} onChange={handleAddressChange}
-                    placeholder="e.g. 123 Main St, City"
-                    InputProps={{ startAdornment: <InputAdornment position="start" sx={{ mt: "-44px", alignSelf: "flex-start", pt: "10px" }}><LocationOnIcon sx={{ fontSize: 16, color: "#ef4444" }} /></InputAdornment> }} />
+                    placeholder="e.g. 123 Main St, City" />
                 </Grid>
               </Grid>
             </Paper>
@@ -741,7 +748,7 @@ export default function Outlet() {
               title="Divisions & Products *"
               color="#10b981"
             />
-            <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid #e8eaf6", bgcolor: "#fff" }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: "16px", border: "1.5px solid", borderColor: "divider", bgcolor: "background.paper" }}>
               {renderDivisionSection()}
             </Paper>
           </Box>
@@ -753,7 +760,7 @@ export default function Outlet() {
 
   /* ─── Card component ─── */
   const OutletCard = ({ o, i }) => {
-    const tc = TYPE_META[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #94a3b8, #64748b)", shadow: "rgba(100,116,139,0.3)" };
+    const tc = TYPE_META[o.outletType] ?? { bg: "#f1f5f9", color: "text.secondary", dot: "#94a3b8", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #94a3b8, #64748b)", shadow: "rgba(100,116,139,0.3)" };
     const IconComponent = tc.icon;
 
     return (
@@ -769,8 +776,8 @@ export default function Outlet() {
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography variant="caption" sx={{
-              color: "#94a3b8", fontWeight: 700,
-              bgcolor: "#f8fafc", border: "1px solid #e2e8f0",
+              color: "text.secondary", fontWeight: 700,
+              bgcolor: "background.default", border: "1px solid #e2e8f0",
               borderRadius: "20px", px: "9px", py: "2px",
             }}>
               #{(page - 1) * pageSize + i + 1}
@@ -778,11 +785,11 @@ export default function Outlet() {
           </Box>
         </Box>
 
-        <Typography sx={{ fontWeight: 800, fontSize: "0.96rem", color: "#0f172a", mb: "3px" }}>
+        <Typography sx={{ fontWeight: 800, fontSize: "0.96rem", color: "text.primary", mb: "3px" }}>
           {o.outletName}
         </Typography>
         {o.outletCode && (
-          <Typography variant="caption" sx={{ color: "#94a3b8", fontFamily: "monospace", display: "block", mb: 0.75 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", display: "block", mb: 0.75 }}>
             {o.outletCode}
           </Typography>
         )}
@@ -791,8 +798,8 @@ export default function Outlet() {
           {o.outletType && <TypeBadge type={o.outletType} />}
           {o.locationName && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <LocationOnIcon sx={{ fontSize: 13, color: "#94a3b8" }} />
-              <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{o.locationName}</Typography>
+              <LocationOnIcon sx={{ fontSize: 13, color: "text.secondary" }} />
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>{o.locationName}</Typography>
             </Box>
           )}
         </Stack>
@@ -810,18 +817,18 @@ export default function Outlet() {
               <Chip key={idx} label={p} size="small" sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontSize: "0.7rem" }} />
             ))}
             {o.productNames.length > 3 && (
-              <Chip label={`+${o.productNames.length - 3}`} size="small" sx={{ bgcolor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }} />
+              <Chip label={`+${o.productNames.length - 3}`} size="small" sx={{ bgcolor: "background.default", color: "text.secondary", fontSize: "0.7rem" }} />
             )}
           </Stack>
         )}
         {o.ownerName && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-            <PersonIcon sx={{ fontSize: 13, color: "#94a3b8" }} />
-            <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>{o.ownerName}</Typography>
+            <PersonIcon sx={{ fontSize: 13, color: "text.secondary" }} />
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>{o.ownerName}</Typography>
           </Box>
         )}
         {o.address && (
-          <Typography variant="caption" sx={{ color: "#94a3b8", display: "block", mb: 1,
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1,
             overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
             {o.address}
           </Typography>
@@ -844,15 +851,15 @@ export default function Outlet() {
 
   /* ═══ RENDER ═══ */
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "#f8fafc", minHeight: "100vh" }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: "background.default", minHeight: "100vh" }}>
 
         {/* ─── Hero ─── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 900, color: "#0f172a", letterSpacing: "-0.4px" }}>
+            <Typography variant="h5" sx={{ fontWeight: 900, color: "text.primary", letterSpacing: "-0.4px" }}>
               <TypingText text="Outlet Management" />
             </Typography>
-            <Typography variant="caption" sx={{ color: "#94a3b8", fontWeight: 500 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>
               Manage and monitor all your outlet locations
             </Typography>
           </Box>
@@ -876,7 +883,7 @@ export default function Outlet() {
         {isFormView ? (
           /* ─── Form page (Full Page with Animation) ─── */
           <Box className="animate-fade-in">
-            <Paper elevation={0} sx={{ mb: 4, borderRadius: "20px", border: "1.5px solid #e8eaf6", overflow: "hidden" }}>
+            <Paper elevation={0} sx={{ mb: 4, borderRadius: "20px", border: "1.5px solid", borderColor: "divider", overflow: "hidden" }}>
               {renderFormPage()}
             </Paper>
           </Box>
@@ -908,7 +915,7 @@ export default function Outlet() {
         )}
 
         {/* ─── Toolbar ─── */}
-        <Paper elevation={0} sx={{ border: "1.5px solid #e8eaf6", borderRadius: "16px", p: "14px 18px", mb: 2, bgcolor: "#fff" }}>
+        <Paper elevation={0} sx={{ border: "1.5px solid", borderColor: "divider", borderRadius: "16px", p: "14px 18px", mb: 2, bgcolor: "background.paper" }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
 
             {/* Search */}
@@ -922,7 +929,7 @@ export default function Outlet() {
               }}
               sx={{ minWidth: 260, flex: 1, "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
               InputProps={{
-                startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "#94a3b8", fontSize: 18 }} /></InputAdornment>,
+                startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: "text.secondary", fontSize: 18 }} /></InputAdornment>,
                 endAdornment: searchInput ? (
                   <InputAdornment position="end">
                     <IconButton size="small" onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}>
@@ -941,7 +948,7 @@ export default function Outlet() {
                 borderRadius: "10px", fontWeight: 700, height: 40, px: 2,
                 ...(showFilters
                   ? { bgcolor: "#4f46e5", color: "#fff", "&:hover": { bgcolor: "#4338ca" } }
-                  : { borderColor: "#e2e8f0", color: "#64748b" }),
+                  : { borderColor: "#e2e8f0", color: "text.secondary" }),
               }}>
               Filters {hasActiveFilters && !showFilters ? `(${[locationFilter, typeFilter, divisionFilter, productFilter].filter(Boolean).length})` : ""}
             </Button>
@@ -955,7 +962,7 @@ export default function Outlet() {
 
             <Box sx={{ ml: { md: "auto" }, display: "flex", alignItems: "center", gap: 1.5 }}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Typography variant="body2" sx={{ color: "#64748b", whiteSpace: "nowrap" }}>Show</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>Show</Typography>
                 <FormControl size="small" sx={{ minWidth: 72 }}>
                   <Select value={pageSize}
                     onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
@@ -963,7 +970,7 @@ export default function Outlet() {
                     {PAGE_SIZES.map((n) => <MenuItem key={n} value={n}>{n}</MenuItem>)}
                   </Select>
                 </FormControl>
-                <Typography variant="body2" sx={{ color: "#64748b" }}>entries</Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>entries</Typography>
               </Stack>
 
               <ToggleButtonGroup size="small" value={view} exclusive onChange={(_, v) => v && setView(v)}
@@ -1033,7 +1040,7 @@ export default function Outlet() {
                   <TableRow>
                     <TableCell colSpan={10} align="center" sx={{ py: 7 }}>
                       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-                        <Box sx={{ width: 60, height: 60, borderRadius: "18px", bgcolor: "#f1f5f9",
+                        <Box sx={{ width: 60, height: 60, borderRadius: "18px", bgcolor: "background.default",
                           display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <HomeWorkIcon sx={{ fontSize: 30, color: "#cbd5e1" }} />
                         </Box>
@@ -1058,7 +1065,7 @@ export default function Outlet() {
                         <TableCell sx={{ width: 40, p: "13px 8px" }}>
                           <IconButton size="small"
                             onClick={() => setExpandedRow(expandedRow === o.id ? null : o.id)}
-                            sx={{ color: "#94a3b8", bgcolor: expandedRow === o.id ? "#ede9fe" : "transparent",
+                            sx={{ color: "text.secondary", bgcolor: expandedRow === o.id ? "#ede9fe" : "transparent",
                               borderRadius: "8px", width: 28, height: 28 }}>
                             {expandedRow === o.id
                               ? <KeyboardArrowUpIcon sx={{ fontSize: 18, color: "#4f46e5" }} />
@@ -1066,14 +1073,14 @@ export default function Outlet() {
                           </IconButton>
                         </TableCell>
 
-                        <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontSize: "12px" }}>
+                        <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "12px" }}>
                           {(page - 1) * pageSize + i + 1}
                         </TableCell>
 
                         <TableCell>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                             {(() => {
-                              const tc = TYPE_META[o.outletType] ?? { bg: "#f1f5f9", color: "#64748b", dot: "#94a3b8", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #94a3b8, #64748b)", shadow: "rgba(100,116,139,0.3)" };
+                              const tc = TYPE_META[o.outletType] ?? { bg: "#f1f5f9", color: "text.secondary", dot: "#94a3b8", icon: StorefrontIcon, iconBg: "linear-gradient(135deg, #94a3b8, #64748b)", shadow: "rgba(100,116,139,0.3)" };
                               const IconComp = tc.icon;
                               return (
                                 <Box sx={{
@@ -1085,7 +1092,7 @@ export default function Outlet() {
                                 </Box>
                               );
                             })()}
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
                               {o.outletName}
                             </Typography>
                           </Box>
@@ -1093,9 +1100,9 @@ export default function Outlet() {
 
                         <TableCell>
                           {o.outletCode
-                            ? <Box sx={{ display: "inline-block", bgcolor: "#f8fafc", border: "1px solid #e2e8f0",
+                            ? <Box sx={{ display: "inline-block", bgcolor: "background.default", border: "1px solid #e2e8f0",
                                 borderRadius: "7px", px: "8px", py: "2px", fontFamily: "monospace",
-                                fontSize: "11.5px", color: "#475569", fontWeight: 700 }}>
+                                fontSize: "11.5px", color: "text.secondary", fontWeight: 700 }}>
                                 {o.outletCode}
                               </Box>
                             : <Typography variant="body2" sx={{ color: "#cbd5e1" }}>—</Typography>}
@@ -1124,7 +1131,7 @@ export default function Outlet() {
                                   <Chip key={idx} label={d} size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }} />
                                 ))}
                                 {o.divisionNames.length > 2 && (
-                                  <Chip label={`+${o.divisionNames.length - 2}`} size="small" sx={{ bgcolor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }} />
+                                  <Chip label={`+${o.divisionNames.length - 2}`} size="small" sx={{ bgcolor: "background.default", color: "text.secondary", fontSize: "0.7rem" }} />
                                 )}
                               </Stack>}
                         </TableCell>
@@ -1137,7 +1144,7 @@ export default function Outlet() {
                                   <Chip key={idx} label={p} size="small" sx={{ bgcolor: "#ede9fe", color: "#4f46e5", fontSize: "0.7rem" }} />
                                 ))}
                                 {o.productNames.length > 2 && (
-                                  <Chip label={`+${o.productNames.length - 2}`} size="small" sx={{ bgcolor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }} />
+                                  <Chip label={`+${o.productNames.length - 2}`} size="small" sx={{ bgcolor: "background.default", color: "text.secondary", fontSize: "0.7rem" }} />
                                 )}
                               </Stack>}
                         </TableCell>
@@ -1220,11 +1227,11 @@ export default function Outlet() {
           <Paper elevation={0} sx={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             px: 3, py: 1.75, borderRadius: "14px", border: "1.5px solid #e8eaf6",
-            flexWrap: "wrap", gap: 1, bgcolor: "#fff",
+            flexWrap: "wrap", gap: 1, bgcolor: "background.paper",
           }}>
-            <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
-              Showing <strong style={{ color: "#0f172a" }}>{start}–{end}</strong> of{" "}
-              <strong style={{ color: "#0f172a" }}>{totalElements}</strong> entries
+            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 500 }}>
+              Showing <strong style={{ color: "text.primary" }}>{start}–{end}</strong> of{" "}
+              <strong style={{ color: "text.primary" }}>{totalElements}</strong> entries
             </Typography>
             <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)}
               shape="rounded" size="small"
@@ -1247,7 +1254,7 @@ export default function Outlet() {
             subtitle="This action cannot be undone" accent="#ef4444" onClose={() => setDeleteModal(null)} />
           <DialogContent sx={{ pt: 2.5 }}>
             <Box sx={{ bgcolor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "12px", p: "14px 16px" }}>
-              <Typography variant="body2" sx={{ color: "#1e293b", fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600, mb: 0.5 }}>
                 Are you sure you want to delete{" "}
                 <Typography component="span" sx={{ color: "#ef4444", fontWeight: 800 }}>
                   "{deleteModal?.outletName}"

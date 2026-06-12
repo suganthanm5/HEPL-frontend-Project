@@ -65,17 +65,20 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   // ── Theme ─────────────────────────────────────────────────
   const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem("theme");
-    const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return saved === "dark" || (!saved && sysDark);
+    return localStorage.getItem("darkMode") === "true";
   });
 
-  // Persist theme preference — only the sidebar class changes, NOT body
   useEffect(() => {
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark]);
-
-  const toggleTheme = () => setIsDark((prev) => !prev);
+    const handleThemeChange = () => {
+      setIsDark(localStorage.getItem("darkMode") === "true");
+    };
+    window.addEventListener("settingsUpdated", handleThemeChange);
+    window.addEventListener("storage", handleThemeChange);
+    return () => {
+      window.removeEventListener("settingsUpdated", handleThemeChange);
+      window.removeEventListener("storage", handleThemeChange);
+    };
+  }, []);
 
   // ── Search ────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -116,7 +119,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     navigate("/");
   };
 
-  const handleToggle = () => setCollapsed((prev) => !prev);
+  const handleToggle = () => {
+    setCollapsed((prev) => {
+      const newValue = !prev;
+      localStorage.setItem("sidebarCollapsed", String(newValue));
+      window.dispatchEvent(new Event("settingsUpdated"));
+      return newValue;
+    });
+  };
 
   const location = useLocation();
   const [isMasterOpen, setIsMasterOpen] = useState(false);

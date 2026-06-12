@@ -7,7 +7,7 @@ import {
   DialogContent, DialogActions, TextField,
   FormControl, Select, MenuItem, Tooltip,
   CircularProgress, Snackbar, Alert, IconButton, Paper,
-  Grid, Stack,
+  Grid, Stack, useTheme
 } from "@mui/material";
 import {
   SearchRounded, SwapHorizRounded, WarehouseRounded,
@@ -50,6 +50,8 @@ const stockOutletName = (s) => s.outletName ?? s.outlet?.outletName ?? s.outletI
 ══════════════════════════════════════════ */
 const Stock = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [stock, setStock] = useState([]);
   const [mainStock, setMainStock] = useState([]);
   const [txns, setTxns] = useState([]);
@@ -393,10 +395,10 @@ const Stock = () => {
           {!isOutletUser && (
             <Box className="stat-cards-row">
               {[
-                { label: "Stock Entries", value: stock.length, bg: "#f5f0ff", color: "#7d2ae8", Icon: WarehouseRounded, theme: "purple" },
-                { label: "Total IN", value: totalIn, bg: "#dcfce7", color: "#16a34a", Icon: TrendingUpRounded, theme: "green" },
-                { label: "Total OUT", value: totalOut, bg: "#fee2e2", color: "#ef4444", Icon: TrendingDownRounded, theme: "rose" },
-                { label: "Transactions", value: txns.length, bg: "#e0f2fe", color: "#0284c7", Icon: SwapHorizRounded, theme: "blue" },
+                { label: "Stock Entries", value: stock.length, bg: isDark ? "rgba(125, 42, 232, 0.2)" : "#f5f0ff", color: isDark ? "#c084fc" : "#7d2ae8", Icon: WarehouseRounded, theme: "purple" },
+                { label: "Total IN", value: totalIn, bg: isDark ? "rgba(22, 163, 74, 0.2)" : "#dcfce7", color: isDark ? "#4ade80" : "#16a34a", Icon: TrendingUpRounded, theme: "green" },
+                { label: "Total OUT", value: totalOut, bg: isDark ? "rgba(239, 68, 68, 0.2)" : "#fee2e2", color: isDark ? "#f87171" : "#ef4444", Icon: TrendingDownRounded, theme: "rose" },
+                { label: "Transactions", value: txns.length, bg: isDark ? "rgba(2, 132, 199, 0.2)" : "#e0f2fe", color: isDark ? "#60a5fa" : "#0284c7", Icon: SwapHorizRounded, theme: "blue" },
               ].map(({ label, value, bg, color, Icon, theme }) => (
                 <Box className={`stat-card stat-${theme}`} key={label}>
                   <Box className="stat-card-icon" sx={{ background: bg }}><Icon sx={{ color, fontSize: 22 }} /></Box>
@@ -413,7 +415,7 @@ const Stock = () => {
           <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
             {["stock", "main", "history"].map((t) => (
               <ButtonBase key={t} onClick={() => setTab(t)} disableRipple
-                sx={{ px: 2.5, py: 1, borderRadius: "50px", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600, transition: "all 0.2s", background: tab === t ? "linear-gradient(135deg,#7d2ae8,#a855f7)" : "#f5f0ff", color: tab === t ? "#fff" : "#7d2ae8", boxShadow: tab === t ? "0 4px 12px rgba(125,42,232,0.3)" : "none" }}>
+                sx={{ px: 2.5, py: 1, borderRadius: "50px", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 600, transition: "all 0.2s", background: tab === t ? "linear-gradient(135deg,#7d2ae8,#a855f7)" : "action.hover", color: tab === t ? "#fff" : "primary.main", boxShadow: tab === t ? "0 4px 12px rgba(125,42,232,0.3)" : "none" }}>
                 {t === "stock" ? "Outlet Stock" : t === "main" ? "Main Warehouse Stock" : "Transaction History"}
               </ButtonBase>
             ))}
@@ -423,7 +425,7 @@ const Stock = () => {
           <Box className="table-card">
             <Box className="table-toolbar">
               <Box sx={{ display: "flex", gap: 2, alignItems: "center", flex: 1 }}>
-                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>
+                <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit" }}>
                   {tab === "stock" ? "Current Stock" : tab === "main" ? "Main Warehouse Stock" : "Transaction History"}
                 </Typography>
                 <ExportMenu
@@ -465,18 +467,18 @@ const Stock = () => {
                       {outlets.map(ot => <MenuItem key={ot.id} value={ot.id}>{ot.outletName}</MenuItem>)}
                     </Select>
 
-                    <ButtonBase onClick={() => setFilters({ productId: "", outletId: userOutletId, type: "" })} sx={{ color: "#7d2ae8", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
+                    <ButtonBase onClick={() => setFilters({ productId: "", outletId: userOutletId, type: "" })} sx={{ color: "primary.main", fontSize: "0.75rem", fontWeight: 600 }}>Clear</ButtonBase>
                   </>
                 )}
               </Box>
               <Box className="table-search">
-                <SearchRounded sx={{ fontSize: 18, color: "#7d2ae8", flexShrink: 0 }} />
+                <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
                 <InputBase placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)}
-                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b" }} />
+                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }} />
               </Box>
             </Box>
 
-            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #f1f5f9", borderRadius: 3 }}>
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
               {tab === "stock" ? (
                 <Table size="small">
                   <TableHead>
@@ -493,9 +495,9 @@ const Stock = () => {
                   </TableHead>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6 }}><CircularProgress color="primary" size={32} /></TableCell></TableRow>
                     ) : filteredStock.length === 0 ? (
-                      <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>No stock found</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={isOutletUser ? 3 : 6} align="center" sx={{ py: 6, color: "text.secondary", fontFamily: "inherit" }}>No stock found</TableCell></TableRow>
                     ) : (
                       filteredStock.map((s) => {
                         const lvl = stockLevel(s.availableQty);
@@ -504,19 +506,19 @@ const Stock = () => {
                           <TableRow
                             key={s.id} hover
                             sx={{
-                              "&:hover": { background: isLow ? "#fff1f2" : "#faf5ff" },
+                              "&:hover": { background: isLow ? "rgba(239,68,68,0.12)" : "action.hover" },
                               "&:last-child td": { borderBottom: 0 },
-                              background: isLow ? "#fff1f2" : "inherit"
+                              background: isLow ? "rgba(239,68,68,0.08)" : "inherit"
                             }}
                           >
                             {isOutletUser ? (
                               <>
-                                <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.productId}</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "inherit" }}>{s.availableQty}</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.productId}</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "text.primary", fontFamily: "inherit" }}>{s.availableQty}</TableCell>
                                 <TableCell>
                                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                     <Tooltip title="View Stock Detail">
-                                      <IconButton size="small" sx={{ color: "#3b82f6", background: "#eff6ff" }} onClick={() => setDetailDialog({ open: true, data: s })}>
+                                      <IconButton size="small" sx={{ color: "#3b82f6", background: "rgba(59,130,246,0.12)" }} onClick={() => setDetailDialog({ open: true, data: s })}>
                                         <VisibilityRounded sx={{ fontSize: 16 }} />
                                       </IconButton>
                                     </Tooltip>
@@ -541,10 +543,10 @@ const Stock = () => {
                               </>
                             ) : (
                               <>
-                                <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.outletName || s.outletId}</TableCell>
-                                <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.productId}</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "#1e1b4b", fontFamily: "inherit" }}>{s.availableQty}</TableCell>
-                                <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.reservedQty || 0}</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.outletName || s.outletId}</TableCell>
+                                <TableCell sx={{ color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.productId}</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: isLow ? "#ef4444" : "text.primary", fontFamily: "inherit" }}>{s.availableQty}</TableCell>
+                                <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.reservedQty || 0}</TableCell>
                                 <TableCell>
                                   <Box className="stock-level">
                                     <Box className="stock-level-bar">
@@ -572,33 +574,33 @@ const Stock = () => {
                   </TableHead>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress color="primary" size={32} /></TableCell></TableRow>
                     ) : mainStock.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>No main stock found</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary", fontFamily: "inherit" }}>No main stock found</TableCell></TableRow>
                     ) : (
                       mainStock.map((s) => {
                         return (
                           <TableRow
                             key={s.id} hover
-                            sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}
+                            sx={{ "&:hover": { background: "action.hover" }, "&:last-child td": { borderBottom: 0 } }}
                           >
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.batchNo}</TableCell>
-                            <TableCell sx={{ fontWeight: 600, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.product?.name || s.productId}</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "#1e1b4b", fontFamily: "inherit" }}>{s.quantity}</TableCell>
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>₹{s.purchasePrice}</TableCell>
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>₹{s.sellingPrice}</TableCell>
-                            <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.expiryDate}</TableCell>
+                            <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.batchNo}</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.productName || s.product?.name || s.productId}</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: "0.875rem", color: "text.primary", fontFamily: "inherit" }}>{s.quantity}</TableCell>
+                            <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>₹{s.purchasePrice}</TableCell>
+                            <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>₹{s.sellingPrice}</TableCell>
+                            <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{s.expiryDate}</TableCell>
                             <TableCell>
                               <Box sx={{ display: "flex", gap: 0.75 }}>
                                 <Tooltip title="View Batch Details">
-                                  <IconButton size="small" sx={{ color: "#3b82f6", background: "#eff6ff" }} onClick={() => setDetailDialog({ open: true, data: s })}>
+                                  <IconButton size="small" sx={{ color: "#3b82f6", background: "rgba(59,130,246,0.12)" }} onClick={() => setDetailDialog({ open: true, data: s })}>
                                     <VisibilityRounded sx={{ fontSize: 14 }} />
                                   </IconButton>
                                 </Tooltip>
                                 {!isOutletUser && (
                                   <>
                                     <Tooltip title="Edit Stock Batch">
-                                      <IconButton size="small" sx={{ color: "#f59e0b", background: "#fef3c7" }} onClick={() => {
+                                      <IconButton size="small" sx={{ color: "#f59e0b", background: "rgba(245,158,11,0.12)" }} onClick={() => {
                                         setAddStockData({ id: s.id, productId: s.product?.id || s.productId, quantity: s.quantity, purchasePrice: s.purchasePrice, sellingPrice: s.sellingPrice, expiryDate: s.expiryDate, batchNo: s.batchNo });
                                         setIsFormView(true);
                                       }}>
@@ -606,7 +608,7 @@ const Stock = () => {
                                       </IconButton>
                                     </Tooltip>
                                     <Tooltip title="Delete Batch">
-                                      <IconButton size="small" sx={{ color: "#ef4444", background: "#fee2e2" }} onClick={async () => {
+                                      <IconButton size="small" sx={{ color: "#ef4444", background: "rgba(239,68,68,0.12)" }} onClick={async () => {
                                         if (window.confirm(`Are you sure you want to delete batch ${s.batchNo}?`)) {
                                           try {
                                             await API.delete(`/api/batches/${s.id}`);
@@ -660,12 +662,12 @@ const Stock = () => {
                   </TableHead>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress sx={{ color: "#7d2ae8" }} size={32} /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}><CircularProgress color="primary" size={32} /></TableCell></TableRow>
                     ) : txns.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "#94a3b8", fontFamily: "inherit" }}>No transactions</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: "text.secondary", fontFamily: "inherit" }}>No transactions</TableCell></TableRow>
                     ) : (
                       txns.map((t) => (
-                        <TableRow key={t.id} hover sx={{ "&:hover": { background: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
+                        <TableRow key={t.id} hover sx={{ "&:hover": { background: "action.hover" }, "&:last-child td": { borderBottom: 0 } }}>
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                               {t.transactionType === "IN"
@@ -675,11 +677,11 @@ const Stock = () => {
                               <Typography sx={{ fontWeight: 700, fontSize: "0.78rem", color: t.transactionType === "IN" ? "#16a34a" : "#ef4444", fontFamily: "inherit" }}>{t.transactionType}</Typography>
                             </Box>
                           </TableCell>
-                          <TableCell sx={{ color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.productName || t.productId}</TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.outletName || t.outletId}</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: "#1e1b4b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.quantity}</TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.createdBy}</TableCell>
-                          <TableCell sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit" }}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "—"}</TableCell>
+                          <TableCell sx={{ color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.productName || t.productId}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.outletName || t.outletId}</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: "text.primary", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.quantity}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.875rem", fontFamily: "inherit" }}>{t.createdBy}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem", fontFamily: "inherit" }}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "—"}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -694,7 +696,7 @@ const Stock = () => {
                 <ButtonBase
                   disabled={tab === "stock" ? stockPage === 0 : tab === "main" ? mainStockPage === 0 : txnPage === 0}
                   onClick={() => tab === "stock" ? setStockPage(p => p - 1) : tab === "main" ? setMainStockPage(p => p - 1) : setTxnPage(p => p - 1)}
-                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage === 0 : tab === "main" ? mainStockPage === 0 : txnPage === 0) ? 0.5 : 1 }}
+                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid", borderColor: "divider", opacity: (tab === "stock" ? stockPage === 0 : tab === "main" ? mainStockPage === 0 : txnPage === 0) ? 0.5 : 1 }}
                 >
                   Previous
                 </ButtonBase>
@@ -704,7 +706,7 @@ const Stock = () => {
                 <ButtonBase
                   disabled={tab === "stock" ? stockPage >= totalStockPages - 1 : tab === "main" ? mainStockPage >= totalMainStockPages - 1 : txnPage >= totalTxnPages - 1}
                   onClick={() => tab === "stock" ? setStockPage(p => p + 1) : tab === "main" ? setMainStockPage(p => p + 1) : setTxnPage(p => p + 1)}
-                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid #e2e8f0", opacity: (tab === "stock" ? stockPage >= totalStockPages - 1 : tab === "main" ? mainStockPage >= totalMainStockPages - 1 : txnPage >= totalTxnPages - 1) ? 0.5 : 1 }}
+                  sx={{ px: 2, py: 0.5, borderRadius: 2, border: "1px solid", borderColor: "divider", opacity: (tab === "stock" ? stockPage >= totalStockPages - 1 : tab === "main" ? mainStockPage >= totalMainStockPages - 1 : txnPage >= totalTxnPages - 1) ? 0.5 : 1 }}
                 >
                   Next
                 </ButtonBase>
@@ -715,34 +717,34 @@ const Stock = () => {
       )}
 
       <Dialog open={detailDialog.open} onClose={() => setDetailDialog({ open: false, data: null })} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b" }}>Stock Details</DialogTitle>
+        <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "text.primary" }}>Stock Details</DialogTitle>
         <DialogContent>
           {detailDialog.data && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-              <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2 }}>
-                <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Product</Typography>
-                <Typography sx={{ fontWeight: 600, color: "#1e293b" }}>{detailDialog.data.productName || detailDialog.data.product?.name || detailDialog.data.productId}</Typography>
+              <Box sx={{ p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
+                <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 0.5 }}>Product</Typography>
+                <Typography sx={{ fontWeight: 600, color: "text.primary" }}>{detailDialog.data.productName || detailDialog.data.product?.name || detailDialog.data.productId}</Typography>
               </Box>
               {detailDialog.data.batchNo && (
-                <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2 }}>
-                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Batch No</Typography>
-                  <Typography sx={{ fontWeight: 600, color: "#1e293b" }}>{detailDialog.data.batchNo}</Typography>
+                <Box sx={{ p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
+                  <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 0.5 }}>Batch No</Typography>
+                  <Typography sx={{ fontWeight: 600, color: "text.primary" }}>{detailDialog.data.batchNo}</Typography>
                 </Box>
               )}
               {detailDialog.data.outletName && (
-                <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2 }}>
-                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Outlet</Typography>
-                  <Typography sx={{ fontWeight: 600, color: "#1e293b" }}>{detailDialog.data.outletName}</Typography>
+                <Box sx={{ p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
+                  <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 0.5 }}>Outlet</Typography>
+                  <Typography sx={{ fontWeight: 600, color: "text.primary" }}>{detailDialog.data.outletName}</Typography>
                 </Box>
               )}
-              <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2, display: "flex", justifyContent: "space-between" }}>
+              <Box sx={{ p: 2, bgcolor: "action.hover", borderRadius: 2, display: "flex", justifyContent: "space-between" }}>
                 <Box>
-                  <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Available Quantity</Typography>
+                  <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 0.5 }}>Available Quantity</Typography>
                   <Typography sx={{ fontWeight: 700, color: "#10b981", fontSize: "1.2rem" }}>{detailDialog.data.quantity ?? detailDialog.data.availableQty}</Typography>
                 </Box>
                 {detailDialog.data.reservedQty !== undefined && (
                   <Box sx={{ textAlign: "right" }}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "#64748b", mb: 0.5 }}>Reserved Quantity</Typography>
+                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 0.5 }}>Reserved Quantity</Typography>
                     <Typography sx={{ fontWeight: 700, color: "#f59e0b", fontSize: "1.2rem" }}>{detailDialog.data.reservedQty}</Typography>
                   </Box>
                 )}

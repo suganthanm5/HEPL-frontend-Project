@@ -24,6 +24,7 @@ import {
   Tooltip,
   CircularProgress,
   Fade,
+  useTheme
 } from "@mui/material";
 import {
   NotificationsRounded,
@@ -45,8 +46,22 @@ import { orderService } from "../../services/orderService";
 import { useWebSocketContext } from "../../context/WebSocketContext";
 import "./NotificationPage.css";
 
+const getNotifColor = (color, isDark) => {
+  if (!isDark) return color;
+  if (color === "#7d2ae8" || color === "#7c3aed") return "#c084fc";
+  if (color === "#db2777") return "#f472b6";
+  if (color === "#ef4444") return "#f87171";
+  if (color === "#f59e0b") return "#fbbf24";
+  if (color === "#ea580c") return "#fb923c";
+  if (color === "#10b981") return "#4ade80";
+  if (color === "#0ea5e9") return "#38bdf8";
+  return color;
+};
+
 const NotificationPage = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { latestNotification } = useWebSocketContext();
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -337,19 +352,19 @@ const NotificationPage = () => {
               <IconButton
                 onClick={() => navigate(-1)}
                 sx={{
-                  color: "#7d2ae8",
-                  background: "#ffffff",
-                  boxShadow: "0 8px 16px rgba(125,42,232,0.06)",
+                  color: isDark ? "#c084fc" : "#7d2ae8",
+                  background: "background.paper",
+                  boxShadow: isDark ? "none" : "0 8px 16px rgba(125,42,232,0.06)",
                   borderRadius: "14px",
                   width: 48,
                   height: 48,
                   mr: 0.5,
                   transition: "all 0.2s ease-in-out",
                   "&:hover": {
-                    background: "#7d2ae8",
-                    color: "#ffffff",
+                    background: isDark ? "rgba(255,255,255,0.08)" : "#7d2ae8",
+                    color: isDark ? "#c084fc" : "#ffffff",
                     transform: "translateX(-3px)",
-                    boxShadow: "0 8px 20px rgba(125,42,232,0.25)"
+                    boxShadow: isDark ? "none" : "0 8px 20px rgba(125,42,232,0.25)"
                   },
                 }}
               >
@@ -357,7 +372,7 @@ const NotificationPage = () => {
               </IconButton>
             </Tooltip>
             <Box className="notif-page-bell-icon">
-              <NotificationsRounded sx={{ fontSize: 24, color: "#7d2ae8" }} />
+              <NotificationsRounded sx={{ fontSize: 24, color: "primary.main" }} />
             </Box>
             <Box>
               <Typography variant="h5" className="notif-page-title">
@@ -370,7 +385,7 @@ const NotificationPage = () => {
           </Box>
           <Box display="flex" gap={1}>
             <Tooltip title="Refresh Events Feed">
-              <IconButton onClick={fetchData} size="medium" sx={{ color: "#7d2ae8", background: "rgba(125,42,232,0.08)" }}>
+              <IconButton onClick={fetchData} size="medium" sx={{ color: "primary.main", background: "action.hover" }}>
                 <RefreshRounded />
               </IconButton>
             </Tooltip>
@@ -406,38 +421,39 @@ const NotificationPage = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchRounded sx={{ color: "#7d2ae8" }} />
+                  <SearchRounded sx={{ color: "primary.main" }} />
                 </InputAdornment>
               ),
             }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "50px",
-                backgroundColor: "#f5f0ff",
+                backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "#f5f0ff",
                 fontFamily: "inherit",
                 fontSize: "13px",
                 "& fieldset": { borderColor: "transparent" },
                 "&:hover fieldset": { borderColor: "rgba(125,42,232,0.25)" },
-                "&.Mui-focused fieldset": { borderColor: "#7d2ae8" },
+                "&.Mui-focused fieldset": { borderColor: "primary.main" },
               },
             }}
           />
-
+ 
           <Tabs
             value={activeTab}
             onChange={(e, newTab) => setActiveTab(newTab)}
             variant="scrollable"
             scrollButtons="auto"
             sx={{
-              borderBottom: "1px solid rgba(125,42,232,0.08)",
-              "& .MuiTabs-indicator": { backgroundColor: "#7d2ae8", height: "3px", borderRadius: "10px" },
+              borderBottom: "1px solid",
+              borderBottomColor: "divider",
+              "& .MuiTabs-indicator": { backgroundColor: "primary.main", height: "3px", borderRadius: "10px" },
               "& .MuiTab-root": {
                 textTransform: "none",
                 fontSize: "13px",
                 fontWeight: 600,
                 fontFamily: "inherit",
-                color: "#94a3b8",
-                "&.Mui-selected": { color: "#7d2ae8" },
+                color: "text.secondary",
+                "&.Mui-selected": { color: "primary.main" },
               },
             }}
           >
@@ -453,7 +469,7 @@ const NotificationPage = () => {
         <CardContent sx={{ p: 0 }} className="notif-page-body">
           {loading ? (
             <Box display="flex" justifyContent="center" alignItems="center" py={10}>
-              <CircularProgress sx={{ color: "#7d2ae8" }} />
+              <CircularProgress color="primary" />
             </Box>
           ) : filteredNotificationsList.length === 0 ? (
             <Fade in={true}>
@@ -483,7 +499,7 @@ const NotificationPage = () => {
                   >
                     <Box
                       className="notif-item-left-icon"
-                      sx={{ background: `${item.color}15`, color: item.color }}
+                      sx={{ background: `${getNotifColor(item.color, isDark)}15`, color: getNotifColor(item.color, isDark) }}
                     >
                       <item.Icon sx={{ fontSize: 22 }} />
                     </Box>
@@ -497,8 +513,8 @@ const NotificationPage = () => {
                           label={item.badge}
                           size="small"
                           sx={{
-                            backgroundColor: `${item.color}12`,
-                            color: item.color,
+                            backgroundColor: `${getNotifColor(item.color, isDark)}12`,
+                            color: getNotifColor(item.color, isDark),
                             fontWeight: 700,
                             fontSize: "10px",
                             height: "20px",

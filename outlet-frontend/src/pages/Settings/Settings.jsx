@@ -114,6 +114,9 @@ const Settings = () => {
 
   // General Settings
   const [theme, setTheme] = useState(localStorage.getItem('darkMode') === 'true' ? 'dark' : 'light');
+
+
+
   const [language, setLanguage] = useState(localStorage.getItem('language') || 'english');
   const [timeFormat, setTimeFormat] = useState(localStorage.getItem('timeFormat') || '12h');
   const [itemsPerPage, setItemsPerPage] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
@@ -144,6 +147,29 @@ const Settings = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(localStorage.getItem('sidebarCollapsed') === 'true');
   const [colorAccent, setColorAccent] = useState(colorMap[storedColorName] || '#4f46e5');
   const [fontSize, setFontSize] = useState((localStorage.getItem('fontSize') || 'Medium').toLowerCase());
+
+  // Synchronize local states with global updates (e.g. from Navbar or Sidebar toggles)
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      const currentDark = localStorage.getItem('darkMode') === 'true' ? 'dark' : 'light';
+      setTheme(currentDark);
+      
+      const currentCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      setSidebarCollapsed(currentCollapsed);
+      
+      const currentThemeColor = localStorage.getItem('themeColor') || 'Purple';
+      setColorAccent(colorMap[currentThemeColor] || '#4f46e5');
+      
+      const currentFontSize = (localStorage.getItem('fontSize') || 'Medium').toLowerCase();
+      setFontSize(currentFontSize);
+    };
+    window.addEventListener('settingsUpdated', handleSettingsChange);
+    window.addEventListener('storage', handleSettingsChange);
+    return () => {
+      window.removeEventListener('settingsUpdated', handleSettingsChange);
+      window.removeEventListener('storage', handleSettingsChange);
+    };
+  }, []);
 
   // Apply Changes Immediately
   useEffect(() => {

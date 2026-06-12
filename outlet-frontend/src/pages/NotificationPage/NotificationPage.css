@@ -203,3 +203,73 @@
   }
 }
 
+/* ── Dark Mode Overrides ────────────────── */
+.dark-theme.notif-page-container,
+.dark .notif-page-container {
+  background-color: var(--color-bg-primary);
+}
+
+.dark-theme .notif-page-card,
+.dark .notif-page-card {
+  background: var(--color-bg-sidebar) !important;
+  border-color: var(--color-border-hr) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-theme .notif-page-header,
+.dark .notif-page-header {
+  background: linear-gradient(135deg, rgba(125, 42, 232, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+}
+
+.dark-theme .notif-page-bell-icon,
+.dark .notif-page-bell-icon {
+  background: var(--color-bg-secondary);
+  box-shadow: none;
+}
+
+.dark-theme .notif-page-title,
+.dark .notif-page-title {
+  color: var(--color-text-primary) !important;
+}
+
+.dark-theme .notif-page-subtitle,
+.dark .notif-page-subtitle {
+  color: var(--color-primary-light) !important;
+}
+
+.dark-theme .notif-page-item-wrap,
+.dark .notif-page-item-wrap {
+  border-color: var(--color-border-hr);
+}
+
+.dark-theme .notif-page-item:hover,
+.dark .notif-page-item:hover {
+  background-color: var(--color-bg-secondary) !important;
+}
+
+.dark-theme .notif-item-title-text,
+.dark .notif-item-title-text {
+  color: var(--color-text-primary) !important;
+}
+
+.dark-theme .notif-item-desc-text,
+.dark .notif-item-desc-text {
+  color: var(--color-text-secondary) !important;
+}
+
+.dark-theme .notif-item-time-text,
+.dark .notif-item-time-text {
+  color: var(--color-primary-light) !important;
+}
+
+.dark-theme .notif-empty-circle,
+.dark .notif-empty-circle {
+  background: var(--color-bg-secondary);
+  box-shadow: none;
+}
+
+.dark-theme .notif-empty-title,
+.dark .notif-empty-title {
+  color: var(--color-text-primary) !important;
+}
+

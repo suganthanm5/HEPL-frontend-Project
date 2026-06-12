@@ -101,8 +101,8 @@ const SearchableSelect = ({
           disablePortal={false}
           style={{ zIndex: 9999, width: anchorRef.current?.offsetWidth }}
         >
-          <Paper className="select-dropdown" sx={{ mt: 0.5, borderRadius: 2, overflow: 'hidden' }}>
-            <Box className="search-box" sx={{ p: 1.5, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Paper className="select-dropdown" sx={{ mt: 0.5, borderRadius: 2, overflow: 'hidden', bgcolor: 'var(--color-bg-sidebar)', border: '1px solid var(--color-border-hr)' }}>
+            <Box className="search-box" sx={{ p: 1.5, borderBottom: '1px solid var(--color-border-hr)', display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'var(--color-bg-primary)' }}>
               <IconSearch />
               <InputBase
                 inputRef={searchInputRef}
@@ -110,13 +110,13 @@ const SearchableSelect = ({
                 fullWidth
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ fontSize: '0.875rem', fontFamily: "inherit" }}
+                sx={{ fontSize: '0.875rem', fontFamily: "inherit", color: 'var(--color-text-primary)' }}
               />
             </Box>
             
             <Box className="options-list" sx={{ maxHeight: 250, overflowY: 'auto' }}>
               {filteredOptions.length === 0 ? (
-                <Box className="no-options" sx={{ p: 2, textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                <Box className="no-options" sx={{ p: 2, textAlign: 'center', color: 'var(--color-text-placeholder)', fontStyle: 'italic', fontSize: '0.875rem' }}>
                   {searchTerm ? 'No matches found' : 'No options available'}
                 </Box>
               ) : (
@@ -129,8 +129,10 @@ const SearchableSelect = ({
                       p: '10px 16px',
                       cursor: 'pointer',
                       fontSize: '0.875rem',
-                      '&:hover': { bgcolor: '#f1f5f9', color: '#6366f1' },
-                      ...(String(option.id) === String(value) && { bgcolor: '#eef2ff', color: '#6366f1', fontWeight: 600 })
+                      color: 'var(--color-text-primary)',
+                      borderBottom: '1px solid var(--color-border-hr)',
+                      '&:hover': { bgcolor: 'var(--color-bg-primary)', color: 'var(--color-primary-main)' },
+                      ...(String(option.id) === String(value) && { bgcolor: 'var(--color-bg-secondary)', color: 'var(--color-primary-main)', fontWeight: 600 })
                     }}
                   >
                     {option.name}

@@ -5,6 +5,7 @@ import {
   Box, Typography, Button, IconButton, Alert,
   Table, TableHead, TableRow, TableCell, TableBody,
   TableContainer, Paper, LinearProgress, Chip, Stack,
+  useTheme
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -63,6 +64,8 @@ const BulkUploadModal = ({
   open, onClose, title, accent = "#6366f1",
   templateHeaders, templateRows, parseRow, onUpload, onDone,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const fileRef = useRef(null);
   const [step, setStep]       = useState("idle");
   const [rows, setRows]       = useState([]);
@@ -258,18 +261,18 @@ const BulkUploadModal = ({
 
       {/* ── Header ── */}
       <DialogTitle sx={{ p: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "18px 24px 14px", borderBottom: "1px solid #f1f5f9" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: "18px 24px 14px", borderBottom: "1px solid", borderColor: "divider" }}>
           <Box sx={{ width: 38, height: 38, borderRadius: 2, display: "flex", alignItems: "center",
             justifyContent: "center", bgcolor: `${accent}18`, color: accent }}>
             <UploadFileIcon sx={{ fontSize: 20 }} />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b" }}>{title}</Typography>
-            <Typography variant="caption" sx={{ color: "#64748b" }}>
+            <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "text.primary" }}>{title}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               Upload a CSV or Excel spreadsheet to create multiple records instantly
             </Typography>
           </Box>
-          <IconButton size="small" onClick={handleClose} sx={{ color: "#94a3b8" }}>
+          <IconButton size="small" onClick={handleClose} sx={{ color: "text.secondary", bgcolor: "background.default", borderRadius: 1.5, "&:hover": { bgcolor: "action.hover" } }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -282,11 +285,11 @@ const BulkUploadModal = ({
           <Stack spacing={2.5}>
 
             {/* Template download */}
-            <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2, border: "1px solid #e2e8f0" }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b", mb: 0.5 }}>
+            <Box sx={{ p: 2, bgcolor: "background.default", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>
                 Step 1 — Download the template
               </Typography>
-              <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 1.5 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
                 Required columns: <strong>{templateHeaders.join(", ")}</strong>
               </Typography>
               <Stack direction="row" spacing={1.5}>
@@ -309,16 +312,16 @@ const BulkUploadModal = ({
             <Box
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 2, border: `2px dashed #e2e8f0`,
+              sx={{ p: 3, bgcolor: "background.default", borderRadius: 2, border: `2px dashed`, borderColor: "divider",
                 "&:hover": { borderColor: accent, bgcolor: `${accent}08` },
                 transition: "all 0.2s", textAlign: "center", cursor: "pointer" }}
               onClick={() => fileRef.current?.click()}
             >
               <UploadFileIcon sx={{ fontSize: 40, color: accent, mb: 1, opacity: 0.7 }} />
-              <Typography variant="body2" sx={{ fontWeight: 600, color: "#1e293b", mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary", mb: 0.5 }}>
                 Step 2 — Upload your filled spreadsheet
               </Typography>
-              <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 2 }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
                 Drag & drop your file here, or click to browse
               </Typography>
               <Stack direction="row" spacing={1} justifyContent="center">
@@ -359,15 +362,15 @@ const BulkUploadModal = ({
                 severity="warning" 
                 sx={{ 
                   borderRadius: 3, 
-                  border: "1px solid #fef08a",
-                  bgcolor: "#fefce8",
-                  "& .MuiAlert-icon": { color: "#ca8a04", mt: 0.5 }
+                  border: isDark ? "none" : "1px solid #fef08a",
+                  bgcolor: isDark ? "rgba(245, 158, 11, 0.15)" : "#fefce8",
+                  "& .MuiAlert-icon": { color: isDark ? "warning.main" : "#ca8a04", mt: 0.5 }
                 }}
               >
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#854d0e", mb: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: isDark ? "warning.main" : "#854d0e", mb: 0.5 }}>
                   {errors.length} Row{errors.length > 1 ? "s" : ""} Will Be Skipped
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#a16207", mb: 1.5, fontSize: "0.825rem" }}>
+                <Typography variant="body2" sx={{ color: isDark ? "text.secondary" : "#a16207", mb: 1.5, fontSize: "0.825rem" }}>
                   The items below contain validation errors or missing data. <strong>You can still proceed to upload all other valid rows</strong>, or fix these rows in your spreadsheet and upload again.
                 </Typography>
                 
@@ -375,26 +378,27 @@ const BulkUploadModal = ({
                   sx={{ 
                     maxHeight: 180, 
                     overflowY: "auto", 
-                    bgcolor: "#fff", 
+                    bgcolor: isDark ? "background.paper" : "#fff", 
                     borderRadius: 2, 
-                    border: "1px solid #fef08a",
+                    border: "1px solid",
+                    borderColor: isDark ? "divider" : "#fef08a",
                     p: 1
                   }}
                 >
                   <Table size="small" stickyHeader>
                     <TableHead>
-                      <TableRow sx={{ "& th": { bgcolor: "#fefefc", py: 0.75, fontWeight: 700, color: "#854d0e", fontSize: "0.72rem", borderBottom: "1px solid #fef08a" } }}>
+                      <TableRow sx={{ "& th": { bgcolor: isDark ? "background.default" : "#fefefc", py: 0.75, fontWeight: 700, color: isDark ? "warning.main" : "#854d0e", fontSize: "0.72rem", borderBottom: "1px solid", borderBottomColor: isDark ? "divider" : "#fef08a" } }}>
                         <TableCell sx={{ width: 80 }}>Row #</TableCell>
                         <TableCell>Issue & How to Fix</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {errors.map((e, idx) => (
-                        <TableRow key={idx} sx={{ "& td": { py: 0.75, fontSize: "0.78rem", borderBottom: idx === errors.length - 1 ? 0 : "1px solid #fef9c3" } }}>
-                          <TableCell sx={{ fontWeight: 700, color: "#ca8a04" }}>
+                        <TableRow key={idx} sx={{ "& td": { py: 0.75, fontSize: "0.78rem", borderBottom: idx === errors.length - 1 ? 0 : "1px solid", borderBottomColor: isDark ? "divider" : "#fef9c3" } }}>
+                          <TableCell sx={{ fontWeight: 700, color: isDark ? "warning.main" : "#ca8a04" }}>
                             {e.row === 0 ? "Headers" : `Row ${e.row}`}
                           </TableCell>
-                          <TableCell sx={{ color: "#713f12", fontWeight: 500 }}>
+                          <TableCell sx={{ color: isDark ? "text.primary" : "#713f12", fontWeight: 500 }}>
                             {e.msg}
                           </TableCell>
                         </TableRow>
@@ -407,19 +411,19 @@ const BulkUploadModal = ({
 
             {rows.length > 0 && (
               <Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: "#475569", display: "block", mb: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
                   Previewing Valid Rows to Upload:
                 </Typography>
                 <TableContainer component={Paper} elevation={0}
-                  sx={{ border: "1px solid #f1f5f9", borderRadius: 2, maxHeight: 240 }}>
+                  sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, maxHeight: 240 }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem", color: "#94a3b8",
-                          bgcolor: "#fafafa", width: 40 }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: "0.72rem", color: "text.secondary",
+                          bgcolor: isDark ? "background.default" : "#fafafa", width: 40 }}>#</TableCell>
                         {templateHeaders.map((h) => (
                           <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.75rem",
-                            textTransform: "uppercase", color: "#64748b", bgcolor: "#fafafa",
+                            textTransform: "uppercase", color: "text.secondary", bgcolor: isDark ? "background.default" : "#fafafa",
                             letterSpacing: "0.04em" }}>{h}</TableCell>
                         ))}
                       </TableRow>
@@ -427,9 +431,9 @@ const BulkUploadModal = ({
                     <TableBody>
                       {rows.map((row, i) => (
                         <TableRow key={i} hover sx={{ "&:last-child td": { borderBottom: 0 } }}>
-                          <TableCell sx={{ color: "#94a3b8", fontSize: "0.8rem" }}>{i + 1}</TableCell>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{i + 1}</TableCell>
                           {templateHeaders.map((h) => (
-                            <TableCell key={h} sx={{ fontSize: "0.85rem", color: "#1e293b" }}>
+                            <TableCell key={h} sx={{ fontSize: "0.85rem", color: "text.primary" }}>
                               {String(row[h] ?? row[h.toLowerCase()] ?? "")}
                             </TableCell>
                           ))}
@@ -452,7 +456,7 @@ const BulkUploadModal = ({
         {/* ── Step: uploading ── */}
         {step === "uploading" && (
           <Box sx={{ py: 5, textAlign: "center" }}>
-            <Typography variant="body1" sx={{ fontWeight: 600, color: "#1e293b", mb: 2.5 }}>
+            <Typography variant="body1" sx={{ fontWeight: 600, color: "text.primary", mb: 2.5 }}>
               Uploading {rows.length} record{rows.length !== 1 ? "s" : ""}…
             </Typography>
             <LinearProgress sx={{ borderRadius: 2, height: 8, bgcolor: `${accent}22`,
@@ -465,8 +469,8 @@ const BulkUploadModal = ({
           <Stack spacing={2}>
             <Box sx={{ display: "flex", gap: 2 }}>
               {successCount > 0 && (
-                <Box sx={{ flex: 1, p: 2.5, bgcolor: "#f0fdf4", borderRadius: 2,
-                  border: "1px solid #bbf7d0", textAlign: "center" }}>
+                <Box sx={{ flex: 1, p: 2.5, bgcolor: isDark ? "rgba(22, 163, 74, 0.15)" : "#f0fdf4", borderRadius: 2,
+                  border: "1px solid", borderColor: isDark ? "rgba(22, 163, 74, 0.3)" : "#bbf7d0", textAlign: "center" }}>
                   <CheckCircleIcon sx={{ color: "#16a34a", fontSize: 36, mb: 0.5 }} />
                   <Typography variant="h4" sx={{ fontWeight: 800, color: "#16a34a" }}>{successCount}</Typography>
                   <Typography variant="caption" sx={{ color: "#16a34a", fontWeight: 600 }}>
@@ -475,8 +479,8 @@ const BulkUploadModal = ({
                 </Box>
               )}
               {failCount > 0 && (
-                <Box sx={{ flex: 1, p: 2.5, bgcolor: "#fef2f2", borderRadius: 2,
-                  border: "1px solid #fecaca", textAlign: "center" }}>
+                <Box sx={{ flex: 1, p: 2.5, bgcolor: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2", borderRadius: 2,
+                  border: "1px solid", borderColor: isDark ? "rgba(239, 68, 68, 0.3)" : "#fecaca", textAlign: "center" }}>
                   <ErrorIcon sx={{ color: "#ef4444", fontSize: 36, mb: 0.5 }} />
                   <Typography variant="h4" sx={{ fontWeight: 800, color: "#ef4444" }}>{failCount}</Typography>
                   <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 600 }}>Failed Rows</Typography>
@@ -486,15 +490,15 @@ const BulkUploadModal = ({
 
             {failCount > 0 && (
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#991b1b", mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: isDark ? "error.main" : "#991b1b", mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
                   <ErrorIcon sx={{ color: "#ef4444", fontSize: 20 }} />
                   Failed to Save {failCount} Record{failCount > 1 ? "s" : ""}
                 </Typography>
                 <TableContainer component={Paper} elevation={0}
-                  sx={{ border: "1px solid #fee2e2", borderRadius: 3, maxHeight: 220, bgcolor: "#fffdfd" }}>
+                  sx={{ border: "1px solid", borderColor: isDark ? "divider" : "#fee2e2", borderRadius: 3, maxHeight: 220, bgcolor: isDark ? "background.paper" : "#fffdfd" }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
-                      <TableRow sx={{ "& th": { bgcolor: "#fef2f2", fontWeight: 700, color: "#991b1b" } }}>
+                      <TableRow sx={{ "& th": { bgcolor: isDark ? "background.default" : "#fef2f2", fontWeight: 700, color: isDark ? "error.main" : "#991b1b" } }}>
                         <TableCell>Record Name</TableCell>
                         <TableCell sx={{ width: 120 }}>Status</TableCell>
                         <TableCell>Reason for Failure</TableCell>
@@ -503,12 +507,12 @@ const BulkUploadModal = ({
                     <TableBody>
                       {results.filter((r) => !r.success).map((r, i) => (
                         <TableRow key={i}>
-                          <TableCell sx={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{r.name || "N/A"}</TableCell>
+                          <TableCell sx={{ fontSize: "0.85rem", fontWeight: 600, color: "text.primary" }}>{r.name || "N/A"}</TableCell>
                           <TableCell>
                             <Chip label="Failed" size="small"
                               sx={{ bgcolor: "#fee2e2", color: "#ef4444", fontWeight: 700 }} />
                           </TableCell>
-                          <TableCell sx={{ fontSize: "0.8rem", color: "#7f1d1d", fontWeight: 500 }}>
+                          <TableCell sx={{ fontSize: "0.8rem", color: isDark ? "error.light" : "#7f1d1d", fontWeight: 500 }}>
                             {translateErrorMessage(r.error)}
                           </TableCell>
                         </TableRow>
@@ -526,14 +530,14 @@ const BulkUploadModal = ({
       <DialogActions sx={{ px: 3, pb: 3, pt: 1.5, gap: 1 }}>
         {step === "idle" && (
           <Button variant="outlined" onClick={handleClose}
-            sx={{ color: "#64748b", borderColor: "#e2e8f0", textTransform: "none", borderRadius: 2 }}>
+            sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none", borderRadius: 2 }}>
             Cancel
           </Button>
         )}
         {step === "preview" && (
           <>
             <Button variant="outlined" onClick={reset}
-              sx={{ color: "#64748b", borderColor: "#e2e8f0", textTransform: "none", borderRadius: 2 }}>
+              sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none", borderRadius: 2 }}>
               Re-upload
             </Button>
             <Button variant="contained" disabled={rows.length === 0} onClick={handleUpload}

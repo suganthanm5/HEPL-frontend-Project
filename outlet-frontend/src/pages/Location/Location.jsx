@@ -14,7 +14,7 @@ import {
   TableHead, TableRow, TextField, Typography, Grid, Avatar, Tooltip,
   FormControl, ToggleButton, ToggleButtonGroup, Pagination, Stack,
   Divider, Chip, LinearProgress, Fade, Grow, Badge, InputBase,
-  Card, CardContent, CardActions, ButtonBase,
+  Card, CardContent, CardActions, ButtonBase, useTheme
 } from "@mui/material";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -69,6 +69,8 @@ const LocAvatar = ({ name, size = 36 }) => {
 };
 
 const Location = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -183,12 +185,12 @@ const Location = () => {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
 
       {/* ── Page Header ── */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContext: "space-between", mb: 3, flexWrap: "wrap", gap: 1.5 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1e293b", mb: 0.25 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", mb: 0.25 }}>
             <TypingText text="Location Management" />
           </Typography>
-          <Typography sx={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>
+          <Typography sx={{ fontSize: "0.8rem", color: "text.secondary", fontWeight: 500 }}>
             Manage geographic locations for your outlets
           </Typography>
         </Box>
@@ -196,7 +198,7 @@ const Location = () => {
           <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
             <Tooltip title="Refresh">
               <IconButton onClick={() => fetchLocations()} size="small"
-                sx={{ color: "#7d2ae8", bgcolor: "#f5f0ff", "&:hover": { bgcolor: "#ede9fe" } }}>
+                sx={{ color: isDark ? "#c084fc" : "#7d2ae8", bgcolor: isDark ? "rgba(125,42,232,0.2)" : "#f5f0ff", "&:hover": { bgcolor: isDark ? "rgba(125,42,232,0.3)" : "#ede9fe" } }}>
                 <RefreshRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -251,39 +253,39 @@ const Location = () => {
                     />
                     {/* Completion bar */}
                     <Box>
-                      <Typography sx={{ fontSize: "0.7rem", color: "#94a3b8", fontFamily: "inherit", mb: 0.5, fontWeight: 600 }}>
+                      <Typography sx={{ fontSize: "0.7rem", color: "text.secondary", fontFamily: "inherit", mb: 0.5, fontWeight: 600 }}>
                         FORM COMPLETION
                       </Typography>
                       <LinearProgress
                         variant="determinate"
                         value={formComplete ? 100 : 0}
-                        sx={{ borderRadius: 4, height: 6, bgcolor: "#e2e8f0", "& .MuiLinearProgress-bar": { bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 4 } }}
+                        sx={{ borderRadius: 4, height: 6, bgcolor: "divider", "& .MuiLinearProgress-bar": { bgcolor: editModal ? "#7d2ae8" : "#10b981", borderRadius: 4 } }}
                       />
                     </Box>
                   </Grid>
                   <Grid item xs={12} md={5}>
                     {/* Preview / Tips */}
-                    <Box sx={{ p: 3, bgcolor: "#f8fafc", borderRadius: 3, border: "1px solid #e2e8f0" }}>
+                    <Box sx={{ p: 3, bgcolor: "background.default", borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                        <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: "#f5f0ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <FmdGoodRoundedIcon sx={{ color: "#7d2ae8", fontSize: 20 }} />
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: isDark ? "rgba(125,42,232,0.2)" : "#f5f0ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <FmdGoodRoundedIcon sx={{ color: "primary.main", fontSize: 20 }} />
                         </Box>
-                        <Typography sx={{ fontWeight: 700, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>
+                        <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit", fontSize: "0.875rem" }}>
                           {formName.trim() ? "Preview" : "Quick Tips"}
                         </Typography>
                       </Box>
                       {formName.trim() ? (
                         <Stack spacing={1}>
                           {formName.split(",").map(n => n.trim()).filter(Boolean).map((name, i) => (
-                            <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "#fff", borderRadius: 2, border: "1px solid #e2e8f0" }}>
+                            <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
                               <LocAvatar name={name} size={32} />
-                              <Typography sx={{ fontWeight: 600, color: "#1e293b", fontFamily: "inherit", fontSize: "0.875rem" }}>{name}</Typography>
-                              <Chip label="New" size="small" sx={{ ml: "auto", bgcolor: "#dcfce7", color: "#16a34a", fontWeight: 700, fontFamily: "inherit", fontSize: "0.65rem", height: 18 }} />
+                              <Typography sx={{ fontWeight: 600, color: "text.primary", fontFamily: "inherit", fontSize: "0.875rem" }}>{name}</Typography>
+                              <Chip label="New" size="small" sx={{ ml: "auto", bgcolor: isDark ? "rgba(22, 163, 74, 0.2)" : "#dcfce7", color: isDark ? "#4ade80" : "#16a34a", fontWeight: 700, fontFamily: "inherit", fontSize: "0.65rem", height: 18 }} />
                             </Box>
                           ))}
                         </Stack>
                       ) : (
-                        <Box component="ul" sx={{ pl: 2.5, m: 0, color: "#64748b", fontSize: "0.82rem", fontFamily: "inherit" }}>
+                        <Box component="ul" sx={{ pl: 2.5, m: 0, color: "text.secondary", fontSize: "0.82rem", fontFamily: "inherit" }}>
                           <li style={{ marginBottom: 6 }}>Only letters and spaces allowed</li>
                           <li style={{ marginBottom: 6 }}>Use commas to add multiple locations</li>
                           <li>Names should be concise and clear</li>
@@ -301,9 +303,9 @@ const Location = () => {
           {/* ── Stat Cards ── */}
           <Box className="stat-cards-row">
             {[
-              { label: "Total Locations", value: totalElements, icon: LocationOnRoundedIcon, theme: "purple", color: "#7d2ae8", bg: "#f3e8ff" },
-              { label: "This Page", value: locations.length, icon: LayersRoundedIcon, theme: "blue", color: "#0284c7", bg: "#e0f2fe" },
-              { label: "Total Pages", value: totalPages, icon: TravelExploreRoundedIcon, theme: "green", color: "#10b981", bg: "#dcfce7" },
+              { label: "Total Locations", value: totalElements, icon: LocationOnRoundedIcon, theme: "purple", color: isDark ? "#c084fc" : "#7d2ae8", bg: isDark ? "rgba(125,42,232,0.2)" : "#f3e8ff" },
+              { label: "This Page", value: locations.length, icon: LayersRoundedIcon, theme: "blue", color: isDark ? "#60a5fa" : "#0284c7", bg: isDark ? "rgba(2,132,199,0.2)" : "#e0f2fe" },
+              { label: "Total Pages", value: totalPages, icon: TravelExploreRoundedIcon, theme: "green", color: isDark ? "#4ade80" : "#10b981", bg: isDark ? "rgba(22,163,74,0.2)" : "#dcfce7" },
             ].map((s, i) => (
               <Box className={`stat-card stat-${s.theme}`} key={i}>
                 <Box className="stat-card-icon" sx={{ background: s.bg }}>
@@ -321,16 +323,16 @@ const Location = () => {
           {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2, fontFamily: "inherit" }}>{error}</Alert>}
 
           {/* ── Toolbar ── */}
-          <Box className="table-card" sx={{ bgcolor: "#fff", border: "1px solid rgba(125,42,232,0.08)", borderRadius: 3, mb: 2 }}>
-            <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderBottom: "1px solid rgba(125,42,232,0.07)" }}>
+          <Box className="table-card" sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3, mb: 2 }}>
+            <Box sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderBottom: "1px solid", borderBottomColor: "divider" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Typography sx={{ fontWeight: 700, color: "#1e1b4b", fontFamily: "inherit" }}>All Locations</Typography>
-                <Chip label={totalElements} size="small" sx={{ bgcolor: "#f3e8ff", color: "#7d2ae8", fontWeight: 700, fontFamily: "inherit", height: 20, fontSize: "0.7rem" }} />
+                <Typography sx={{ fontWeight: 700, color: "text.primary", fontFamily: "inherit" }}>All Locations</Typography>
+                <Chip label={totalElements} size="small" sx={{ bgcolor: isDark ? "rgba(125,42,232,0.2)" : "#f3e8ff", color: isDark ? "#c084fc" : "#7d2ae8", fontWeight: 700, fontFamily: "inherit", height: 20, fontSize: "0.7rem" }} />
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                 {/* Page size */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "inherit", whiteSpace: "nowrap" }}>Show</Typography>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.8rem", fontFamily: "inherit", whiteSpace: "nowrap" }}>Show</Typography>
                   <Select value={pageSize} size="small"
                     onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); localStorage.setItem("itemsPerPage", e.target.value); }}
                     sx={{ fontFamily: "inherit", fontSize: "0.8rem", borderRadius: 2, "& .MuiSelect-select": { py: 0.5, px: 1.5 } }}>
@@ -339,19 +341,19 @@ const Location = () => {
                 </Box>
                 {/* View toggle */}
                 <ToggleButtonGroup size="small" value={view} exclusive onChange={(_, v) => v && setView(v)}
-                  sx={{ "& .MuiToggleButton-root": { px: 1.5, border: "1px solid #e2e8f0", fontFamily: "inherit" }, "& .Mui-selected": { bgcolor: "#f5f0ff !important", color: "#7d2ae8 !important" } }}>
+                  sx={{ "& .MuiToggleButton-root": { px: 1.5, border: "1px solid", borderColor: "divider", fontFamily: "inherit" }, "& .Mui-selected": { bgcolor: isDark ? "rgba(125,42,232,0.2) !important" : "#f5f0ff !important", color: isDark ? "#c084fc !important" : "#7d2ae8 !important" } }}>
                   <ToggleButton value="table"><Tooltip title="Table"><TableChartRoundedIcon fontSize="small" /></Tooltip></ToggleButton>
                   <ToggleButton value="card"><Tooltip title="Cards"><GridViewRoundedIcon fontSize="small" /></Tooltip></ToggleButton>
                 </ToggleButtonGroup>
                 {/* Search */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: "#f5f0ff", border: "1.5px solid transparent", borderRadius: "50px", px: 2, py: 0.8, width: 240, transition: "all 0.3s", "&:focus-within": { borderColor: "#7d2ae8", bgcolor: "#fff", boxShadow: "0 0 0 3px rgba(125,42,232,0.1)" } }}>
-                  <SearchRoundedIcon sx={{ fontSize: 17, color: "#7d2ae8", flexShrink: 0 }} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: isDark ? "rgba(255, 255, 255, 0.05)" : "#f5f0ff", border: "1.5px solid transparent", borderRadius: "50px", px: 2, py: 0.8, width: 240, transition: "all 0.3s", "&:focus-within": { borderColor: "primary.main", bgcolor: "background.paper", boxShadow: isDark ? "0 0 0 3px rgba(125,42,232,0.25)" : "0 0 0 3px rgba(125,42,232,0.1)" } }}>
+                  <SearchRoundedIcon sx={{ fontSize: 17, color: "primary.main", flexShrink: 0 }} />
                   <InputBase placeholder="Search locations…" value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                    sx={{ fontSize: "0.875rem", fontFamily: "inherit", color: "#1e1b4b", flex: 1 }}
+                    sx={{ fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary", flex: 1 }}
                   />
                   {search && (
-                    <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }} sx={{ p: 0, color: "#94a3b8" }}>
+                    <IconButton size="small" onClick={() => { setSearch(""); setPage(1); }} sx={{ p: 0, color: "text.secondary" }}>
                       <CloseRoundedIcon sx={{ fontSize: 14 }} />
                     </IconButton>
                   )}
@@ -404,14 +406,14 @@ const Location = () => {
                       </TableRow>
                     ) : (
                       locations.map((loc, i) => (
-                        <TableRow key={loc.id} hover sx={{ "&:hover": { bgcolor: "#faf5ff" }, "&:last-child td": { borderBottom: 0 } }}>
-                          <TableCell sx={{ color: "#94a3b8", fontWeight: 700, fontFamily: "inherit", fontSize: "0.8rem" }}>
+                        <TableRow key={loc.id} hover sx={{ "&:hover": { bgcolor: "action.hover" }, "&:last-child td": { borderBottom: 0 } }}>
+                          <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontFamily: "inherit", fontSize: "0.8rem" }}>
                             {(safePage - 1) * pageSize + i + 1}
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <LocAvatar name={loc.name} size={34} />
-                              <Typography sx={{ fontWeight: 600, color: "#1e1b4b", fontFamily: "inherit", fontSize: "0.875rem" }}>
+                              <Typography sx={{ fontWeight: 600, color: "text.primary", fontFamily: "inherit", fontSize: "0.875rem" }}>
                                 {loc.name}
                               </Typography>
                             </Box>
@@ -420,13 +422,13 @@ const Location = () => {
                             <Box sx={{ display: "flex", gap: 0.75 }}>
                               <Tooltip title="Edit">
                                 <IconButton size="small" onClick={() => openEdit(loc)}
-                                  sx={{ color: "#f59e0b", bgcolor: "#fef3c7", borderRadius: 1.5, "&:hover": { bgcolor: "#fde68a" } }}>
+                                  sx={{ color: isDark ? "#fbbf24" : "#f59e0b", bgcolor: isDark ? "rgba(245, 158, 11, 0.15)" : "#fef3c7", borderRadius: 1.5, "&:hover": { bgcolor: isDark ? "rgba(245, 158, 11, 0.25)" : "#fde68a" } }}>
                                   <EditRoundedIcon sx={{ fontSize: 16 }} />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Delete">
                                 <IconButton size="small" onClick={() => setDeleteModal(loc)}
-                                  sx={{ color: "#ef4444", bgcolor: "#fee2e2", borderRadius: 1.5, "&:hover": { bgcolor: "#fecaca" } }}>
+                                  sx={{ color: isDark ? "#f87171" : "#ef4444", bgcolor: isDark ? "rgba(239, 68, 68, 0.15)" : "#fee2e2", borderRadius: 1.5, "&:hover": { bgcolor: isDark ? "rgba(239, 68, 68, 0.25)" : "#fecaca" } }}>
                                   <DeleteRoundedIcon sx={{ fontSize: 16 }} />
                                 </IconButton>
                               </Tooltip>
@@ -471,18 +473,19 @@ const Location = () => {
                           <Paper
                             elevation={0}
                             sx={{
-                              p: 2,
-                              borderRadius: 4,
-                              border: "1px solid #f1f5f9",
-                              height: "100%",
-                              display: "flex",
-                              flexDirection: "column",
-                              transition: "all 0.3s ease",
-                              "&:hover": {
-                                transform: "translateY(-6px)",
-                                boxShadow: "0 15px 30px rgba(0,0,0,0.08)",
-                                borderColor: "#e2e8f0"
-                              }
+                                p: 2,
+                                borderRadius: 4,
+                                border: "1px solid",
+                                borderColor: "divider",
+                                height: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                transition: "all 0.3s ease",
+                                "&:hover": {
+                                  transform: "translateY(-6px)",
+                                  boxShadow: isDark ? "0 15px 30px rgba(0,0,0,0.4)" : "0 15px 30px rgba(0,0,0,0.08)",
+                                  borderColor: "divider"
+                                }
                             }}
                           >
                             <Box sx={{ position: "relative", mb: 2 }}>
@@ -493,7 +496,8 @@ const Location = () => {
                                   height: 160,
                                   background: `linear-gradient(135deg, ${c1}15, ${c2}25)`,
                                   borderRadius: 3,
-                                  border: "1px solid #f1f5f9",
+                                  border: "1px solid",
+                                  borderColor: "divider",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center"
@@ -501,15 +505,15 @@ const Location = () => {
                               >
                                 <LocAvatar name={loc.name} size={64} />
                               </Avatar>
-                              <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "#94a3b8", fontWeight: 600, backdropFilter: "blur(4px)" }}>
+                              <Typography variant="caption" sx={{ position: "absolute", top: 12, left: 12, bgcolor: isDark ? "rgba(30, 41, 59, 0.9)" : "rgba(255,255,255,0.9)", px: 1, py: 0.5, borderRadius: 1.5, color: "text.secondary", fontWeight: 600, backdropFilter: "blur(4px)" }}>
                                 #{(safePage - 1) * pageSize + i + 1}
                               </Typography>
                             </Box>
                             
-                            <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#1e293b", mb: 0.5 }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "text.primary", mb: 0.5 }}>
                               {loc.name}
                             </Typography>
-                            <Typography sx={{ fontSize: "0.72rem", color: "#94a3b8", mb: 2 }}>Location Node</Typography>
+                            <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", mb: 2 }}>Location Node</Typography>
                             
                             <Divider sx={{ mb: 1.5 }} />
                             
@@ -522,10 +526,10 @@ const Location = () => {
                                 onClick={() => openEdit(loc)}
                                 sx={{
                                   borderRadius: 2,
-                                  color: "#6366f1",
-                                  borderColor: "#eef2ff",
-                                  bgcolor: "#fefefe",
-                                  "&:hover": { bgcolor: "#eef2ff", borderColor: "#6366f1" },
+                                  color: "primary.main",
+                                  borderColor: "divider",
+                                  bgcolor: "background.paper",
+                                  "&:hover": { bgcolor: "action.hover", borderColor: "primary.main" },
                                   textTransform: "none",
                                   fontWeight: 600
                                 }}
@@ -542,9 +546,9 @@ const Location = () => {
                                 sx={{
                                   borderRadius: 2,
                                   boxShadow: "none",
-                                  bgcolor: "#fef2f2",
-                                  color: "#ef4444",
-                                  "&:hover": { bgcolor: "#fee2e2", boxShadow: "none" },
+                                  bgcolor: isDark ? "rgba(239, 68, 68, 0.15)" : "#fef2f2",
+                                  color: isDark ? "#f87171" : "#ef4444",
+                                  "&:hover": { bgcolor: isDark ? "rgba(239, 68, 68, 0.25)" : "#fee2e2", boxShadow: "none" },
                                   textTransform: "none",
                                   fontWeight: 600
                                 }}
@@ -565,7 +569,7 @@ const Location = () => {
           {/* ── Pagination ── */}
           {!loading && totalElements > 0 && (
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1, flexWrap: "wrap", gap: 1 }}>
-              <Typography variant="body2" sx={{ color: "#64748b", fontFamily: "inherit" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", fontFamily: "inherit" }}>
                 Showing <strong>{start}–{end}</strong> of <strong>{totalElements}</strong> entries
               </Typography>
               <Pagination count={totalPages} page={safePage} onChange={(_, v) => setPage(v)}
@@ -580,22 +584,22 @@ const Location = () => {
 
           {/* ── Delete Dialog ── */}
           <Dialog open={!!deleteModal} onClose={() => setDeleteModal(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-            <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "#1e1b4b", pb: 1 }}>
+            <DialogTitle sx={{ fontFamily: "inherit", fontWeight: 700, color: "text.primary", pb: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: isDark ? "rgba(239,68,68,0.2)" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <WarningAmberRoundedIcon sx={{ color: "#ef4444", fontSize: 20 }} />
                 </Box>
                 Delete Location
               </Box>
             </DialogTitle>
             <DialogContent>
-              <Typography sx={{ fontFamily: "inherit", color: "#64748b", fontSize: "0.9rem" }}>
+              <Typography sx={{ fontFamily: "inherit", color: "text.secondary", fontSize: "0.9rem" }}>
                 Delete <strong>"{deleteModal?.name}"</strong>? This cannot be undone.
               </Typography>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
               <Button variant="outlined" color="inherit" onClick={() => setDeleteModal(null)}
-                sx={{ color: "#64748b", borderColor: "#e2e8f0", fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
+                sx={{ color: "text.secondary", borderColor: "divider", fontFamily: "inherit", textTransform: "none", borderRadius: 2 }}>
                 Cancel
               </Button>
               <Button variant="contained" color="error" startIcon={<DeleteRoundedIcon />}
