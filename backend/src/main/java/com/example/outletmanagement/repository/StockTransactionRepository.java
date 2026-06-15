@@ -21,4 +21,12 @@ public interface StockTransactionRepository extends JpaRepository<StockTransacti
             @org.springframework.data.repository.query.Param("productId") Long productId,
             @org.springframework.data.repository.query.Param("type") StockTransaction.TransactionType type,
             org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT t.transactionType, SUM(t.quantity) FROM StockTransaction t WHERE " +
+            "(:outletId IS NULL OR t.outlet.id = :outletId) AND " +
+            "(:productId IS NULL OR t.product.id = :productId) " +
+            "GROUP BY t.transactionType")
+    List<Object[]> getTransactionStats(
+            @org.springframework.data.repository.query.Param("outletId") Long outletId,
+            @org.springframework.data.repository.query.Param("productId") Long productId);
 }

@@ -75,7 +75,7 @@ const Location = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem("itemsPerPage") || "10", 10));
+  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem("locationPageSize") || "10", 10));
   const [page, setPage] = useState(1);
   const [view, setView] = useState("table");
   const [totalPages, setTotalPages] = useState(1);
@@ -185,7 +185,7 @@ const Location = () => {
     <Box sx={{ p: { xs: 2, md: 3 } }}>
 
       {/* ── Page Header ── */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContext: "space-between", mb: 3, flexWrap: "wrap", gap: 1.5 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "stretch", md: "center" }, justifyContent: "space-between", mb: 3, gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 800, color: "text.primary", mb: 0.25 }}>
             <TypingText text="Location Management" />
@@ -195,7 +195,7 @@ const Location = () => {
           </Typography>
         </Box>
         {!isFormView && (
-          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ width: { xs: "100%", md: "auto" }, alignItems: "center" }}>
             <Tooltip title="Refresh">
               <IconButton onClick={() => fetchLocations()} size="small"
                 sx={{ color: isDark ? "#c084fc" : "#7d2ae8", bgcolor: isDark ? "rgba(125,42,232,0.2)" : "#f5f0ff", "&:hover": { bgcolor: isDark ? "rgba(125,42,232,0.3)" : "#ede9fe" } }}>
@@ -204,16 +204,18 @@ const Location = () => {
             </Tooltip>
             <Button variant="outlined" color="primary" startIcon={<UploadFileRoundedIcon />}
               onClick={() => setBulkOpen(true)}
-              sx={{ borderRadius: 2.5, px: 2, py: 1, textTransform: "none", fontWeight: 600, fontFamily: "inherit" }}>
+              sx={{ borderRadius: 2.5, px: 2.5, width: { xs: "100%", sm: "auto" }, textTransform: "none", fontWeight: 600, fontFamily: "inherit" }}>
               Bulk Upload
             </Button>
-            <ExportMenu getData={() => formatLocationData(allLocations)} filename="locations" title="Locations Report" backendType="locations" />
+            <Box sx={{ width: { xs: "100%", sm: "auto" }, "& > button": { width: "100%", justifyContent: "center", py: 1.1 } }}>
+              <ExportMenu getData={() => formatLocationData(allLocations)} filename="locations" title="Locations Report" backendType="locations" />
+            </Box>
             <Button variant="contained" color="primary" startIcon={<AddRoundedIcon />}
               onClick={openAdd}
-              sx={{ borderRadius: 2.5, px: 2.5, py: 1, fontWeight: 600, fontFamily: "inherit", boxShadow: "none" }}>
+              sx={{ borderRadius: 2.5, px: 3, width: { xs: "100%", sm: "auto" }, fontWeight: 700, fontFamily: "inherit", boxShadow: "none", textTransform: "none" }}>
               Add Location
             </Button>
-          </Box>
+          </Stack>
         )}
       </Box>
 
@@ -334,7 +336,7 @@ const Location = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography sx={{ color: "text.secondary", fontSize: "0.8rem", fontFamily: "inherit", whiteSpace: "nowrap" }}>Show</Typography>
                   <Select value={pageSize} size="small"
-                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); localStorage.setItem("itemsPerPage", e.target.value); }}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); localStorage.setItem("locationPageSize", e.target.value); }}
                     sx={{ fontFamily: "inherit", fontSize: "0.8rem", borderRadius: 2, "& .MuiSelect-select": { py: 0.5, px: 1.5 } }}>
                     {PAGE_SIZES.map(n => <MenuItem key={n} value={n} sx={{ fontFamily: "inherit", fontSize: "0.875rem" }}>{n}</MenuItem>)}
                   </Select>

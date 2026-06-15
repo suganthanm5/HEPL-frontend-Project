@@ -13,6 +13,12 @@ export const orderService = {
     return res.data?.data || res.data;
   },
 
+  /** Get order counts */
+  getCounts: async (params = {}) => {
+    const res = await apiClient.get('/api/orders/counts', { params });
+    return res.data?.data || {};
+  },
+
   /** Create order */
   create: async (data) => {
     const formatted = {

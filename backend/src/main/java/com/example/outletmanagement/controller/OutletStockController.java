@@ -82,4 +82,17 @@ public class OutletStockController {
                 .data(response)
                 .build());
     }
+
+    @GetMapping("/transactions/stats")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
+    public ResponseEntity<ApiResponse> getTransactionStats(
+            @RequestParam(required = false) Long outletId,
+            @RequestParam(required = false) Long productId) {
+        java.util.Map<String, Long> stats = outletStockService.getTransactionStats(outletId, productId);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Transaction stats fetched successfully")
+                .data(stats)
+                .build());
+    }
 }

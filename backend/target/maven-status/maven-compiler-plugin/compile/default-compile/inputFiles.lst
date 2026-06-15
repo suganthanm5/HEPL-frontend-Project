@@ -104,6 +104,7 @@ C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\e
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\OutletStockService.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\config\CorsConfig.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\OutletController.java
+C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\service\impl\EmailServiceImpl.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\config\JwtAuthenticationFilter.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\config\JwtService.java
 C:\Users\HEPLIntern\Desktop\outlet management system\backend\src\main\java\com\example\outletmanagement\controller\OrderController.java

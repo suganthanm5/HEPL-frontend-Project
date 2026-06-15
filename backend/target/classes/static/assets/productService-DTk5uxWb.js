@@ -1,0 +1,1 @@
+import{s as e}from"./productService-C8shIvXF.js";export{e as productService};

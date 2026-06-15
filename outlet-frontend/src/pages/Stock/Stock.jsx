@@ -77,10 +77,11 @@ const Stock = () => {
   const [stockPage, setStockPage] = useState(0);
   const [mainStockPage, setMainStockPage] = useState(0);
   const [txnPage, setTxnPage] = useState(0);
-  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
+  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('stockPageSize') || '10', 10));
   const [totalStockPages, setTotalStockPages] = useState(0);
   const [totalMainStockPages, setTotalMainStockPages] = useState(0);
   const [totalTxnPages, setTotalTxnPages] = useState(0);
+  const [stats, setStats] = useState({ totalIn: 0, totalOut: 0 });
 
   // Ensure filters are updated if user changes (rare)
   useEffect(() => {
@@ -142,6 +143,21 @@ const Stock = () => {
     }
   }, [tab, filters, search, stockPage, mainStockPage, txnPage, pageSize]);
 
+  const loadStats = useCallback(async (signal) => {
+    if (tab === "history") {
+      try {
+        const activeFilters = {};
+        if (filters.productId) activeFilters.productId = filters.productId;
+        if (filters.outletId) activeFilters.outletId = filters.outletId;
+        const statsData = await stockService.getStats(activeFilters, signal);
+        setStats(statsData);
+      } catch (err) {
+        if (err?.name === "CanceledError" || err?.name === "AbortError") return;
+        console.error("Fetch stats error:", err);
+      }
+    }
+  }, [tab, filters]);
+
   /* ── Load Metadata (Initial Only) ── */
   const loadMetadata = useCallback(async () => {
     try {
@@ -169,9 +185,10 @@ const Stock = () => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       loadDynamicData(controller.signal);
+      loadStats(controller.signal);
     }, 800);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [loadDynamicData]);
+  }, [loadDynamicData, loadStats]);
 
   // Real-time stock update handler via WebSocket
   useEffect(() => {
@@ -260,8 +277,8 @@ const Stock = () => {
     }
   };
 
-  const totalIn = txns.filter((t) => t.transactionType === "IN").reduce((a, t) => a + (t.quantity || 0), 0);
-  const totalOut = txns.filter((t) => t.transactionType === "OUT").reduce((a, t) => a + (t.quantity || 0), 0);
+  const totalIn = stats.totalIn || 0;
+  const totalOut = stats.totalOut || 0;
 
   return (
     <Box className="stock-page">
@@ -471,10 +488,33 @@ const Stock = () => {
                   </>
                 )}
               </Box>
-              <Box className="table-search">
-                <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
-                <InputBase placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)}
-                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", display: { xs: "none", sm: "block" } }}>Show:</Typography>
+                  <Select
+                    size="small"
+                    value={pageSize}
+                    onChange={(e) => {
+                      const newSize = e.target.value;
+                      setPageSize(newSize);
+                      localStorage.setItem('stockPageSize', newSize);
+                      setStockPage(0); setMainStockPage(0); setTxnPage(0);
+                    }}
+                    sx={{ height: 36, fontSize: "0.875rem", minWidth: 70 }}
+                  >
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                    <MenuItem value={25}>25</MenuItem>
+                    <MenuItem value={50}>50</MenuItem>
+                    <MenuItem value={100}>100</MenuItem>
+                    <MenuItem value={1000}>100+</MenuItem>
+                  </Select>
+                </Box>
+                <Box className="table-search">
+                  <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
+                  <InputBase placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)}
+                    sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }} />
+                </Box>
               </Box>
             </Box>
 

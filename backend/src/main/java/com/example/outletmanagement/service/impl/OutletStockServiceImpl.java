@@ -186,4 +186,39 @@ public class OutletStockServiceImpl implements OutletStockService {
                 return stockTransactionRepository.findFilteredTransactions(effectiveOutletId, productId, type, pageable)
                                 .map(this::toStockTransactionResponse);
         }
+
+        @Override
+        @Transactional(readOnly = true)
+        public java.util.Map<String, Long> getTransactionStats(Long outletId, Long productId) {
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                User currentUser = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+                Long effectiveOutletId = outletId;
+                if (currentUser.getRole() != User.Role.ADMIN && currentUser.getRole() != User.Role.MANAGER) {
+                        if (currentUser.getOutlet() == null) {
+                                return new java.util.HashMap<>();
+                        }
+                        effectiveOutletId = currentUser.getOutlet().getId();
+                } else if (currentUser.getRole() == User.Role.MANAGER && currentUser.getOutlet() != null) {
+                        effectiveOutletId = currentUser.getOutlet().getId();
+                }
+
+                List<Object[]> results = stockTransactionRepository.getTransactionStats(effectiveOutletId, productId);
+                java.util.Map<String, Long> stats = new java.util.HashMap<>();
+                stats.put("totalIn", 0L);
+                stats.put("totalOut", 0L);
+
+                for (Object[] row : results) {
+                        StockTransaction.TransactionType type = (StockTransaction.TransactionType) row[0];
+                        Long sum = ((Number) row[1]).longValue();
+
+                        if (type == StockTransaction.TransactionType.IN || type == StockTransaction.TransactionType.TRANSFER_IN) {
+                                stats.put("totalIn", stats.get("totalIn") + sum);
+                        } else if (type == StockTransaction.TransactionType.OUT || type == StockTransaction.TransactionType.TRANSFER_OUT) {
+                                stats.put("totalOut", stats.get("totalOut") + sum);
+                        }
+                }
+                return stats;
+        }
 }

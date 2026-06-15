@@ -13,4 +13,5 @@ public interface OutletStockService {
     OutletStockResponse transferStock(Long fromOutletId, Long toOutletId, Long productId, Long batchId, Integer quantity, String remarks);
     Page<StockTransactionResponse> getTransactions(Long outletId, Long productId, Pageable pageable);
     Page<StockTransactionResponse> getFilteredTransactions(Long outletId, Long productId, StockTransaction.TransactionType type, Pageable pageable);
+    java.util.Map<String, Long> getTransactionStats(Long outletId, Long productId);
 }

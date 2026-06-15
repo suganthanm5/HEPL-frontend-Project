@@ -33,8 +33,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     java.math.BigDecimal calculateTotalRevenueByOutlet(@org.springframework.data.repository.query.Param("outletId") Long outletId);
 
     long countByStatus(Order.OrderStatus status);
-
+    
     long countByOutletId(Long outletId);
 
     long countByOutletIdAndStatus(Long outletId, Order.OrderStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT o.status, COUNT(o) FROM Order o WHERE (:outletId IS NULL OR o.outlet.id = :outletId) GROUP BY o.status")
+    List<Object[]> getOrderCountsByStatus(@org.springframework.data.repository.query.Param("outletId") Long outletId);
 }

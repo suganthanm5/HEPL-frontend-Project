@@ -36,6 +36,17 @@ public class OrderController {
                 .build());
     }
 
+    @GetMapping("/counts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OUTLET_MANAGER', 'USER')")
+    public ResponseEntity<ApiResponse> getOrderCounts(@RequestParam(required = false) Long outletId) {
+        java.util.Map<String, Long> counts = orderService.getOrderCounts(outletId);
+        return ResponseEntity.ok(ApiResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .message("Order counts fetched successfully")
+                .data(counts)
+                .build());
+    }
+
     @GetMapping("/outlet/{outletId}")
     public ResponseEntity<ApiResponse> getOrdersByOutlet(@PathVariable Long outletId) {
         List<OrderResponse> response = orderService.getOrdersByOutlet(outletId)

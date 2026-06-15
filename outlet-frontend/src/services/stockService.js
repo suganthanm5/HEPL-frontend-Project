@@ -25,4 +25,10 @@ export const stockService = {
     const res = await apiClient.get('/api/stock/transactions', { params, signal });
     return res.data?.data;
   },
+
+  /** Get transaction stats */
+  getStats: async (params = {}, signal) => {
+    const res = await apiClient.get('/api/stock/transactions/stats', { params, signal });
+    return res.data?.data || { totalIn: 0, totalOut: 0 };
+  },
 };

@@ -209,7 +209,7 @@ const Division = () => {
   const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(() => {
-    const stored = localStorage.getItem('itemsPerPage');
+    const stored = localStorage.getItem('divisionPageSize');
     const parsed = parseInt(stored, 10);
     return PAGE_SIZES.includes(parsed) ? parsed : 10;
   });
@@ -286,9 +286,12 @@ const Division = () => {
     return true;
   };
 
-  useEffect(() => {
-    localStorage.setItem('itemsPerPage', pageSize.toString());
-  }, [pageSize]);
+  const handlePageSizeChange = (event) => {
+    const newSize = parseInt(event.target.value, 10);
+    setPageSize(newSize);
+    localStorage.setItem('divisionPageSize', newSize.toString());
+    setPage(1);
+  };
 
   useEffect(() => {
     const controller = new AbortController();

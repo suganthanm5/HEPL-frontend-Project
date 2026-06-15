@@ -81,7 +81,7 @@ const Settings = () => {
   const [selectedImpersonateUser, setSelectedImpersonateUser] = useState('');
   const [usersList, setUsersList] = useState([]);
 
-  // Fetch users for impersonation tab
+  
   useEffect(() => {
     if (activeTab === 'impersonate' && role === 'ADMIN') {
       const fetchUsers = async () => {
@@ -171,7 +171,6 @@ const Settings = () => {
     };
   }, []);
 
-  // Apply Changes Immediately
   useEffect(() => {
     localStorage.setItem('darkMode', theme === 'dark');
     const colorName = reverseColorMap[colorAccent] || 'Purple';
@@ -238,7 +237,7 @@ const Settings = () => {
   return (
     <Box className="settings-container">
       <Box className="settings-header" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <IconButton onClick={() => navigate(-1)} sx={{ bgcolor: 'white', boxShadow: 1, '&:hover': { bgcolor: '#f1f5f9' } }}>
+        <IconButton onClick={() => navigate(-1)} sx={{ bgcolor: 'background.paper', boxShadow: 1, '&:hover': { bgcolor: 'action.hover' } }}>
           <ArrowBackIcon />
         </IconButton>
         <Box>

@@ -589,8 +589,8 @@ function UserDashboard({ summary, transactions, navigate, filters }) {
                 <td><strong>{ord.orderNo || "—"}</strong></td>
                 <td>
                   <span className={`db-badge ${ord.status === "APPROVED" || ord.status === "COMPLETED" ? "green"
-                      : ord.status === "REJECTED" || ord.status === "CANCELLED" ? "rose"
-                        : "orange"
+                    : ord.status === "REJECTED" || ord.status === "CANCELLED" ? "rose"
+                      : "orange"
                     }`}>
                     {ord.status || "—"}
                   </span>
@@ -700,7 +700,7 @@ export default function Dashboard() {
           const trans = isOutletManager
             ? await API.get('/api/orders?size=8').then(r => r.data.data)
             : await reportService.getTransactions(params);
-          
+
           let list = trans?.content || trans || [];
           if (!isOutletManager && list.length === 0) {
             const ordersParams = {};

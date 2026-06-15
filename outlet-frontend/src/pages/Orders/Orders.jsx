@@ -81,14 +81,15 @@ const Orders = () => {
   const [delDialog, setDelDialog] = useState({ open: false, id: null, title: "" });
   const [snack, setSnack] = useState({ open: false, msg: "", severity: "success" });
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('itemsPerPage') || '10', 10));
-  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize, setPageSize] = useState(parseInt(localStorage.getItem('ordersPageSize') || '10', 10));
   const [orders, setOrders] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [outlets, setOutlets] = useState([]);
   const [products, setProducts] = useState([]);
-  const [totalElements, setTotalElements] = useState(0);
 
   /* ── Extract array from various response shapes ── */
   const extractArr = (val) => {
@@ -105,21 +106,22 @@ const Orders = () => {
     setLoading(true);
     try {
       const activeFilters = {
-        page,
+        page: page,
         size: pageSize,
         sort: "id,desc"
       };
-      if (filters.status) activeFilters.status = filters.status;
       if (filters.outletId) activeFilters.outletId = filters.outletId;
       if (search) activeFilters.orderNo = search;
 
       const oData = await orderService.getAll(activeFilters, signal);
       if (oData && oData.content) {
         setOrders(oData.content);
-        setTotalPages(oData.totalPages);
-        setTotalElements(oData.totalElements);
+        setTotalPages(oData.totalPages || 1);
+        setTotalElements(oData.totalElements || 0);
       } else {
         setOrders(extractArr(oData));
+        setTotalPages(1);
+        setTotalElements(0);
       }
     } catch (err) {
       if (err?.name === "CanceledError" || err?.name === "AbortError") return;
@@ -127,7 +129,19 @@ const Orders = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, search, page, pageSize]);
+  }, [filters.outletId, search, page, pageSize]);
+
+  const loadCounts = useCallback(async (signal) => {
+    try {
+      const activeFilters = {};
+      if (filters.outletId) activeFilters.outletId = filters.outletId;
+      const countsData = await orderService.getCounts(activeFilters, signal);
+      setCounts(countsData);
+    } catch (err) {
+      if (err?.name === "CanceledError" || err?.name === "AbortError") return;
+      console.error("Fetch counts error:", err);
+    }
+  }, [filters.outletId]);
 
   /* ── Load Metadata (Initial Only) ── */
   const loadMetadata = useCallback(async () => {
@@ -167,20 +181,32 @@ const Orders = () => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       loadOrders(controller.signal);
-    }, 800);
+      loadCounts(controller.signal);
+    }, 600);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [loadOrders]);
+  }, [loadOrders, loadCounts]);
 
-  // Re-fetch orders list in real-time when a WebSocket event for orders is received
+  // Re-fetch or update orders list in real-time when a WebSocket event for orders is received
   useEffect(() => {
     if (latestOrder) {
       const isRelevant = isAdmin || isManager || 
                          (latestOrder.outletId && String(latestOrder.outletId) === String(userOutletId));
       if (isRelevant) {
-        loadOrders();
+        if (latestOrder.type === 'ORDER_STATUS_CHANGED') {
+          // Update local state instantly instead of fetching to avoid backend transaction race conditions
+          setOrders(prev => prev.map(o => String(o.id) === String(latestOrder.orderId) ? { ...o, status: latestOrder.status } : o));
+          setDetail(prev => prev && String(prev.id) === String(latestOrder.orderId) ? { ...prev, status: latestOrder.status } : prev);
+        } else {
+          // For NEW_ORDER, add a small delay so backend transaction can commit before we fetch
+          const timer = setTimeout(() => {
+            loadOrders();
+            loadCounts();
+          }, 500);
+          return () => clearTimeout(timer);
+        }
       }
     }
-  }, [latestOrder, loadOrders, isAdmin, isManager, userOutletId]);
+  }, [latestOrder, loadOrders, loadCounts, isAdmin, isManager, userOutletId]);
 
   // Ensure filters and new order data reflect the user's outlet
   useEffect(() => {
@@ -193,27 +219,26 @@ const Orders = () => {
   const toast = (msg, severity = "success") =>
     setSnack({ open: true, msg, severity });
 
-  /* Orders are already filtered server-side */
   const filtered = orders;
-
-  const counts = Object.keys(STATUS_META).reduce((acc, k) => {
-    acc[k] = orders.filter((o) => o.status === k).length;
-    return acc;
-  }, {});
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   /* ── Create order ── */
   const handleCreate = async () => {
     if (!create.data.outletId || create.data.items.length === 0)
       return toast("Please select outlet and add items", "error");
 
+    setSubmitLoading(true);
     try {
       await orderService.create(create.data);
       toast("Order created successfully");
       setCreate({ open: false, data: emptyOrder });
       setIsFormView(false);
       loadOrders();
+      loadCounts();
     } catch (err) {
       toast(err.response?.data?.message || "Creation failed", "error");
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -221,9 +246,10 @@ const Orders = () => {
   const handleDelete = async () => {
     try {
       await orderService.delete(delDialog.id);
-      toast("Order deleted successfully");
+      toast("Order deleted");
       setDelDialog({ open: false, id: null, title: "" });
       loadOrders();
+      loadCounts();
     } catch (err) {
       toast(err.response?.data?.message || "Delete failed", "error");
     }
@@ -312,6 +338,7 @@ const Orders = () => {
               onClose={() => { setIsFormView(false); setCreate({ open: false, data: emptyOrder }); }}
               onSave={handleCreate}
               saveLabel="Submit Order"
+              saving={submitLoading}
               saveIcon={<ShoppingCartRounded />}
               colorAccent="primary"
             />
@@ -492,13 +519,33 @@ const Orders = () => {
                 </Button>
               </Box>
  
-              <Box className="table-search">
-                <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
-                <InputBase
-                  placeholder="Search order no…" value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }}
-                />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", display: { xs: "none", sm: "block" } }}>Show:</Typography>
+                  <Select
+                    size="small"
+                    value={pageSize}
+                    onChange={(e) => {
+                      const newSize = e.target.value;
+                      setPageSize(newSize);
+                      localStorage.setItem('ordersPageSize', newSize);
+                      setPage(0);
+                    }}
+                    sx={{ height: 36, fontSize: "0.875rem", minWidth: 70 }}
+                  >
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                    <MenuItem value={25}>25</MenuItem>
+                    <MenuItem value={50}>50</MenuItem>
+                    <MenuItem value={100}>100</MenuItem>
+                    <MenuItem value={1000}>100+</MenuItem>
+                  </Select>
+                </Box>
+                <Box className="table-search">
+                  <SearchRounded sx={{ fontSize: 18, color: "primary.main", flexShrink: 0 }} />
+                  <InputBase placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)}
+                    sx={{ flex: 1, fontSize: "0.875rem", fontFamily: "inherit", color: "text.primary" }} />
+                </Box>
               </Box>
             </Box>
 
@@ -673,28 +720,29 @@ const Orders = () => {
           <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "20px", overflow: "hidden", boxShadow: isDark ? "0 24px 64px rgba(0,0,0,0.4)" : "0 24px 64px rgba(0,0,0,0.08)", mb: 4 }}>
             {/* Elegant Header */}
             <Box sx={{ 
-              background: "linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary-main) 100%)", 
-              color: "#fff", 
-              p: { xs: 3, md: 5 }, 
+              bgcolor: isDark ? "rgba(125,42,232,0.05)" : "#f9f8ff",
+              borderBottom: "1px solid",
+              borderBottomColor: "divider",
+              p: { xs: 3, md: 4 }, 
               position: "relative" 
             }}>
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 <ButtonBase 
                   onClick={() => setDetail(null)} disableRipple
-                  sx={{ display: "flex", alignItems: "center", gap: 1, color: "rgba(255,255,255,0.7)", transition: "all 0.2s", "&:hover": { color: "#fff", transform: "translateX(-4px)" }, fontWeight: 600, fontSize: "0.85rem", letterSpacing: "0.5px" }}
+                  sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary", transition: "all 0.2s", "&:hover": { color: "primary.main", transform: "translateX(-4px)" }, fontWeight: 600, fontSize: "0.85rem", letterSpacing: "0.5px" }}
                 >
                   <ArrowBackRounded fontSize="small" /> BACK TO ORDERS
                 </ButtonBase>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
-                <Typography sx={{ display: "inline-flex", alignItems: "center", px: 1.5, py: 0.5, background: "rgba(255,255,255,0.15)", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "1px", border: "1px solid rgba(255,255,255,0.2)" }}>
+                <Typography sx={{ display: "inline-flex", alignItems: "center", px: 1.5, py: 0.5, bgcolor: "background.paper", borderRadius: "6px", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "1px", border: "1px solid", borderColor: "divider", color: "text.primary" }}>
                   {detail.orderNo || `ORD-${detail.id}`}
                 </Typography>
-                <Typography sx={{ display: "inline-flex", alignItems: "center", px: 1.5, py: 0.5, background: detail.status === "COMPLETED" ? "rgba(16, 185, 129, 0.2)" : "rgba(245, 158, 11, 0.2)", color: detail.status === "COMPLETED" ? "#6ee7b7" : "#fcd34d", borderRadius: "6px", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px" }}>
+                <Typography sx={{ display: "inline-flex", alignItems: "center", px: 1.5, py: 0.5, background: detail.status === "COMPLETED" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)", color: detail.status === "COMPLETED" ? "#10b981" : "#d97706", borderRadius: "6px", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px" }}>
                   {detail.status}
                 </Typography>
               </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "2rem", fontFamily: "inherit", mt: 1, textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}>
+              <Typography sx={{ fontWeight: 800, fontSize: "1.75rem", color: "text.primary", fontFamily: "inherit", mt: 1 }}>
                 {detail.outlet?.outletName || "Outlet Order"}
               </Typography>
             </Box>

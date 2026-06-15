@@ -54,18 +54,35 @@ const CustomPieLegend = ({ data, colors }) => {
 };
 
 // Reusable StatCard inline
-const StatCard = ({ label, value, icon, iconBg, iconColor }) => (
-  <Paper elevation={0} sx={{
-    p: 2, borderRadius: "12px", border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2,
-    bgcolor: "background.paper", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.04)", transition: "all 0.2s",
-    "&:hover": { borderColor: "primary.light", transform: "translateY(-2px)" }
-  }}>
-    <Box sx={{ p: 1.5, borderRadius: "10px", background: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-secondary)' : iconBg, color: iconColor, display: "flex" }}>
+const StatCard = ({ label, value, icon, gradient, iconBg, iconColor, accent }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      flex: 1, minWidth: 200,
+      borderRadius: "18px",
+      border: `1.5px solid ${accent}33`,
+      background: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : gradient,
+      p: "20px 26px",
+      display: "flex", alignItems: "center", gap: 2.5,
+      cursor: "default",
+      transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s",
+      "&:hover": { transform: "translateY(-5px)", boxShadow: `0 14px 40px ${accent}22`, borderColor: accent },
+    }}
+  >
+    <Box sx={{
+      width: 46, height: 46, borderRadius: "13px",
+      background: iconBg, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      boxShadow: `0 4px 14px ${accent}33`,
+      "& svg": { fontSize: 22 },
+    }}>
       {icon}
     </Box>
     <Box>
-      <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.02em" }}>{label}</Typography>
-      <Typography sx={{ fontSize: "24px", fontWeight: 900, color: "text.primary", lineHeight: 1.2 }}>{value || 0}</Typography>
+      <Typography sx={{ fontSize: 26, fontWeight: 800, color: "text.primary", lineHeight: 1, letterSpacing: "-0.5px" }}>
+        {value || 0}
+      </Typography>
+      <Typography sx={{ fontSize: 12, color: iconColor, fontWeight: 600, mt: "2px", textTransform: "uppercase" }}>{label}</Typography>
     </Box>
   </Paper>
 );
@@ -73,11 +90,20 @@ const StatCard = ({ label, value, icon, iconBg, iconColor }) => (
 // Reusable PremiumCard inline
 const PremiumCard = ({ title, subtitle, icon, children }) => (
   <Paper elevation={0} sx={{
-    bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider",
-    boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.04)", display: "flex", flexDirection: "column", overflow: "hidden"
+    background: (theme) => theme.palette.mode === 'dark' ? 'var(--color-bg-sidebar)' : theme.palette.background.paper,
+    borderRadius: "20px",
+    border: (theme) => `1.5px solid ${theme.palette.divider}`,
+    boxShadow: (theme) => theme.palette.mode === 'dark' ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.03)",
+    display: "flex", flexDirection: "column", overflow: "hidden",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    "&:hover": {
+      transform: "translateY(-4px)",
+      boxShadow: (theme) => theme.palette.mode === 'dark' ? "0 16px 48px rgba(0,0,0,0.5)" : "0 16px 48px rgba(79,70,229,0.12)",
+      borderColor: "primary.main",
+    }
   }}>
-    <Box sx={{ p: 2, borderBottom: "1px solid", borderBottomColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Box sx={{ color: "primary.main", display: "flex" }}>{icon}</Box>
+    <Box sx={{ p: 2, borderBottom: "1.5px solid", borderBottomColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
+      <Box sx={{ color: "primary.main", display: "flex", background: "rgba(79,70,229,0.1)", p: 1, borderRadius: "10px" }}>{icon}</Box>
       <Box>
         <Typography sx={{ fontSize: "16px", fontWeight: 800, color: "text.primary" }}>{title}</Typography>
         <Typography sx={{ fontSize: "14px", color: "text.secondary" }}>{subtitle}</Typography>
@@ -235,13 +261,18 @@ export default function Reports() {
 
       {/* ── Compact Stat KPI Row ────────────────────────────────────────────── */}
       <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 2, mb: 3 }}>
-        <StatCard label={userRole === "ADMIN" ? "Global Orders" : "Total Orders"} value={d.totalOrders} icon={<ShoppingCartRounded />} iconBg="#fffbeb" iconColor="#f59e0b" />
-        <StatCard label="Pending Orders" value={d.pendingOrdersCount} icon={<AccessTimeRounded />} iconBg="#fef2f2" iconColor="#f43f5e" />
-        <StatCard label={userRole === "ADMIN" ? "System Revenue" : "Outlet Revenue"} value={`₹${d.totalRevenue?.toLocaleString() || 0}`} icon={<TrendingUpRounded />} iconBg="#ecfdf5" iconColor="#10b981" />
+        <StatCard label={userRole === "ADMIN" ? "Global Orders" : "Total Orders"} value={d.totalOrders} icon={<ShoppingCartRounded />} 
+          gradient="linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)" iconBg="linear-gradient(135deg, #f59e0b, #d97706)" iconColor="#d97706" accent="#f59e0b" />
+        <StatCard label="Pending Orders" value={d.pendingOrdersCount} icon={<AccessTimeRounded />} 
+          gradient="linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)" iconBg="linear-gradient(135deg, #f43f5e, #e11d48)" iconColor="#e11d48" accent="#f43f5e" />
+        <StatCard label={userRole === "ADMIN" ? "System Revenue" : "Outlet Revenue"} value={`₹${d.totalRevenue?.toLocaleString() || 0}`} icon={<TrendingUpRounded />} 
+          gradient="linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)" iconBg="linear-gradient(135deg, #10b981, #059669)" iconColor="#059669" accent="#10b981" />
         {userRole === "ADMIN" && (
-          <StatCard label="Total Users" value={d.totalUsers} icon={<PeopleRounded />} iconBg="#eff6ff" iconColor="#3b82f6" />
+          <StatCard label="Total Users" value={d.totalUsers} icon={<PeopleRounded />} 
+            gradient="linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)" iconBg="linear-gradient(135deg, #3b82f6, #2563eb)" iconColor="#2563eb" accent="#3b82f6" />
         )}
-        <StatCard label={userRole === "ADMIN" ? "Global Low Stock" : "Low Stock Alerts"} value={d.lowStockCount} icon={<WarningRounded />} iconBg="#fdf4ff" iconColor="#d946ef" />
+        <StatCard label={userRole === "ADMIN" ? "Global Low Stock" : "Low Stock Alerts"} value={d.lowStockCount} icon={<WarningRounded />} 
+          gradient="linear-gradient(135deg, #ffffff 0%, #fdf4ff 100%)" iconBg="linear-gradient(135deg, #d946ef, #c026d3)" iconColor="#c026d3" accent="#d946ef" />
       </Box>
 
       {/* ── Section: Distribution charts (Highly space-efficient CSS Grid) ──── */}

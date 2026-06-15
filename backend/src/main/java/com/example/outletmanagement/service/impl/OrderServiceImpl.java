@@ -32,6 +32,7 @@ public class OrderServiceImpl implements OrderService {
     private final RequestBatchRepository requestBatchRepository;
     private final WebSocketEventPublisher webSocketEventPublisher;
     private final com.example.outletmanagement.service.AuditLogService auditLogService;
+    private final com.example.outletmanagement.service.EmailService emailService;
 
     @Override
     public Page<Order> getAllOrders(Pageable pageable) {
@@ -129,14 +130,22 @@ public class OrderServiceImpl implements OrderService {
         Order saved = orderRepository.save(order);
         auditLogService.log("CREATE_ORDER", "Created order " + saved.getOrderNo() + " for outlet " + outlet.getOutletName() + " (ID: " + saved.getId() + ")");
 
-        // Publish real-time event
-        webSocketEventPublisher.publishNewOrder(
-                saved.getId(),
-                saved.getOrderNo(),
-                outlet.getId(),
-                outlet.getOutletName(),
-                saved.getStatus().name()
-        );
+        // Publish real-time event ONLY after transaction commits to prevent frontend race conditions
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketEventPublisher.publishNewOrder(
+                        saved.getId(),
+                        saved.getOrderNo(),
+                        outlet.getId(),
+                        outlet.getOutletName(),
+                        saved.getStatus().name()
+                );
+            }
+        });
+
+        // Send email notification via Mailtrap
+        emailService.sendOrderNotification(saved);
 
         return saved;
     }
@@ -189,14 +198,23 @@ public class OrderServiceImpl implements OrderService {
         Order updated = orderRepository.save(order);
         auditLogService.log("UPDATE_ORDER_STATUS", "Updated order " + updated.getOrderNo() + " status to " + status.name());
 
-        // Publish real-time status change event
-        webSocketEventPublisher.publishOrderStatusChange(
-                updated.getId(),
-                updated.getOrderNo(),
-                updated.getOutlet().getId(),
-                updated.getOutlet().getOutletName(),
-                updated.getStatus().name()
-        );
+        // Publish real-time status change event ONLY after transaction commits
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketEventPublisher.publishOrderStatusChange(
+                        updated.getId(),
+                        updated.getOrderNo(),
+                        updated.getOutlet().getId(),
+                        updated.getOutlet().getOutletName(),
+                        updated.getStatus().name()
+                );
+            }
+        });
+
+        if (updated.getStatus() == Order.OrderStatus.APPROVED || updated.getStatus() == Order.OrderStatus.PARTIALLY_APPROVED) {
+            emailService.sendOrderApprovedNotification(updated);
+        }
 
         return updated;
     }
@@ -297,5 +315,21 @@ public class OrderServiceImpl implements OrderService {
         }
         orderRepository.deleteById(id); // triggers @SQLDelete soft-delete
         auditLogService.log("DELETE_ORDER", "Deleted order ID: " + id + " (Order No: " + order.getOrderNo() + ")");
+    }
+
+    @Override
+    public java.util.Map<String, Long> getOrderCounts(Long outletId) {
+        List<Object[]> results = orderRepository.getOrderCountsByStatus(outletId);
+        java.util.Map<String, Long> counts = new java.util.HashMap<>();
+        // Initialize all statuses to 0
+        for (Order.OrderStatus status : Order.OrderStatus.values()) {
+            counts.put(status.name(), 0L);
+        }
+        for (Object[] row : results) {
+            Order.OrderStatus status = (Order.OrderStatus) row[0];
+            Long count = ((Number) row[1]).longValue();
+            counts.put(status.name(), count);
+        }
+        return counts;
     }
 }

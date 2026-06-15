@@ -13,4 +13,5 @@ public interface OrderService {
     Order createOrder(com.example.outletmanagement.payload.dto.request.OrderRequest request);
     Order updateOrderStatus(Long id, Order.OrderStatus status);
     void deleteOrder(Long id);
+    java.util.Map<String, Long> getOrderCounts(Long outletId);
 }
