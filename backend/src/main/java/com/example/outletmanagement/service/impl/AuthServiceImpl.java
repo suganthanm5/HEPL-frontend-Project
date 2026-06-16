@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.outletmanagement.websocket.WebSocketEventPublisher;
 import com.example.outletmanagement.service.AuditLogService;
+import com.example.outletmanagement.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final WebSocketEventPublisher webSocketEventPublisher;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -42,6 +44,9 @@ public class AuthServiceImpl implements AuthService {
                 .role(User.Role.USER)
                 .build();
         userRepository.save(user);
+        
+        emailService.sendUserRegistrationNotification(user);
+        
         auditLogService.log(user.getUsername(), "USER_REGISTER", "User registered: " + user.getUsername() + " (Email: " + user.getEmail() + ")");
 
         try {
@@ -111,6 +116,9 @@ public class AuthServiceImpl implements AuthService {
                             .role(User.Role.USER)
                             .build();
                     userRepository.save(user);
+                    
+                    emailService.sendUserRegistrationNotification(user);
+                    
                     auditLogService.log(user.getUsername(), "USER_REGISTER_GOOGLE", "New user registered via Google: " + user.getUsername());
 
                     try {

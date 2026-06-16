@@ -365,8 +365,8 @@ const Location = () => {
 
             {/* ── TABLE VIEW ── */}
             {view === "table" && (
-              <TableContainer>
-                <Table size="small">
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table size="small" sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ ...thSx, width: 60 }}>#</TableCell>

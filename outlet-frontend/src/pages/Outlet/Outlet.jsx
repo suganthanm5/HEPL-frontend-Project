@@ -1019,7 +1019,7 @@ export default function Outlet() {
         {/* ─── Table View ─── */}
         {view === "table" && (
           <Paper elevation={0} sx={{ borderRadius: "16px", border: "1.5px solid #e8eaf6", overflow: "hidden", mb: 2 }}>
-            <Table size="small">
+            <Table size="small" sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow>
                   {["", "#", "Outlet", "Code", "Type", "Location", "Divisions", "Products", "Owner", "Actions"].map((h) => (

@@ -1005,8 +1005,8 @@ const Product = () => {
 
           {/* ── Table / Card View ── */}
           {view === "table" && (
-            <GlassCard elevation={0}>
-              <Table size="small">
+            <GlassCard elevation={0} sx={{ overflowX: 'auto' }}>
+              <Table size="small" sx={{ minWidth: 800 }}>
                 <TableHead>
                   <TableRow>
                     {["#", "Image", "Name", "Division", "Code", "UIM Price", "MRP", "Selling Price", "Purchase Price", "Stock", "Actions"].map((h) => (

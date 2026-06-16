@@ -579,8 +579,8 @@ const Orders = () => {
               ))}
             </Tabs>
  
-            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
-              <Table size="small">
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, overflowX: 'auto' }}>
+              <Table size="small" sx={{ minWidth: 800 }}>
                 <TableHead>
                   <TableRow>
                     {["Order No", "Outlet", "Items", "Status", "Date", "Actions"].map((h) => (
@@ -790,8 +790,8 @@ const Orders = () => {
 
             <Box sx={{ p: { xs: 3, md: 5 }, position: "relative" }}>
               <Typography sx={{ fontWeight: 800, color: "text.primary", fontSize: "1.2rem", mb: 2, fontFamily: "inherit" }}>Order Items</Typography>
-              <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "12px", overflow: "hidden", mb: 4 }}>
-                <Table>
+              <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: "12px", overflowX: 'auto', mb: 4 }}>
+                <Table sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       {["Product Details", "Quantity", "Price", "Total"].map((h) => (

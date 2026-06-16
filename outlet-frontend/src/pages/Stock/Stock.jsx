@@ -518,9 +518,9 @@ const Stock = () => {
               </Box>
             </Box>
 
-            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+            <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, overflowX: 'auto' }}>
               {tab === "stock" ? (
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       {isOutletUser
@@ -604,7 +604,7 @@ const Stock = () => {
                   </TableBody>
                 </Table>
               ) : tab === "main" ? (
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       {["Ref No", "Product", "Available", "Purchase Price", "Selling Price", "Expiry", "Actions"].map((h) => (
@@ -692,7 +692,7 @@ const Stock = () => {
                   </TableBody>
                 </Table>
               ) : (
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
                       {["Type", "Product", "Outlet", "Qty", "By", "Date"].map((h) => (

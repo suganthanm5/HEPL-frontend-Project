@@ -629,7 +629,7 @@ const Division = () => {
       {/* ── TABLE VIEW ── */}
       {view === "table" && (
         <Paper elevation={0} sx={{ border: `1px solid ${C.slate200}`, borderRadius: 3, overflow: "hidden" }}>
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table sx={{ minWidth: 700 }}>
               <TableHead>
                 <TableRow>

@@ -326,8 +326,8 @@ const AuditLogs = () => {
           </Box>
         </Box>
 
-        <TableContainer>
-          <Table size="small">
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontFamily: "inherit", width: 60, fontWeight: 700 }}>#</TableCell>
