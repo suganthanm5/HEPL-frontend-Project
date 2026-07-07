@@ -31,6 +31,8 @@ public class BatchScheduler {
                 today, 
                 ProductBatch.Status.ACTIVE, 
                 ProductBatch.Status.EXPIRED
+                
+    
         );
         
         if (updatedCount > 0) {
